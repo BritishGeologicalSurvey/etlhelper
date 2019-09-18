@@ -1,0 +1,42 @@
+"""
+Database helper for mssql
+"""
+from etlhelper.db_helpers.db_helper import DbHelper
+
+
+class SqlServerDbHelper(DbHelper):
+    """
+    MS Sql server helper class
+    """
+    def __init__(self):
+        super().__init__()
+        try:
+            import pyodbc
+            self.sql_exceptions = (pyodbc.DatabaseError)
+            self._connect_func = pyodbc.connect
+            self.connect_exceptions = (pyodbc.DatabaseError, pyodbc.InterfaceError)
+        except ImportError:
+            print("The pyodc Python package could not be found")
+            # TODO: More helpful error message with solution
+
+    def get_connection_string(self, db_params, password_variable):
+        """
+        Return a connection string
+        :param db_params: DbParams
+        :param password: str, password
+        :return: str
+        """
+        # Prepare connection string
+        password = self.get_password(password_variable)
+        return (f'DRIVER={db_params.odbc_driver};SERVER=tcp:{db_params.host};PORT={db_params.port};'
+                f'DATABASE={db_params.dbname};UID={db_params.username};PWD={password}')
+
+    def get_sqlalchemy_connection_string(self, db_params, password_variable):
+        """
+        Returns connection string for sql alchemy type
+        """
+        password = self.get_password(password_variable)
+        driver = db_params.odbc_driver.replace(" ", "+")
+        return (f'mssql+pyodbc://{db_params.username}:{password}@'
+                f'{db_params.host}:{db_params.port}/{db_params.dbname}?'
+                f'driver={driver}')
