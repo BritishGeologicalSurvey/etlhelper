@@ -1,0 +1,58 @@
+variables:
+  POSTGRES_DB: etlhelper
+  POSTGRES_USER: etlhelper_user
+  POSTGRES_PASSWORD: etlhelper_pw
+  POSTGRES_HOST: postgis
+
+# Build stage also runs tests on container and pushes to repository
+stages:
+  - test
+  - package
+
+services:
+  - docker:18-dind
+  # Use PostGIS for testing: https://www.hackzine.org/postgis-on-gitlab-ci.html
+  - name: mdillon/postgis:11-alpine
+    alias: postgis
+
+test:
+  tags:
+    - docker-builder
+  image: docker
+  stage: test
+  script:
+    # Resolve PostGIS hostname (necessary because SQLAlchemy can't for some reason)
+    - export POSTGRES_HOST=$(getent hosts postgis | awk '{ print $1 ; exit }')
+
+    # Login to registry and previous test container
+    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
+    - docker pull "$CI_REGISTRY_IMAGE:test-runner" || true # Don't fail if missing
+
+    # Build new container using cached layers from previous
+    - docker build --cache-from  "$CI_REGISTRY_IMAGE:test-runner" -t "$CI_REGISTRY_IMAGE:test-runner" .
+    
+    # Push to repository (for use as cache for next build)
+    - docker push "$CI_REGISTRY_IMAGE:test-runner"
+
+    # Run linting and tests
+    - >
+      docker run \
+        "$CI_REGISTRY_IMAGE:test-runner" flake8 etlhelper test
+    - >
+      docker run \
+        -e TEST_PG_HOST=${POSTGRES_HOST} \
+        -e TEST_PG_PASSWORD=${POSTGRES_PASSWORD} \
+        "$CI_REGISTRY_IMAGE:test-runner" pytest --cov=etlhelper -vs test/
+
+package:
+  tags:
+    - docker
+  image: python:3.6-slim
+  stage: package
+  before_script:
+  script:
+    # Build zipped source distribution of module
+    - python setup.py sdist --formats=zip
+  artifacts:
+    paths:
+      - dist/
