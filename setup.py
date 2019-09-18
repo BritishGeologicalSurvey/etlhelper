@@ -31,16 +31,16 @@ setup(
     author="BGS Informatics",
     author_email="informatics@bgs.ac.uk",
     classifiers=[
-        "Development Status :: 4 - Beta"
-        "Intended Audience :: Developers"
-        "Intended Audience :: Information Technology"
-        "Intended Audience :: Science/Research"
-        "License :: OSI Approved :: GNU Lesser General Public License v3 or later (LGPLv3+)"
-        "Natural Language :: English"
-        "Operating System :: OS Independent"
-        "Programming Language :: Python :: 3"
-        "Topic :: Database"
-        "Topic :: Scientific/Engineering :: GIS"
+        "Development Status :: 4 - Beta",
+        "Intended Audience :: Developers",
+        "Intended Audience :: Information Technology",
+        "Intended Audience :: Science/Research",
+        "License :: OSI Approved :: GNU Lesser General Public License v3 or later (LGPLv3+)",
+        "Natural Language :: English",
+        "Operating System :: OS Independent",
+        "Programming Language :: Python :: 3",
+        "Topic :: Database",
+        "Topic :: Scientific/Engineering :: GIS",
     ],
     python_requires='>=3.6',
     packages=["etlhelper", "etlhelper.db_helpers"],
