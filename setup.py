@@ -22,15 +22,14 @@ README = (HERE / "README.md").read_text()
 # This call to setup() does all the work
 setup(
     name="etlhelper",
-    homepage="http://github.com/BritishGeologicalSurvey/etlhelper",
     version=versioneer.get_version(),
     cmdclass=versioneer.get_cmdclass(),
     description="A Python library to simplify data transfer between databases.",
     long_description=README,
     long_description_content_type="text/markdown",
-    url="https://",
+    url="https://github.com/BritishGeologicalSurvey/etlhelper",
     author="BGS Informatics",
-    author_email="informatics@bgs.ac.uk",
+    author_email="jostev@bgs.ac.uk",
     classifiers=[
         "Development Status :: 4 - Beta",
         "Intended Audience :: Developers",
