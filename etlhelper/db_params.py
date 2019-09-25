@@ -10,6 +10,9 @@ from etlhelper.exceptions import ETLHelperDbParamsError
 class DbParams:
     """Generic data holder class for database connection parameters"""
     _VALID_DBTYPES = ['ORACLE', 'PG', 'MSSQL']
+    _REQUIRED_PARMS = {'ORACLE': ('host', 'port', 'dbname', 'username'),
+                       'PG': ('host', 'port', 'dbname', 'username'),
+                       'MSSQL': ('host', 'port', 'dbname', 'username', 'odbc_driver')}
 
     def __init__(self, dbtype=None, odbc_driver=None, host=None, port=None,
                  dbname=None, username=None):
@@ -24,11 +27,21 @@ class DbParams:
     def validate_params(self):
         """
         Validate database parameters.
+
+        Should validate that a dbtype is a valid one and that the appropriate
+        params have been passed for a particular db_type.
+
         :raises ETLHelperParamsError: Error if params are invalid
         """
         # Check dbtype
         if self.dbtype not in self._VALID_DBTYPES:
             msg = f'{self.dbtype} not in valid types ({self._VALID_DBTYPES})'
+            raise ETLHelperDbParamsError(msg)
+
+        given = set(dir(self))
+        required = set(self._REQUIRED_PARMS[self.dbtype])
+        if required ^ given:
+            msg = f'Parameter not set. Required parameters are {self._REQUIRED_PARMS}'
             raise ETLHelperDbParamsError(msg)
 
     @classmethod
