@@ -1,8 +1,6 @@
 """
 Test db params
 """
-import os
-
 import pytest
 
 from etlhelper.db_params import DbParams
@@ -30,14 +28,14 @@ def test_db_params_repr():
 
 def test_db_params_from_environment(monkeypatch):
     """
-    Test capturing db params from environment settings
+    Test capturing db params from environment settings.
     """
     # Arrange
-    monkeypatch.setitem(os.environ, 'TEST_DBTYPE', 'ORACLE')
-    monkeypatch.setitem(os.environ, 'TEST_HOST', 'test.host')
-    monkeypatch.setitem(os.environ, 'TEST_PORT', '1234')
-    monkeypatch.setitem(os.environ, 'TEST_DBNAME', 'testdb')
-    monkeypatch.setitem(os.environ, 'TEST_USER', 'testuser')
+    monkeypatch.setenv('TEST_DBTYPE', 'ORACLE')
+    monkeypatch.setenv('TEST_HOST', 'test.host')
+    monkeypatch.setenv('TEST_PORT', '1234')
+    monkeypatch.setenv('TEST_DBNAME', 'testdb')
+    monkeypatch.setenv('TEST_USER', 'testuser')
 
     # Act
     db_params = DbParams.from_environment(prefix='TEST_')
