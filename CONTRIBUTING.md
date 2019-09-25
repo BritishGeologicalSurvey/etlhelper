@@ -1,7 +1,44 @@
+# Contributing to etlhelper
+
+## Roadmap
+
+`etlhelper` is currently at Beta status.
+All main features are complete, however contributions and suggestions are
+welcome, particularly in the following areas:
+
++ support for more database types
++ additional recipes / case studies
++ performance optimisation
++ improved documentation
+
+See the [issues list](https://github.com/BritishGeologicalSurvey/etlhelper/issues) for details.
+
+#### Support for more database types
+
+The `DbHelper` class provides a uniform interface to different database types.
+
+Implementing a new one requires the following:
+
++ New DbHelper class for database
+  - `__init__` method imports the driver and defines error types
+  - `get_connection_string` and `get_sqlalchemy_connection_string` are defined
+  - `required_parameters` defines set of names of parameters required by DbParams
+  - other specific function overrides are in place (e.g. executemany for
+    PostgreSQL)
++ DbHelper class is registered with DB_HELPER_FACTORY
++ Tests at `test/integration/db/test_xxx.py` that cover at least the `connect()` and
+  `copy_rows()` functions
++ _Optional:_ `setup_xxx_driver.py` script to check driver installation
+
+See [etlhelper/db_helpers/oracle.py](etlhelper/db_helpers/oracle.py) and
+[test/integration/db/test_oracle.py](test/integration/db/test_oracle.py) for examples.
+
+
 ## Developer setup
 
 Note: [https://www.github.com/BritishGeologicalSurvey/etlhelper](https://www.github.com/BritishGeologicalSurvey/etlhelper) is a mirror of an internal repository.
-Pull requests are applied there and then mirrored to GitHub.
+Pull requests are applied to BGS GitLab and then mirrored to GitHub.
+
 
 ### Prerequisites
 
@@ -59,14 +96,36 @@ HTML coverage output.  It can be viewed with `firefox htmlcov/index.html`.
 
 #### Additional integration tests
 
-There is a full suite of integration tests that also test Oracle and SQL Server
-databases.  These were developed prior to publication of `etlhelper` are only
-run within BGS agains internal databases.  They will be migrated to run in
-Docker containers or against environment-variable-defined connections in the
-future.
+Additional integration tests can be run against internal BGS Oracle and SQL Server
+databases.
+The DbParams for these databases are defined by environment variables stored
+within the Continuous Integration system.
+If the variables are not defined then the tests will be skipped.
+
+```bash
+export TEST_ORACLE_DBTYPE='ORACLE'
+export TEST_ORACLE_HOST=...
+export TEST_ORACLE_PORT=...
+export TEST_ORACLE_DBNAME=...
+export TEST_ORACLE_USER=...
+export TEST_MSSQL_DBTYPE='MSSQL'
+export TEST_MSSQL_DBDRIVER=...
+export TEST_MSSQL_HOST=...
+export TEST_MSSQL_PORT=...
+export TEST_MSSQL_DBNAME=...
+export TEST_MSSQL_USER=...
+```
+
+(Internal developers: see project wiki for definitions)
 
 
-### Creating a new release
+## Creating a new release
+
+Releases are created manually from the master branch with the following
+commands.
+The full integration test suite should be run before creating a release.
+
+#### Tagging
 
 `etlhelper` uses the [semantic versioning](https://semver.org/) notation.
 We use the versioneer package to automatically manage version numbers. The
@@ -84,18 +143,15 @@ git push --tags
 ```
 
 to ensure the tag is pushed to the remote repository. Release notes
-can then be created in the GitLab web interface (easiest), or via the API.
-
-Pushing a tag will start the CI process to make a release.
+can then be created in the GitHub web interface (easiest), or via the API.
 
 
-#### Building distribution files
+#### Upload to PyPI
 
-A source distribution file can be created and uploaded to a repository e.g.
-PyPI.
-It is created as follows:
+A source distribution is created via `setup.py`.
+Twine is used to upload to PyPI.  A PyPI account is required.
 
 ```bash
 python setup.py sdist --formats=zip
+twine upload dist/etlhelper-0.x.x.zip
 ```
-
