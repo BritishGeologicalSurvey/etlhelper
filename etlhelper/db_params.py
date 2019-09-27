@@ -10,10 +10,6 @@ from etlhelper.db_helper_factory import DB_HELPER_FACTORY
 
 class DbParams:
     """Generic data holder class for database connection parameters"""
-    _VALID_DBTYPES = ['ORACLE', 'PG', 'MSSQL']
-    _REQUIRED_PARMS = {'ORACLE': ('host', 'port', 'dbname', 'username'),
-                       'PG': ('host', 'port', 'dbname', 'username'),
-                       'MSSQL': ('host', 'port', 'dbname', 'username', 'odbc_driver')}
 
     def __init__(self, dbtype=None, odbc_driver=None, host=None, port=None,
                  dbname=None, username=None):
@@ -34,16 +30,13 @@ class DbParams:
 
         :raises ETLHelperParamsError: Error if params are invalid
         """
-        # Check dbtype
-        if self.dbtype not in self._VALID_DBTYPES:
-            msg = f'{self.dbtype} not in valid types ({self._VALID_DBTYPES})'
-            raise ETLHelperDbParamsError(msg)
-
+        # Get a set of the attributes to compare against required attributes.
         given = set(dir(self))
 
         try:
             helper = DB_HELPER_FACTORY.from_dbtype(self.dbtype)
         except ETLHelperHelperError as exc:
+            msg = f'{self.dbtype} not in valid types ({DB_HELPER_FACTORY.helpers.keys()})'
             raise ETLHelperDbParamsError(exc)
 
         required_params = helper.required_params
