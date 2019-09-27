@@ -8,18 +8,24 @@ from etlhelper.exceptions import ETLHelperDbParamsError, ETLHelperHelperError
 from etlhelper.db_helper_factory import DB_HELPER_FACTORY
 
 
-class DbParams:
-    """Generic data holder class for database connection parameters"""
+class DbParams(dict):
+    """Generic data holder class for database connection parameters.
 
-    def __init__(self, dbtype=None, odbc_driver=None, host=None, port=None,
-                 dbname=None, username=None):
-        self.dbtype = dbtype.upper()
-        self.odbc_driver = odbc_driver
-        self.host = host
-        self.port = str(port)
-        self.dbname = dbname
-        self.username = username
+    As we do not know which parameters will be provided in advance, DbParams
+    subclasses dict, to give dynamic attributes, following the pattern described
+    here: https://amir.rachum.com/blog/2016/10/05/python-dynamic-attributes/
+    """
+
+    def __init__(self, dbtype=None, **kwargs):
+        kwargs.update(dbtype=dbtype.upper())
+        super().__init__(kwargs)
         self.validate_params()
+
+    def __getattr__(self, item):
+        return self[item]
+
+    def __dir__(self):
+        return super().__dir__() + [str(k) for k in self.keys()]
 
     def validate_params(self):
         """
@@ -31,7 +37,7 @@ class DbParams:
         :raises ETLHelperParamsError: Error if params are invalid
         """
         # Get a set of the attributes to compare against required attributes.
-        given = set(dir(self))
+        given = set(self.keys())
 
         try:
             required_params = DB_HELPER_FACTORY.from_dbtype(self.dbtype).required_params
@@ -60,9 +66,8 @@ class DbParams:
         )
 
     def __repr__(self):
-        return (
-            f"DbParams(dbtype='{self.dbtype}', driver='{self.odbc_driver}', host='{self.host}', "
-            f"port='{self.port}', dbname='{self.dbname}', username='{self.username}')")
+        key_val_str = ", ".join([f"{key}='{self[key]}'" for key in self.keys()])
+        return f"DbParams({key_val_str})"
 
     def __str__(self):
         return self.__repr__()

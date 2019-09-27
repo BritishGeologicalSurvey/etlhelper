@@ -23,8 +23,8 @@ def test_db_params_repr():
         dbname='etlhelper',
         username='etlhelper_user')
     result = str(test_params)
-    expected = ("DbParams(dbtype='PG', driver='None', host='localhost', "
-                "port='5432', dbname='etlhelper', username='etlhelper_user')")
+    expected = ("DbParams(host='localhost', "
+                "port='5432', dbname='etlhelper', username='etlhelper_user', dbtype='PG')")
     assert result == expected
 
 
