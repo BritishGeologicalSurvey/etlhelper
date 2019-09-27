@@ -185,6 +185,12 @@ The above code demonstrates that the returned chunk can have a different number
 of rows of different length.
 The external data can result from a call to a webservice or other database.
 
+The `iter_chunks` and `iter_rows` functions return generators.
+Each chunk or row of data is only accessed when it is required.
+Using `yield` instead of `return` in the transform function makes it
+a generator, too.
+Data transformation can then be performed via [memory-efficient iterator-chains](https://dbader.org/blog/python-iterator-chains).
+
 
 #### Spatial ETL
 

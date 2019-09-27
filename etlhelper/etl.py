@@ -78,7 +78,7 @@ def iter_chunks(select_query, conn, parameters=(),
                 rows = _read_lob(rows)
 
             # Apply row_factory
-            rows = [create_row(row) for row in rows]
+            rows = (create_row(row) for row in rows)
 
             # Apply transform
             if transform:
@@ -168,6 +168,7 @@ def executemany(query, rows, conn, commit_chunks=True):
     """
     logging.debug(f"Chunk size: {CHUNKSIZE}")
     helper = DB_HELPER_FACTORY.from_conn(conn)
+    processed = 0
 
     with conn.cursor() as cursor:
         for chunk in _chunker(rows, CHUNKSIZE):
@@ -176,6 +177,7 @@ def executemany(query, rows, conn, commit_chunks=True):
                 # Chunker pads to whole chunk with None; remove these
                 chunk = [row for row in chunk if row is not None]
                 helper.executemany(cursor, query, chunk)
+                processed += len(chunk)
 
             except helper.sql_exceptions as exc:
                 # Rollback to clear the failed transaction before any others can
@@ -185,7 +187,7 @@ def executemany(query, rows, conn, commit_chunks=True):
                 raise ETLHelperInsertError(msg)
 
             logging.debug(
-                f'executemany: {cursor.rowcount} rows processed so far')
+                f'executemany: {processed} rows processed so far')
 
             # Commit changes so far
             if commit_chunks:
@@ -195,7 +197,7 @@ def executemany(query, rows, conn, commit_chunks=True):
     if not commit_chunks:
         conn.commit()
 
-    logging.debug(f'executemany: {len(rows)} rows processed in total')
+    logging.debug(f'executemany: {processed} rows processed in total')
 
 
 def copy_rows(select_query, source_conn, insert_query, dest_conn,

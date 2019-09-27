@@ -23,7 +23,7 @@ def test_iter_chunks(pgtestdb_test_tables, pgtestdb_conn,
     sql = "SELECT * FROM src"
 
     # Act
-    result = list(iter_chunks(sql, pgtestdb_conn))
+    result = [list(chunk) for chunk in iter_chunks(sql, pgtestdb_conn)]
 
     # Assert
     expected = [test_table_data[s] for s in slices]
