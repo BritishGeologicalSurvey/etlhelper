@@ -16,11 +16,11 @@ However, it can be used in conjunction with each of these.
 For an introduction to `etlhelper`, see the FOSS4GUK 2019 presentation _Open Source Spatial ETL with Python and Apache Airflow_: [video](https://www.youtube.com/watch?v=12rzUW4ps74&feature=youtu.be&t=6238) (20 mins),
 [slides](https://volcan01010.github.io/FOSS4G2019-talk).
 
- + [#Installation](Installation)
- + [#Quick Start](Quick Start)
- + [#Recipes](Recipes)
- + [#Development](Development)
- + [#Reference](Reference)
+ + [Installation](#Installation)
+ + [Quick Start](#Quick Start)
+ + [Recipes](#Recipes)
+ + [Development](#Development)
+ + [Reference](#Reference)
 
 ## Installation
 
