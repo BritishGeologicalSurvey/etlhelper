@@ -64,7 +64,7 @@ Proprietary Oracle Instant Client drivers are required.
 These can be installed with:
 
 ```bash
-setup_oracle_client
+setup_oracle_client /path/or/url/to/instantclient-xxxx.zip
 export "$(oracle_lib_path_export)"
 ```
 
