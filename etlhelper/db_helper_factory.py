@@ -32,7 +32,7 @@ class DbHelperFactory():
             msg = f"Expected DbParams-like object, got {type(db_params)}"
             raise ETLHelperHelperError(msg)
 
-        return self._from_dbtype(db_params.dbtype)
+        return self.from_dbtype(db_params.dbtype)
 
     def from_conn(self, conn):
         """
@@ -48,9 +48,9 @@ class DbHelperFactory():
         except KeyError:
             msg = f"Unsupported connection type: {conn_type}"
             raise ETLHelperHelperError(msg)
-        return self._from_dbtype(dbtype)
+        return self.from_dbtype(dbtype)
 
-    def _from_dbtype(self, dbtype):
+    def from_dbtype(self, dbtype):
         """
         Return initialised db helper based on type
         """

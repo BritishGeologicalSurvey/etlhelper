@@ -4,7 +4,8 @@ parameters.
 """
 import os
 
-from etlhelper.exceptions import ETLHelperDbParamsError
+from etlhelper.exceptions import ETLHelperDbParamsError, ETLHelperHelperError
+from etlhelper.db_helper_factory import DB_HELPER_FACTORY
 
 
 class DbParams:
@@ -39,9 +40,15 @@ class DbParams:
             raise ETLHelperDbParamsError(msg)
 
         given = set(dir(self))
-        required = set(self._REQUIRED_PARMS[self.dbtype])
-        if required ^ given:
-            msg = f'Parameter not set. Required parameters are {self._REQUIRED_PARMS}'
+
+        try:
+            helper = DB_HELPER_FACTORY.from_dbtype(self.dbtype)
+        except ETLHelperHelperError as exc:
+            raise ETLHelperDbParamsError(exc)
+
+        required_params = helper.required_params
+        if (given ^ required_params) & required_params:
+            msg = f'Parameter not set. Required parameters are {required_params}'
             raise ETLHelperDbParamsError(msg)
 
     @classmethod
