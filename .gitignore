@@ -1,3 +1,7 @@
+#  Oracle setup files
+etlhelper/oracle_instantclient/
+etlhelper/oracle_lib_path_export
+
 # PyCharm
 .idea
 

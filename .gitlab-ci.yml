@@ -21,6 +21,9 @@ test:
   image: docker
   stage: test
   script:
+    # Import test environment variables
+    - source ${TEST_ENV_VARS}
+
     # Resolve PostGIS hostname (necessary because SQLAlchemy can't for some reason)
     - export POSTGRES_HOST=$(getent hosts postgis | awk '{ print $1 ; exit }')
 
@@ -29,7 +32,11 @@ test:
     - docker pull "$CI_REGISTRY_IMAGE:test-runner" || true # Don't fail if missing
 
     # Build new container using cached layers from previous
-    - docker build --cache-from  "$CI_REGISTRY_IMAGE:test-runner" -t "$CI_REGISTRY_IMAGE:test-runner" .
+    - >
+      docker build \
+        --cache-from  "$CI_REGISTRY_IMAGE:test-runner" \
+        --build-arg INSTANT_CLIENT_ZIP=${INSTANT_CLIENT_ZIP} \
+        -t "$CI_REGISTRY_IMAGE:test-runner" .
     
     # Push to repository (for use as cache for next build)
     - docker push "$CI_REGISTRY_IMAGE:test-runner"
@@ -42,6 +49,18 @@ test:
       docker run \
         -e TEST_PG_HOST=${POSTGRES_HOST} \
         -e TEST_PG_PASSWORD=${POSTGRES_PASSWORD} \
+        -e TEST_ORACLE_DBTYPE="${TEST_ORACLE_DBTYPE}" \
+        -e TEST_ORACLE_HOST="${TEST_ORACLE_HOST}" \
+        -e TEST_ORACLE_PORT="${TEST_ORACLE_PORT}" \
+        -e TEST_ORACLE_DBNAME="${TEST_ORACLE_DBNAME}" \
+        -e TEST_ORACLE_USER="${TEST_ORACLE_USER}" \
+        -e TEST_ORACLE_PASSWORD="${TEST_ORACLE_PASSWORD}" \
+        -e TEST_MSSQL_DBTYPE="${TEST_MSSQL_DBTYPE}" \
+        -e TEST_MSSQL_DBDRIVER="${TEST_MSSQL_DBDRIVER}" \
+        -e TEST_MSSQL_HOST="${TEST_MSSQL_HOST}" \
+        -e TEST_MSSQL_PORT="${TEST_MSSQL_PORT}" \
+        -e TEST_MSSQL_DBNAME="${TEST_MSSQL_DBNAME}" \
+        -e TEST_MSSQL_PASSWORD="${TEST_MSSQL_PASSWORD}" \
         "$CI_REGISTRY_IMAGE:test-runner" pytest --cov=etlhelper -vs test/
 
 package:

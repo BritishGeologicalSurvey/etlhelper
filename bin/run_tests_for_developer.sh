@@ -1,7 +1,21 @@
 #! /bin/sh
-docker build -t etlhelper-test-runner . || exit 1
+docker build \
+  --build-arg INSTANT_CLIENT_ZIP=${INSTANT_CLIENT_ZIP} \
+  -t etlhelper-test-runner . || exit 1
 docker run \
-  -e TEST_PG_PASSWORD=${TEST_PG_PASSWORD} \
+  -e TEST_PG_PASSWORD="${TEST_PG_PASSWORD}" \
+  -e TEST_ORACLE_DBTYPE="${TEST_ORACLE_DBTYPE}" \
+  -e TEST_ORACLE_HOST="${TEST_ORACLE_HOST}" \
+  -e TEST_ORACLE_PORT="${TEST_ORACLE_PORT}" \
+  -e TEST_ORACLE_DBNAME="${TEST_ORACLE_DBNAME}" \
+  -e TEST_ORACLE_USER="${TEST_ORACLE_USER}" \
+  -e TEST_ORACLE_PASSWORD="${TEST_ORACLE_PASSWORD}" \
+  -e TEST_MSSQL_DBTYPE="${TEST_MSSQL_DBTYPE}" \
+  -e TEST_MSSQL_DBDRIVER="${TEST_MSSQL_DBDRIVER}" \
+  -e TEST_MSSQL_HOST="${TEST_MSSQL_HOST}" \
+  -e TEST_MSSQL_PORT="${TEST_MSSQL_PORT}" \
+  -e TEST_MSSQL_DBNAME="${TEST_MSSQL_DBNAME}" \
+  -e TEST_MSSQL_PASSWORD="${TEST_MSSQL_PASSWORD}" \
   --net=host \
   --name=etlhelper-test-runner \
   etlhelper-test-runner \

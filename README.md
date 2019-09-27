@@ -2,16 +2,25 @@
 
 > etlhelper is a Python library to simplify data transfer between databases.
 
-etlhelper provides a unified way to connect to different database types (currently Oracle, PostgreSQL and SQL Server).
-It is a thin wrapper around Python's DBAPI2 specification.
-The get_rows function returns the result of a SQL query and can be used to create simple HTTP APIs.
-The copy_rows function transfers data from one database to another.
+`etlhelper` provides a unified way to connect to different database types (currently Oracle, PostgreSQL and SQL Server).
+It is a thin wrapper around Python's [DBAPI2](https://www.python.org/dev/peps/pep-0249/) specification.
+The `get_rows` function returns the result of a SQL query and can be used to create simple HTTP APIs.
+The `copy_rows` function transfers data from one database to another.
 It is possible to apply a transform function to manipulate data in flight.
 These tools make it simple to create easy-to-understand, lightweight, versionable and testable Extract-Transform-Load (ETL) workflows.
 
-etlhelper is not a tool for coordinating ETL jobs (use Apache Airflow), for
-converting GIS data formats (use ogr2ogr or fiona) or an Object Relation Mapper (use SQLAlchemy).
+`etlhelper` is not a tool for coordinating ETL jobs (use [Apache Airflow](https://airflow.apache.org)), for
+converting GIS data formats (use [ogr2ogr](https://gdal.org/programs/ogr2ogr.html) or [fiona](https://pypi.org/project/Fiona/)) or an Object Relation Mapper (use [SQLAlchemy](https://www.sqlalchemy.org/)).
 However, it can be used in conjunction with each of these.
+
+For an introduction to `etlhelper`, see the FOSS4GUK 2019 presentation _Open Source Spatial ETL with Python and Apache Airflow_: [video](https://www.youtube.com/watch?v=12rzUW4ps74&feature=youtu.be&t=6238) (20 mins),
+[slides](https://volcan01010.github.io/FOSS4G2019-talk).
+
+ + [#Installation](Installation)
+ + [#Quick Start](Quick Start)
+ + [#Recipes](Recipes)
+ + [#Development](Development)
+ + [#Reference](Reference)
 
 ## Installation
 
@@ -75,7 +84,7 @@ The [Dockerfile](Dockerfile) contains an example for Debian systems.
 
 ## Quick Start
 
-### Password Definition
+#### Password Definition
 
 Passwords (e.g. Oracle password) must be specified via an environment variable.
 This can be done on the command line via:
@@ -91,7 +100,7 @@ os.environ['ORACLE_PASSWORD'] = 'some-secret-password'
 ```
 
 
-### DbParams
+#### DbParams
 
 Database connection information is defined by `DbParams` objects.
 
@@ -142,6 +151,7 @@ a generator for looping over results.
 
 Copy rows takes the results from a SELECT query and applies them as parameters
 to an INSERT query.
+The source and destination tables must already exist.
 
 ```python
 from my_databases import PGDOCKER, ORADOCKER
@@ -307,8 +317,9 @@ with connect(some_db, 'SOME_DB_PASSWORD') as conn:
     executemany(insert_sql, rows, conn)
 ```
 
+## Development
 
-## Maintainers
+### Maintainers
 
 ETL Helper was created by and is maintained by British Geological Survey Informatics.
 
@@ -317,14 +328,18 @@ ETL Helper was created by and is maintained by British Geological Survey Informa
 + Declan Valters ([dvalters](https://github.com/dvalters))
 + Colin Blackburn ([ximenesuk](https://github.com/ximenesuk))
 
+See [CONTRIBUTING.md](CONTRIBUTING.md) for details on how to contribute to the
+software.
 
-## Licence
+
+### Licence
 
 ETL Helper is distributed under the [LGPL v3.0 licence](LICENSE).
 
 
-## Reference
+## References
 
-+ [psycopg2 docs](http://initd.org/psycopg/docs/cursor.html)
-+ [cx_Oracle docs](https://cx-oracle.readthedocs.io/en/latest/cursor.html)
-+ [PEP249 DB API2 docs](https://www.python.org/dev/peps/pep-0249/#cursor-objects)
++ [PEP249 DB API2](https://www.python.org/dev/peps/pep-0249/#cursor-objects)
++ [psycopg2](http://initd.org/psycopg/docs/cursor.html)
++ [cx_Oracle](https://cx-oracle.readthedocs.io/en/latest/cursor.html)
++ [pyodbc](https://pypi.org/project/pyodbc/)
