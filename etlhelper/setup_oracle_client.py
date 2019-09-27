@@ -251,14 +251,15 @@ NSL_MESSAGE = dedent("""
     A workaround for Fedora 28+ users is detailed here:
     https://github.com/oracle/node-oracledb/issues/892#issuecomment-387082011
 
-    i.e. create a symlink to the newer version of the library libnsl.so.2
-    in the "etlhelper/oracle/instantclient_12_3/lib folder
+    i.e. create a symlink to the newer library on the LD_LIBRARY_PATH
 
     ln -s [PATH TO SYSTEM libnsl.so.2] [PATH TO LOCAL LIBRARY FOLDER]/libnsl.so.1
 
-    For example:
+    etlhelper adds the Oracle Instant Client directory to the LD_LIBRARY_PATH.  When
+    using a virtual environment, the command will look something like:
 
-    ln -s /usr/lib64/libnsl.so.2 etlhelper/etlhelper/oracle/instantclient_12_2/lib/libnsl.so.1
+    ln -s /usr/lib64/libnsl.so.2 \
+        ${VIRTUAL_ENV}/lib/python3.7/site-packages/etlhelper/oracle_instantclient/instantclient_12_2/libnsl.so.1
     """).strip() + '\n'
 
 
