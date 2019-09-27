@@ -15,9 +15,10 @@ class SqlServerDbHelper(DbHelper):
             self.sql_exceptions = (pyodbc.DatabaseError)
             self._connect_func = pyodbc.connect
             self.connect_exceptions = (pyodbc.DatabaseError, pyodbc.InterfaceError)
+            self.required_params = {'host', 'port', 'dbname', 'username', 'odbc_driver'}
         except ImportError:
-            print("The pyodc Python package could not be found")
-            # TODO: More helpful error message with solution
+            print("The pyodc Python package could not be found.\n"
+                  "Run: python -m pip install pyodbc")
 
     def get_connection_string(self, db_params, password_variable):
         """

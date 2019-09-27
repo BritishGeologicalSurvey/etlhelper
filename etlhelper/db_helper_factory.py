@@ -14,14 +14,14 @@ class DbHelperFactory():
     The DB Helper Factory class.
     """
     def __init__(self):
-        self._helpers = {}
+        self.helpers = {}
         self._conn_types = {}
 
     def register_helper(self, dbtype, conn_type, db_helper):
         """
         Store db helper in internal list.
         """
-        self._helpers[dbtype] = db_helper
+        self.helpers[dbtype] = db_helper
         self._conn_types[conn_type] = dbtype
 
     def from_db_params(self, db_params):
@@ -32,7 +32,7 @@ class DbHelperFactory():
             msg = f"Expected DbParams-like object, got {type(db_params)}"
             raise ETLHelperHelperError(msg)
 
-        return self._from_dbtype(db_params.dbtype)
+        return self.from_dbtype(db_params.dbtype)
 
     def from_conn(self, conn):
         """
@@ -48,14 +48,14 @@ class DbHelperFactory():
         except KeyError:
             msg = f"Unsupported connection type: {conn_type}"
             raise ETLHelperHelperError(msg)
-        return self._from_dbtype(dbtype)
+        return self.from_dbtype(dbtype)
 
-    def _from_dbtype(self, dbtype):
+    def from_dbtype(self, dbtype):
         """
         Return initialised db helper based on type
         """
         try:
-            helper = self._helpers[dbtype]()
+            helper = self.helpers[dbtype]()
         except KeyError:
             msg = f"Unsupported DbParams.dbtype: {dbtype}"
             raise ETLHelperHelperError(msg)

@@ -19,6 +19,7 @@ class DbHelper(metaclass=ABCMeta):
     def __init__(self):
         self.sql_exceptions = tuple()
         self.connect_exceptions = tuple()
+        self.required_params = set()
         # Dummy function to allowing calling in connect below
         # (To satisfy Pylint)
         # Throws exception if not overidden

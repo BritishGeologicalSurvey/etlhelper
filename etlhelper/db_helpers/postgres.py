@@ -15,9 +15,10 @@ class PostgresDbHelper(DbHelper):
             self.sql_exceptions = (psycopg2.ProgrammingError)
             self._connect_func = psycopg2.connect
             self.connect_exceptions = (psycopg2.OperationalError)
+            self.required_params = {'host', 'port', 'dbname', 'username'}
         except ImportError:
-            print("The PostgreSQL python libraries could not be found.")
-            # TODO: More helpful error message with solution.
+            print("The PostgreSQL python libraries could not be found.\n"
+                  "Run: python -m pip install psycopg2-binary")
 
     def get_connection_string(self, db_params, password_variable):
         """
