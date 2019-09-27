@@ -34,12 +34,11 @@ class DbParams:
         given = set(dir(self))
 
         try:
-            helper = DB_HELPER_FACTORY.from_dbtype(self.dbtype)
-        except ETLHelperHelperError as exc:
+            required_params = DB_HELPER_FACTORY.from_dbtype(self.dbtype).required_params
+        except ETLHelperHelperError:
             msg = f'{self.dbtype} not in valid types ({DB_HELPER_FACTORY.helpers.keys()})'
-            raise ETLHelperDbParamsError(exc)
+            raise ETLHelperDbParamsError(msg)
 
-        required_params = helper.required_params
         if (given ^ required_params) & required_params:
             msg = f'Parameter not set. Required parameters are {required_params}'
             raise ETLHelperDbParamsError(msg)
