@@ -12,8 +12,7 @@ from etlhelper.exceptions import (
     ETLHelperQueryError,
 )
 
-
-logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger('etlhelper')
 CHUNKSIZE = 5000
 
 
@@ -44,6 +43,10 @@ def iter_chunks(select_query, conn, parameters=(),
                       returns an iterable of rows (possibly of different shape)
     :param read_lob: bool, convert Oracle LOB objects to strings
     """
+    logger.info(f"Fetching rows")
+    logger.debug(f"Fetching:\n\n{select_query}\n\nwith parameters:\n\n"
+                 f"{parameters}\n\nagainst\n\n{conn}")
+
     helper = DB_HELPER_FACTORY.from_conn(conn)
     with helper.cursor(conn) as cursor:
         # Run query
@@ -60,17 +63,21 @@ def iter_chunks(select_query, conn, parameters=(),
         create_row = row_factory(cursor)
 
         # Parse results
+        first_pass = True
         while True:
             rows = cursor.fetchmany(CHUNKSIZE)
 
-            # cursor.rowcount is number of records transferred from the server
-            if cursor.rowcount == 0:
-                logging.debug("iter_chunks: No records returned")
-                return
-
             # No more rows to process
             if not rows:
-                logging.debug(f"iter_chunks: {cursor.rowcount} records returned")
+                if first_pass:
+                    msg = "No rows returned"
+                else:
+                    if cursor.rowcount == -1:
+                        # SQLite3 drive doesn't support row count (always -1)
+                        msg = "All rows returned"
+                    else:
+                        msg = f"{cursor.rowcount} rows returned"
+                logger.info(msg)
                 return
 
             # Convert Oracle LOBs to strings if required
@@ -86,6 +93,7 @@ def iter_chunks(select_query, conn, parameters=(),
 
             # Return data
             yield rows
+            first_pass = False
 
 
 def iter_rows(select_query, conn, parameters=(),
@@ -166,7 +174,9 @@ def executemany(query, rows, conn, commit_chunks=True):
     :param commit_chunks: bool, commit after each chunk has been inserted/updated
     :return row_count: int, number of rows inserted/updated
     """
-    logging.debug(f"Chunk size: {CHUNKSIZE}")
+    logger.info(f"Executing many (chunksize={CHUNKSIZE})")
+    logger.debug(f"Executing:\n\n{query}\n\nagainst\n\n{conn}")
+
     helper = DB_HELPER_FACTORY.from_conn(conn)
     processed = 0
 
@@ -176,6 +186,12 @@ def executemany(query, rows, conn, commit_chunks=True):
             try:
                 # Chunker pads to whole chunk with None; remove these
                 chunk = [row for row in chunk if row is not None]
+
+                # Show first row as example of data
+                if processed == 0:
+                    logger.debug(f"First row: {chunk[0]}")
+
+                # Execute query
                 helper.executemany(cursor, query, chunk)
                 processed += len(chunk)
 
@@ -186,8 +202,8 @@ def executemany(query, rows, conn, commit_chunks=True):
                 msg = f"SQL query raised an error.\n\n{query}\n\n{exc}\n"
                 raise ETLHelperInsertError(msg)
 
-            logging.debug(
-                f'executemany: {processed} rows processed so far')
+            logger.info(
+                f'{processed} rows processed')
 
             # Commit changes so far
             if commit_chunks:
@@ -197,7 +213,7 @@ def executemany(query, rows, conn, commit_chunks=True):
     if not commit_chunks:
         conn.commit()
 
-    logging.debug(f'executemany: {processed} rows processed in total')
+    logger.info(f'{processed} rows processed in total')
 
 
 def copy_rows(select_query, source_conn, insert_query, dest_conn,
@@ -238,6 +254,10 @@ def execute(query, conn, parameters=()):
     :param conn: dbapi connection
     :param parameters: sequence or dict of bind variables to insert in the query
     """
+    logger.info(f"Executing query")
+    logger.debug(f"Executing:\n\n{query}\n\nwith parameters:\n\n"
+                 f"{parameters}\n\nagainst\n\n{conn}")
+
     helper = DB_HELPER_FACTORY.from_conn(conn)
     with helper.cursor(conn) as cursor:
         # Run query
