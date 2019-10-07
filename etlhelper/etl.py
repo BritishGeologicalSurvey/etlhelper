@@ -45,7 +45,7 @@ def iter_chunks(select_query, conn, parameters=(),
     :param read_lob: bool, convert Oracle LOB objects to strings
     """
     helper = DB_HELPER_FACTORY.from_conn(conn)
-    with conn.cursor() as cursor:
+    with helper.cursor(conn) as cursor:
         # Run query
         try:
             cursor.execute(select_query, parameters)
@@ -170,7 +170,7 @@ def executemany(query, rows, conn, commit_chunks=True):
     helper = DB_HELPER_FACTORY.from_conn(conn)
     processed = 0
 
-    with conn.cursor() as cursor:
+    with helper.cursor(conn) as cursor:
         for chunk in _chunker(rows, CHUNKSIZE):
             # Run query
             try:
@@ -239,7 +239,7 @@ def execute(query, conn, parameters=()):
     :param parameters: sequence or dict of bind variables to insert in the query
     """
     helper = DB_HELPER_FACTORY.from_conn(conn)
-    with conn.cursor() as cursor:
+    with helper.cursor(conn) as cursor:
         # Run query
         try:
             cursor.execute(query, parameters)

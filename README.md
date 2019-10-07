@@ -2,7 +2,7 @@
 
 > etlhelper is a Python library to simplify data transfer between databases.
 
-`etlhelper` provides a unified way to connect to different database types (currently Oracle, PostgreSQL and SQL Server).
+`etlhelper` provides a unified way to connect to different database types (currently Oracle, PostgreSQL, SQLite and SQL Server).
 It is a thin wrapper around Python's [DBAPI2](https://www.python.org/dev/peps/pep-0249/) specification.
 The `get_rows` function returns the result of a SQL query and can be used to create simple HTTP APIs.
 The `copy_rows` function transfers data from one database to another.
@@ -37,6 +37,7 @@ Required database drivers are specified in the square brackets.  Options are:
 ```
 
 Multiple values can be separated by commas, e.g.: `[oracle,mssql]` would install both sets of drivers.
+The `sqlite3` driver is included within Python's Standard Library.
 
 
 ### Dependencies
@@ -99,6 +100,8 @@ import os
 os.environ['ORACLE_PASSWORD'] = 'some-secret-password'
 ```
 
+No password is required for SQLite databases.
+
 
 #### DbParams
 
@@ -107,10 +110,19 @@ Database connection information is defined by `DbParams` objects.
 ```
 from etlhelper import DbParams
 
-ORACLEDB = DbParams(host="localhost", port=1521,
-                    database="mydata",
-                    username="oracle_user")
+ORACLEDB = DbParams(dbtype='ORACLE', host="localhost", port=1521,
+                    database="mydata", username="oracle_user")
+
+POSTGRESDB = DbParams(dbtype='PG', host="localhost", port=5432,
+                    database="mydata", username="postgres_user")
+
+SQLITEDB = DbParams(dbtype='SQLITE', filename='/path/to/file.db')
+
+MSSQLDB = DbParams(dbtype='MSSQL', host="localhost", port=5432,
+                   database="mydata", username="mssql_user",
+                   odbc_driver="ODBC Driver 17 for SQL Server")
 ```
+
 
 #### Get rows
 
@@ -119,12 +131,12 @@ The `get_rows` function returns a list of named tuples containing data as
 native Python objects.
 
 ```python
-from my_databases import ORADOCKER
+from my_databases import ORACLEDB
 from etlhelper import connect, get_rows
 
 sql = "SELECT * FROM src"
 
-with connect(ORADOCKER, "ORA_PASSWORD") as conn:
+with connect(ORACLEDB, "ORA_PASSWORD") as conn:
     result = get_rows(sql, conn)
 ```
 
@@ -154,15 +166,15 @@ to an INSERT query.
 The source and destination tables must already exist.
 
 ```python
-from my_databases import PGDOCKER, ORADOCKER
+from my_databases import POSTGRESDB, ORACLEDB
 from etlhelper import connect, copy_rows
 
 select_sql = "SELECT id, name FROM src"
 insert_sql = "INSERT INTO dest (id, name)
               VALUES (%s, %s)"
 
-src_conn = connect(ORADOCKER, "ORA_PASSWORD")
-dest_conn = connect(PGDOCKER, "PG_PASSWORD")
+src_conn = connect(ORACLEDB, "ORA_PASSWORD")
+dest_conn = connect(POSTGRESDB, "PG_PASSWORD")
 
 copy_rows(select_sql, src_conn, insert_sql, dest_conn)
 ```
@@ -233,7 +245,7 @@ Transform functions can manipulate geometries using the [Shapely](https://pypi.o
 The following is an example ETL script.
 
 ```python
-from my_databases import ORADOCKER, PGDOCKER
+from my_databases import ORACLEDB, POSTGRESDB
 from etl_helper import connect, copy_rows
 
 DELETE_SQL = "..."
@@ -241,8 +253,8 @@ SELECT_SQL = "..."
 INSERT_SQL = "..."
 
 def copy_src_to_dest():
-    with connect(ORADOCKER, "ORA_PASSWORD") as src_conn:
-        with connect(PGDOCKER, "PG_PASSWORD") as dest_conn:
+    with connect(ORACLEDB, "ORA_PASSWORD") as src_conn:
+        with connect(POSTGRESDB, "PG_PASSWORD") as dest_conn:
             execute(DELETE_SQL, dest_conn)
             copy_rows(SELECT_SQL, src_conn,
                       INSERT_SQL, dest_conn)
@@ -267,11 +279,11 @@ It can be installed separately with `pip install sqlalchemy`.
 For example, to export a CSV file of data:
 
 ```python
-from my_databases import ORADOCKER
+from my_databases import ORACLEDB
 from etlhelper import get_sqlalchemy_connection_string
 from sqlalchemy import create_engine
 
-sqla_conn_str = get_sqlalchemy_connection_string(ORADOCKER, "ORACLE_PASSWORD")
+sqla_conn_str = get_sqlalchemy_connection_string(ORACLEDB, "ORACLE_PASSWORD")
 engine = create_engine(sqla_conn_str)
 
 sql = "SELECT * FROM my_table"
@@ -289,7 +301,7 @@ For example, to return each row as a dictionary, use the following:
 from etlhelper import connect, iter_rows
 from etlhelper.row_factories import dict_rowfactory
 
-conn = connect(ORADOCKER, 'ORACLE_PASSWORD')
+conn = connect(ORACLEDB, 'ORACLE_PASSWORD')
 sql = "SELECT * FROM my_table"
 for row in iter_rows(sql, conn, row_factory=dict_rowfactory):
     print(row['id'])
