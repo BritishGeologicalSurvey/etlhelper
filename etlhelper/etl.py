@@ -241,9 +241,11 @@ def copy_rows(select_query, source_conn, insert_query, dest_conn,
     :param commit_chunks: bool, commit after each chunk (see executemany)
     :param read_lob: bool, convert Oracle LOB objects to strings
     """
-    for chunk in iter_chunks(select_query, source_conn, parameters=parameters,
-                             transform=transform, read_lob=read_lob):
-        executemany(insert_query, chunk, dest_conn, commit_chunks=commit_chunks)
+    rows_generator = iter_rows(select_query, source_conn,
+                               parameters=parameters, transform=transform,
+                               read_lob=read_lob)
+    executemany(insert_query, rows_generator, dest_conn,
+                commit_chunks=commit_chunks)
 
 
 def execute(query, conn, parameters=()):
