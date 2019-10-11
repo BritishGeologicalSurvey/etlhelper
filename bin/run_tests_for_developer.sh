@@ -19,7 +19,7 @@ docker run \
   --net=host \
   --name=etlhelper-test-runner \
   etlhelper-test-runner \
-  pytest -vs --cov=etlhelper --cov-report html --cov-report term test/
+  pytest -vs -rsx --cov=etlhelper --cov-report html --cov-report term test/
 
 # Copy coverage files out of container to local if tests passed
 if [ $? -eq 0 ]; then

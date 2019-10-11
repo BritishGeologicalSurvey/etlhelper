@@ -10,16 +10,12 @@ import cx_Oracle
 import pytest
 
 from etlhelper import connect, get_rows, copy_rows, DbParams
-from etlhelper.exceptions import ETLHelperError, ETLHelperConnectionError
+from etlhelper.exceptions import ETLHelperConnectionError
 from test.conftest import db_is_unreachable
 
 # Skip these tests if database is unreachable
-try:
-    ORADB = DbParams.from_environment(prefix='TEST_ORACLE_')
-    if db_is_unreachable(ORADB.host, ORADB.port):
-        raise ETLHelperConnectionError()
-except (ETLHelperError, TypeError):
-    # TypeError thrown if host not set, others subclass ETLHelperError
+ORADB = DbParams.from_environment(prefix='TEST_ORACLE_')
+if db_is_unreachable(ORADB.host, ORADB.port):
     pytest.skip('Oracle test database is unreachable', allow_module_level=True)
 
 

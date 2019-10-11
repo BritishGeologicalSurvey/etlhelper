@@ -15,7 +15,7 @@ class SqlServerDbHelper(DbHelper):
             self.sql_exceptions = (pyodbc.DatabaseError)
             self._connect_func = pyodbc.connect
             self.connect_exceptions = (pyodbc.DatabaseError, pyodbc.InterfaceError)
-            self.required_params = {'host', 'port', 'dbname', 'username', 'odbc_driver'}
+            self.required_params = {'host', 'port', 'dbname', 'user', 'odbc_driver'}
         except ImportError:
             print("The pyodc Python package could not be found.\n"
                   "Run: python -m pip install pyodbc")
@@ -30,7 +30,7 @@ class SqlServerDbHelper(DbHelper):
         # Prepare connection string
         password = self.get_password(password_variable)
         return (f'DRIVER={db_params.odbc_driver};SERVER=tcp:{db_params.host};PORT={db_params.port};'
-                f'DATABASE={db_params.dbname};UID={db_params.username};PWD={password}')
+                f'DATABASE={db_params.dbname};UID={db_params.user};PWD={password}')
 
     def get_sqlalchemy_connection_string(self, db_params, password_variable):
         """
@@ -38,6 +38,6 @@ class SqlServerDbHelper(DbHelper):
         """
         password = self.get_password(password_variable)
         driver = db_params.odbc_driver.replace(" ", "+")
-        return (f'mssql+pyodbc://{db_params.username}:{password}@'
+        return (f'mssql+pyodbc://{db_params.user}:{password}@'
                 f'{db_params.host}:{db_params.port}/{db_params.dbname}?'
                 f'driver={driver}')

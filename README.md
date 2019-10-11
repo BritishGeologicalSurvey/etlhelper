@@ -109,8 +109,11 @@ from etlhelper import DbParams
 
 ORACLEDB = DbParams(host="localhost", port=1521,
                     database="mydata",
-                    username="oracle_user")
+                    user="oracle_user")
 ```
+
+DbParams objects can also be created from environment variables using the
+`from_environment()` function.
 
 #### Get rows
 

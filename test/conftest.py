@@ -18,7 +18,7 @@ PGTESTDB = DbParams(
     host='localhost',
     port=5432,
     dbname='etlhelper',
-    username='etlhelper_user')
+    user='etlhelper_user')
 
 
 @pytest.fixture('module')

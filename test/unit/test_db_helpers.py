@@ -15,7 +15,7 @@ from etlhelper.db_helpers import (OracleDbHelper, SqlServerDbHelper, PostgresDbH
 @pytest.fixture()
 def params():
     return DbParams(dbtype='ORACLE', odbc_driver='test driver', host='testhost',
-                    port=1521, dbname='testdb', username='testuser')
+                    port=1521, dbname='testdb', user='testuser')
 
 
 def test_oracle_sql_exceptions():
@@ -34,7 +34,7 @@ def test_oracle_connect(monkeypatch):
     # TODO: Fix DbParams class to take driver as init input.
     db_params = DbParams(dbtype='ORACLE',
                          host='server', port='1521', dbname='testdb',
-                         username='testuser')
+                         user='testuser')
     monkeypatch.setenv('DB_PASSWORD', 'mypassword')
     expected_conn_str = 'testuser/mypassword@server:1521/testdb'
 
@@ -52,7 +52,7 @@ def test_oracle_connect(monkeypatch):
 def test_sqlserver_connect(monkeypatch):
     db_params = DbParams(dbtype='MSSQL',
                          host='server', port='1521', dbname='testdb',
-                         username='testuser', odbc_driver='test driver')
+                         user='testuser', odbc_driver='test driver')
     monkeypatch.setenv('DB_PASSWORD', 'mypassword')
     expected_conn_str = ('DRIVER=test driver;SERVER=tcp:server;PORT=1521;'
                          'DATABASE=testdb;UID=testuser;PWD=mypassword')
@@ -71,7 +71,7 @@ def test_sqlserver_connect(monkeypatch):
 def test_postgres_connect(monkeypatch):
     db_params = DbParams(dbtype='PG',
                          host='server', port='1521', dbname='testdb',
-                         username='testuser', odbc_driver='test driver')
+                         user='testuser', odbc_driver='test driver')
     monkeypatch.setenv('DB_PASSWORD', 'mypassword')
     expected_conn_str = 'host=server port=1521 dbname=testdb user=testuser password=mypassword'
     mock_connect = Mock()
@@ -89,7 +89,7 @@ def test_postgres_connect(monkeypatch):
 def test_oracle_sqlalchemy_conn_string(monkeypatch):
     db_params = DbParams(dbtype='ORACLE',
                          host='server', port='1521', dbname='testdb',
-                         username='testuser')
+                         user='testuser')
     monkeypatch.setenv('DB_PASSWORD', 'mypassword')
     helper = OracleDbHelper()
     conn_str = helper.get_sqlalchemy_connection_string(db_params, 'DB_PASSWORD')
@@ -101,7 +101,7 @@ def test_oracle_sqlalchemy_conn_string(monkeypatch):
 def test_sqlserver_sqlalchemy_connect(monkeypatch):
     db_params = DbParams(dbtype='MSSQL',
                          host='server', port='1521', dbname='testdb',
-                         username='testuser', odbc_driver='test driver')
+                         user='testuser', odbc_driver='test driver')
     monkeypatch.setenv('DB_PASSWORD', 'mypassword')
     helper = SqlServerDbHelper()
     conn_str = helper.get_sqlalchemy_connection_string(db_params, 'DB_PASSWORD')
@@ -113,7 +113,7 @@ def test_sqlserver_sqlalchemy_connect(monkeypatch):
 def test_postgres_sqlalchemy_connect(monkeypatch):
     db_params = DbParams(dbtype='PG',
                          host='server', port='1521', dbname='testdb',
-                         username='testuser')
+                         user='testuser')
     monkeypatch.setenv('DB_PASSWORD', 'mypassword')
     helper = PostgresDbHelper()
     conn_str = helper.get_sqlalchemy_connection_string(db_params, 'DB_PASSWORD')
