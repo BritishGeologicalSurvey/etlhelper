@@ -1,7 +1,14 @@
 #! /bin/sh
+echo "Building container"
 docker build \
   --build-arg INSTANT_CLIENT_ZIP=${INSTANT_CLIENT_ZIP} \
   -t etlhelper-test-runner . || exit 1
+
+echo "Flake8 checks"
+docker run \
+  etlhelper-test-runner flake8 etlhelper test || exit 1
+
+echo "Unit and integration tests"
 docker run \
   -e TEST_PG_PASSWORD="${TEST_PG_PASSWORD}" \
   -e TEST_ORACLE_DBTYPE="${TEST_ORACLE_DBTYPE}" \

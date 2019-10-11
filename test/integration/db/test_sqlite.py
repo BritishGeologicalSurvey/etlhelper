@@ -23,13 +23,15 @@ def test_connect(sqlitedb):
 
 
 @pytest.mark.skipif(sys.platform != 'linux', reason='Requires Linux OS')
-def test_bad_connect():
-    if os.getenv('USER') == 'root':
-        # Don't run for root user, but don't mark as skipped either
-        return
-    db_params = DbParams(dbtype='SQLITE', filename='/cannot_write_to_root')
-    with pytest.raises(ETLHelperConnectionError):
-        connect(db_params)
+def test_bad_connect(tmpdir):
+    # Attemping to create file in non-existent directory should fail
+    try:
+        db_params = DbParams(dbtype='SQLITE', filename='/does/not/exist')
+        with pytest.raises(ETLHelperConnectionError):
+            connect(db_params)
+    finally:
+        # Restore permissions prior to cleanup
+        os.chmod(tmpdir, 0o666)
 
 
 def test_bad_select(testdb_conn):

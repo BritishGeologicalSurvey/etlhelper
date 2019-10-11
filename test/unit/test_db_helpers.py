@@ -11,21 +11,18 @@ from etlhelper import DbParams
 from etlhelper.db_helper_factory import DB_HELPER_FACTORY
 from etlhelper.db_helpers import (
     OracleDbHelper,
-    SqlServerDbHelper,
-    PostgresDbHelper,
-    SQLiteDbHelper
 )
 
 # pylint: disable=missing-docstring
 
 ORACLEDB = DbParams(dbtype='ORACLE', host='server', port='1521',
-                    dbname='testdb', username='testuser')
+                    dbname='testdb', user='testuser')
 
 MSSQLDB = DbParams(dbtype='MSSQL', host='server', port='1521', dbname='testdb',
-                   username='testuser', odbc_driver='test driver')
+                   user='testuser', odbc_driver='test driver')
 
 POSTGRESDB = DbParams(dbtype='PG', host='server', port='1521', dbname='testdb',
-                      username='testuser', odbc_driver='test driver')
+                      user='testuser', odbc_driver='test driver')
 
 SQLITEDB = DbParams(dbtype='SQLITE', filename='/myfile.db')
 
