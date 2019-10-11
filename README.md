@@ -123,6 +123,9 @@ MSSQLDB = DbParams(dbtype='MSSQL', host="localhost", port=5432,
                    odbc_driver="ODBC Driver 17 for SQL Server")
 ```
 
+DbParams objects can also be created from environment variables using the
+`from_environment()` function.
+
 
 #### Get rows
 

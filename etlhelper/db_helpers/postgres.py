@@ -15,7 +15,7 @@ class PostgresDbHelper(DbHelper):
             self.sql_exceptions = (psycopg2.ProgrammingError)
             self._connect_func = psycopg2.connect
             self.connect_exceptions = (psycopg2.OperationalError)
-            self.required_params = {'host', 'port', 'dbname', 'username'}
+            self.required_params = {'host', 'port', 'dbname', 'user'}
         except ImportError:
             print("The PostgreSQL python libraries could not be found.\n"
                   "Run: python -m pip install psycopg2-binary")
@@ -31,14 +31,14 @@ class PostgresDbHelper(DbHelper):
         password = self.get_password(password_variable)
         return (f'host={db_params.host} port={db_params.port} '
                 f'dbname={db_params.dbname} '
-                f'user={db_params.username} password={password}')
+                f'user={db_params.user} password={password}')
 
     def get_sqlalchemy_connection_string(self, db_params, password_variable):
         """
         Returns connection string for sql alchemy
         """
         password = self.get_password(password_variable)
-        return (f'postgresql://{db_params.username}:{password}@'
+        return (f'postgresql://{db_params.user}:{password}@'
                 f'{db_params.host}:{db_params.port}/{db_params.dbname}')
 
     @staticmethod

@@ -16,7 +16,7 @@ class DbParams(dict):
     here: https://amir.rachum.com/blog/2016/10/05/python-dynamic-attributes/
     """
 
-    def __init__(self, dbtype=None, **kwargs):
+    def __init__(self, dbtype='dbtype not set', **kwargs):
         kwargs.update(dbtype=dbtype.upper())
         super().__init__(kwargs)
         self.validate_params()
@@ -45,25 +45,29 @@ class DbParams(dict):
             msg = f'{self.dbtype} not in valid types ({DB_HELPER_FACTORY.helpers.keys()})'
             raise ETLHelperDbParamsError(msg)
 
-        if (given ^ required_params) & required_params:
-            msg = f'Parameter not set. Required parameters are {required_params}'
+        unset_params = (given ^ required_params) & required_params
+        if unset_params:
+            msg = f'{unset_params} not set. Required parameters are {required_params}'
             raise ETLHelperDbParamsError(msg)
 
     @classmethod
     def from_environment(cls, prefix='ETLHelper_'):
         """
         Create DbParams object from parameters specified by environment
-        variables e.g. ETLHelper_DBTYPE, ETLHelper_HOST, ETLHelper_PORT, etc.
+        variables e.g. ETLHelper_dbtype, ETLHelper_host, ETLHelper_port, etc.
         :param prefix: str, prefix to environment variable names
         """
-        return cls(
-            dbtype=os.getenv(f'{prefix}DBTYPE'),
-            odbc_driver=os.getenv(f'{prefix}DBDRIVER'),
-            host=os.getenv(f'{prefix}HOST'),
-            port=os.getenv(f'{prefix}PORT'),
-            dbname=os.getenv(f'{prefix}DBNAME'),
-            username=os.getenv(f'{prefix}USER'),
-        )
+        dbparams_keys = [key for key in os.environ if key.startswith(prefix)]
+        dbparams_from_env = {key.replace(prefix, '').lower(): os.environ[key]
+                             for key in dbparams_keys}
+
+        # Ensure dbtype has been set
+        dbtype_var = f'{prefix}dbtype'
+        if 'dbtype' not in dbparams_from_env:
+            msg = f"{dbtype_var} environment variable is not set"
+            raise ETLHelperDbParamsError(msg)
+
+        return cls(**dbparams_from_env)
 
     def __repr__(self):
         key_val_str = ", ".join([f"{key}='{self[key]}'" for key in self.keys()])

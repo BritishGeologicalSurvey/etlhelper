@@ -71,6 +71,7 @@ def test_connect(monkeypatch, db_params, driver, expected):
     (SQLITEDB, 'sqlite:////myfile.db')
 ])
 def test_sqlalchemy_conn_string(monkeypatch, db_params, expected):
+
     monkeypatch.setenv('DB_PASSWORD', 'mypassword')
     helper = DB_HELPER_FACTORY.from_db_params(db_params)
     conn_str = helper.get_sqlalchemy_connection_string(db_params, 'DB_PASSWORD')
