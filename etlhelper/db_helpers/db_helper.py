@@ -25,7 +25,7 @@ class DbHelper(metaclass=ABCMeta):
         # Throws exception if not overidden
         self._connect_func = lambda conn_str: 1/0
 
-    def connect(self, db_params, password_variable, **kwargs):
+    def connect(self, db_params, password_variable=None, **kwargs):
         """
         Return a connection (as appropriate), configured for
         the database with the password obtained from environment variable.  These
@@ -80,10 +80,19 @@ class DbHelper(metaclass=ABCMeta):
     @staticmethod
     def executemany(cursor, query, chunk):
         """
-        Call executemany method appropriate to database.
+        Call executemany method appropriate to database.  Overridden for PostgreSQL.
 
         :param cursor: Open database cursor.
         :param query: str, SQL query
         :param chunk: list, Rows of parameters.
         """
         cursor.executemany(query, chunk)
+
+    @staticmethod
+    def cursor(conn):
+        """
+        Return a cursor on the connection.  Overridded for SQLite.
+
+        :param conn: Open database connection.
+        """
+        return conn.cursor()

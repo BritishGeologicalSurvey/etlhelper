@@ -4,7 +4,7 @@ Connect to database
 from etlhelper.db_helper_factory import DB_HELPER_FACTORY
 
 
-def connect(db_params, password_variable, **kwargs):
+def connect(db_params, password_variable=None, **kwargs):
     """
     Return database connection.
 
