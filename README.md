@@ -111,15 +111,15 @@ Database connection information is defined by `DbParams` objects.
 from etlhelper import DbParams
 
 ORACLEDB = DbParams(dbtype='ORACLE', host="localhost", port=1521,
-                    database="mydata", username="oracle_user")
+                    dbname="mydata", user="oracle_user")
 
 POSTGRESDB = DbParams(dbtype='PG', host="localhost", port=5432,
-                    database="mydata", username="postgres_user")
+                      dbname="mydata", user="postgres_user")
 
 SQLITEDB = DbParams(dbtype='SQLITE', filename='/path/to/file.db')
 
 MSSQLDB = DbParams(dbtype='MSSQL', host="localhost", port=5432,
-                   database="mydata", username="mssql_user",
+                   dbname="mydata", user="mssql_user",
                    odbc_driver="ODBC Driver 17 for SQL Server")
 ```
 
