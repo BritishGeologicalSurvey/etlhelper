@@ -312,7 +312,7 @@ for row in iter_rows(sql, conn, row_factory=dict_rowfactory):
 
 The `dict_rowfactory` is useful when getting data to be serialised
 into JSON.
-When combined with [Hug](http://pypi.org/package/hug), an HTTP API can be
+When combined with [Hug](http://pypi.org/project/hug), an HTTP API can be
 created in fewer than 20 lines of code.
 
 
