@@ -61,7 +61,7 @@ test:
         -e TEST_MSSQL_PORT="${TEST_MSSQL_PORT}" \
         -e TEST_MSSQL_DBNAME="${TEST_MSSQL_DBNAME}" \
         -e TEST_MSSQL_PASSWORD="${TEST_MSSQL_PASSWORD}" \
-        "$CI_REGISTRY_IMAGE:test-runner" pytest -rsx --cov=etlhelper -vs test/
+        "$CI_REGISTRY_IMAGE:test-runner" pytest -rsx --cov=etlhelper -vvs test/
 
 package:
   tags:
