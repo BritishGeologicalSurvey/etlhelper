@@ -111,15 +111,15 @@ Database connection information is defined by `DbParams` objects.
 from etlhelper import DbParams
 
 ORACLEDB = DbParams(dbtype='ORACLE', host="localhost", port=1521,
-                    database="mydata", username="oracle_user")
+                    dbname="mydata", user="oracle_user")
 
 POSTGRESDB = DbParams(dbtype='PG', host="localhost", port=5432,
-                    database="mydata", username="postgres_user")
+                      dbname="mydata", user="postgres_user")
 
 SQLITEDB = DbParams(dbtype='SQLITE', filename='/path/to/file.db')
 
 MSSQLDB = DbParams(dbtype='MSSQL', host="localhost", port=5432,
-                   database="mydata", username="mssql_user",
+                   dbname="mydata", user="mssql_user",
                    odbc_driver="ODBC Driver 17 for SQL Server")
 ```
 
@@ -275,6 +275,33 @@ script idempotent.
 `etlhelper` has other useful functions.
 
 
+#### Logging progress
+
+ETLHelper does not emit log messages by default.
+Time-stamped messages indicating the number of rows processed can be enabled by
+setting the log level to INFO.
+Setting the level to DEBUG provides information on the query that was run,
+example data and the database connection.
+
+```python
+import logging
+from etlhelper import logger
+
+logger.setLevel(logging.INFO)
+```
+
+Output from a call to `copy_rows` will look like:
+
+```
+2019-10-07 15:06:22,411 iter_chunks: Fetching rows
+2019-10-07 15:06:22,413 executemany: 1 rows processed
+2019-10-07 15:06:22,416 executemany: 2 rows processed
+2019-10-07 15:06:22,419 executemany: 3 rows processed
+2019-10-07 15:06:22,420 iter_chunks: 3 rows returned
+2019-10-07 15:06:22,420 executemany: 3 rows processed in total
+```
+
+
 #### Getting a SQLAlchemy engine
 
 SQLAlchemy allows you to read/write data from [Pandas](https://pandas.pydata.org/pandas-docs/stable/generated/pandas.read_sql.html).
@@ -350,6 +377,7 @@ software.
 ### Licence
 
 ETL Helper is distributed under the [LGPL v3.0 licence](LICENSE).
+Copyright: © BGS / UKRI 2019
 
 
 ## References
