@@ -75,3 +75,10 @@ package:
   artifacts:
     paths:
       - dist/
+
+pypi:
+  stage: release
+  script:
+    - pip install -U twine
+    - LATEST_RELEASE=$(ls -t dist | head -n 1)
+    - twine upload dist/"${LATEST_RELEASE}"
