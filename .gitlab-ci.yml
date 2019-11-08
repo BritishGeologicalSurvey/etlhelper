@@ -8,6 +8,7 @@ variables:
 stages:
   - test
   - package
+  - release
 
 services:
   - docker:18-dind
@@ -77,6 +78,7 @@ package:
       - dist/
 
 pypi:
+  image: python:3.6-slim
   stage: release
   script:
     - pip install -U twine
