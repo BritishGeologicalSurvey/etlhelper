@@ -83,4 +83,4 @@ pypi:
   script:
     - pip install -U twine
     - LATEST_RELEASE=$(ls -t dist | head -n 1)
-    - twine upload dist/"${LATEST_RELEASE}"
+    - twine upload --verbose dist/"${LATEST_RELEASE}"
