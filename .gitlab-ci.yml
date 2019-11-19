@@ -86,3 +86,4 @@ pypi:
     - twine upload --verbose dist/"${LATEST_RELEASE}" -u $TWINE_USERNAME -p $TWINE_PASSWORD
   only:
     - tags
+  when: manual
