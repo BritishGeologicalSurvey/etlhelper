@@ -5,7 +5,7 @@ Factory pattern that generates DbHelpers foreach DB type
 """
 from etlhelper.db_helpers.oracle import OracleDbHelper
 from etlhelper.db_helpers.postgres import PostgresDbHelper
-from etlhelper.db_helpers.mssql import SqlServerDbHelper
+from etlhelper.db_helpers.mssql import MSSQLDbHelper
 from etlhelper.db_helpers.sqlite import SQLiteDbHelper
 from etlhelper.exceptions import ETLHelperHelperError
 
@@ -69,6 +69,6 @@ DB_HELPER_FACTORY.register_helper('ORACLE', "<class 'cx_Oracle.Connection'>",
 DB_HELPER_FACTORY.register_helper('PG', "<class 'psycopg2.extensions.connection'>",
                                   PostgresDbHelper)
 DB_HELPER_FACTORY.register_helper('MSSQL', "<class 'pyodbc.Connection'>",
-                                  SqlServerDbHelper)
+                                  MSSQLDbHelper)
 DB_HELPER_FACTORY.register_helper('SQLITE', "<class 'sqlite3.Connection'>",
                                   SQLiteDbHelper)
