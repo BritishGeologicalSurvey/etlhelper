@@ -4,7 +4,7 @@ Database helper for mssql
 from etlhelper.db_helpers.db_helper import DbHelper
 
 
-class SqlServerDbHelper(DbHelper):
+class MSSQLDbHelper(DbHelper):
     """
     MS Sql server helper class
     """

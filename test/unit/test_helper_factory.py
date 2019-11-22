@@ -8,13 +8,13 @@ import pyodbc
 from etlhelper import DbParams
 from etlhelper.db_helper_factory import DB_HELPER_FACTORY
 from etlhelper.exceptions import ETLHelperHelperError
-from etlhelper.db_helpers import OracleDbHelper, PostgresDbHelper, SqlServerDbHelper
+from etlhelper.db_helpers import OracleDbHelper, PostgresDbHelper, MSSQLDbHelper
 
 
 @pytest.mark.parametrize("dbtype_keyword, expected_helper",
                          [('ORACLE', OracleDbHelper),
                           ('PG', PostgresDbHelper),
-                          ('MSSQL', SqlServerDbHelper)])
+                          ('MSSQL', MSSQLDbHelper)])
 def test_from_dbparams(dbtype_keyword, expected_helper):
     """
     Tests correct helper produced given a db params object
@@ -28,7 +28,7 @@ def test_from_dbparams(dbtype_keyword, expected_helper):
 @pytest.mark.parametrize("expected_helper, db_class",
                          [(OracleDbHelper, cx_Oracle.Connection),
                           (PostgresDbHelper, psycopg2.extensions.connection),
-                          (SqlServerDbHelper, pyodbc.Connection)])
+                          (MSSQLDbHelper, pyodbc.Connection)])
 def test_from_conn(expected_helper, db_class):
     """
     Tests correct helper produced given a conn object
