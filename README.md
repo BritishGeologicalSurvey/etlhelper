@@ -73,10 +73,10 @@ Run `setup_oracle_client` again to confirm setup has worked.
 
 #### pyodbc for Microsoft SQL Server
 
-The `setup_sql_server_driver` tool checks that appropriate drivers are installed.
+The `setup_mssql_driver` tool checks that appropriate drivers are installed.
 
 ```bash
-setup_sql_server_driver
+setup_mssql_driver
 ```
 
 It provides links to installation instructions for drivers.
