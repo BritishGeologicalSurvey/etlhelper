@@ -10,7 +10,7 @@ def setup_mssql_driver():
     """
     drivers = pyodbc.drivers()
     has_mssql_driver = any([d.lower().find('sql server') > -1
-                                 for d in drivers])
+                            for d in drivers])
 
     if has_mssql_driver:
         print(f'pyodbc is correctly configured with following drivers: {drivers}')
