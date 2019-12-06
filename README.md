@@ -2,7 +2,7 @@
 
 > etlhelper is a Python library to simplify data transfer between databases.
 
-`etlhelper` provides a unified way to connect to different database types (currently Oracle, PostgreSQL, SQLite and SQL Server).
+`etlhelper` provides a unified way to connect to different database types (currently Oracle, PostgreSQL, SQLite and MS SQL Server).
 It is a thin wrapper around Python's [DBAPI2](https://www.python.org/dev/peps/pep-0249/) specification.
 The `get_rows` function returns the result of a SQL query and can be used to create simple HTTP APIs.
 The `copy_rows` function transfers data from one database to another.
