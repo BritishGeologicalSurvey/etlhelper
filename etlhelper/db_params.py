@@ -15,14 +15,18 @@ class DbParams(dict):
     subclasses dict, to give dynamic attributes, following the pattern described
     here: https://amir.rachum.com/blog/2016/10/05/python-dynamic-attributes/
     """
-
     def __init__(self, dbtype='dbtype not set', **kwargs):
         kwargs.update(dbtype=dbtype.upper())
         super().__init__(kwargs)
         self.validate_params()
 
     def __getattr__(self, item):
-        return self[item]
+        try:
+            return self[item]
+        except KeyError:
+            # getattr should raise AttributeError, not KeyError
+            # https://docs.python.org/3/library/functions.html#getattr
+            raise AttributeError(f'No such attribute: {item}')
 
     def __dir__(self):
         return super().__dir__() + [str(k) for k in self.keys()]
