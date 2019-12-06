@@ -1,4 +1,4 @@
-FROM python:3.6-slim
+FROM python:3.6.9-slim
 
 # Install package dependencies
 RUN apt-get update -y && \
