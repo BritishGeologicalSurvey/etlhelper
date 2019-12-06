@@ -21,7 +21,7 @@ PGTESTDB = DbParams(
     user='etlhelper_user')
 
 
-@pytest.fixture('module')
+@pytest.fixture(scope='module')
 def pgtestdb_insert_sql():
     """Return SQL command used to populate test database."""
     insert_sql = dedent("""
@@ -33,7 +33,7 @@ def pgtestdb_insert_sql():
     return insert_sql
 
 
-@pytest.fixture('function')
+@pytest.fixture(scope='function')
 def pgtestdb_test_tables(test_table_data, pgtestdb_conn, pgtestdb_insert_sql):
     """
     Create a table and fill with test data.  Teardown after the yield drops it

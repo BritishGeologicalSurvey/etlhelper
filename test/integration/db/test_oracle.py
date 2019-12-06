@@ -69,7 +69,7 @@ def testdb_conn():
         yield conn
 
 
-@pytest.fixture('function')
+@pytest.fixture(scope='function')
 def test_tables(test_table_data, testdb_conn):
     """
     Create a table and fill with test data.  Teardown after the yield drops it
