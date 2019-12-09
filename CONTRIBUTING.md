@@ -78,15 +78,15 @@ A Dockerised PostGIS version can be started with:
 
 ```bash
 export TEST_PG_PORT=5432
+export TEST_PG_PASSWORD=etlhelper_pw
 docker run -e POSTGRES_USER=etlhelper_user -e POSTGRES_DB=etlhelper \
-  -e POSTGRES_PASSWORD=etlhelper_pw --name etlhelper_postgis \
+  -e POSTGRES_PASSWORD=$TEST_PG_PASSWORD --name etlhelper_postgis \
   -d --rm -p $TEST_PG_PORT:5432 mdillon/postgis:11-alpine
 ```
 
 Tests are run with:
 
 ```bash
-export TEST_PG_PASSWORD=etlhelper_pw
 bash bin/run_tests_for_developer.sh
 ```
 
@@ -94,24 +94,27 @@ The test-runner script will run tests within a dedicated container and provide
 HTML coverage output.  It can be viewed with `firefox htmlcov/index.html`.
 
 
-#### Additional integration tests
+#### Running additional BGS integration tests
 
 Additional integration tests can be run against internal BGS Oracle and SQL Server
 databases.
 The DbParams for these databases are defined by environment variables stored
 within the Continuous Integration system.
-The required environment variables to run the integration test suite can be
-seen in the `bin/run_tests_for_developers.sh` file.
+To run these:
 
-Internal BGS developers: `source` the `test_env_vars` Snippet from GitLab to
-configure local variables.
-
++ Go to Settings > CI / CD > Variables in GitLab
++ Use "Reveal values" and copy the contents of TEST_ENV_VARS
++ Paste into the terminal to set environment variables
++ Run tests as before
 
 ## Creating a new release
 
-Releases are created manually from the master branch with the following
-commands.
-The full integration test suite should be run before creating a release.
+Releases are created manually from the master branch via tags.
+This should be done via the GitHub web interface.
+The GitLab CI system will automatically perform the release following the next
+repository mirror synchronisation.
+
+The instructions below explain how to do a manual release.
 
 #### Tagging
 
