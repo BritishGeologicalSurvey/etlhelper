@@ -67,12 +67,10 @@ test:
 package:
   tags:
     - docker
-  image: python:3.6-slim
+  image: "$CI_REGISTRY_IMAGE:test-runner"
   stage: package
   before_script:
   script:
-    # Install git so versioneer can get tag
-    - apt update && apt install -y git
     # Build zipped source distribution of module
     - python setup.py sdist --formats=zip
   artifacts:
@@ -80,12 +78,13 @@ package:
       - dist/
 
 pypi:
-  image: python:3.6-slim
+  image: "$CI_REGISTRY_IMAGE:test-runner"
   stage: release
   script:
-    - pip install -U twine
     - LATEST_RELEASE=$(ls -t dist | head -n 1)
-    - twine upload --verbose dist/"${LATEST_RELEASE}" -u $TWINE_USERNAME -p $TWINE_PASSWORD
+    - >
+        twine upload --verbose dist/"${LATEST_RELEASE}" \
+        -u $TWINE_USERNAME -p $TWINE_PASSWORD
   only:
     - tags
   when: manual
