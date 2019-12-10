@@ -6,6 +6,7 @@ RUN apt-get update -y && \
      apt-transport-https \
      build-essential \
      curl \
+     git \
      libaio1
 
 # Add repo for Microsoft ODBC driver for SQL Server

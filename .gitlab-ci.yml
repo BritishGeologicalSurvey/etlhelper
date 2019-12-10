@@ -25,12 +25,16 @@ test:
     # Import test environment variables
     - source ${TEST_ENV_VARS}
 
-    # Resolve PostGIS hostname (necessary because SQLAlchemy can't for some reason)
+    # Resolve PostGIS hostname (necessary because SQLAlchemy can't)
     - export POSTGRES_HOST=$(getent hosts postgis | awk '{ print $1 ; exit }')
 
     # Login to registry and previous test container
-    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
-    - docker pull "$CI_REGISTRY_IMAGE:test-runner" || true # Don't fail if missing
+    - >
+      docker login -u "$CI_REGISTRY_USER" \
+          -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
+    - >
+      docker pull "$CI_REGISTRY_IMAGE:test-runner" \
+          || true # Don't fail if missing
 
     # Build new container using cached layers from previous
     - >
@@ -38,7 +42,7 @@ test:
         --cache-from  "$CI_REGISTRY_IMAGE:test-runner" \
         --build-arg INSTANT_CLIENT_ZIP=${INSTANT_CLIENT_ZIP} \
         -t "$CI_REGISTRY_IMAGE:test-runner" .
-    
+
     # Push to repository (for use as cache for next build)
     - docker push "$CI_REGISTRY_IMAGE:test-runner"
 
@@ -67,10 +71,12 @@ test:
 package:
   tags:
     - docker
-  image: python:3.6-slim
+  image: "$CI_REGISTRY_IMAGE:test-runner"
   stage: package
   before_script:
   script:
+    - git status
+    - git diff
     # Build zipped source distribution of module
     - python setup.py sdist --formats=zip
   artifacts:
@@ -78,12 +84,13 @@ package:
       - dist/
 
 pypi:
-  image: python:3.6-slim
+  image: "$CI_REGISTRY_IMAGE:test-runner"
   stage: release
   script:
-    - pip install -U twine
     - LATEST_RELEASE=$(ls -t dist | head -n 1)
-    - twine upload --verbose dist/"${LATEST_RELEASE}" -u $TWINE_USERNAME -p $TWINE_PASSWORD
+    - >
+        twine upload --verbose dist/"${LATEST_RELEASE}" \
+        -u $TWINE_USERNAME -p $TWINE_PASSWORD
   only:
     - tags
   when: manual
