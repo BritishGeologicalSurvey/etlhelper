@@ -88,9 +88,7 @@ pypi:
   stage: release
   script:
     - LATEST_RELEASE=$(ls -t dist | head -n 1)
-    - >
-        twine upload --verbose dist/"${LATEST_RELEASE}" \
-        -u $TWINE_USERNAME -p $TWINE_PASSWORD
+    - twine upload -u $TWINE_USERNAME -p $TWINE_PASSWORD --verbose "dist/${LATEST_RELEASE}"
   only:
     - tags
   when: manual
