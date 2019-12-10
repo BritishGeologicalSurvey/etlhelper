@@ -71,6 +71,8 @@ package:
   stage: package
   before_script:
   script:
+    # Install git so versioneer can get tag
+    - apt update && apt install -y git
     # Build zipped source distribution of module
     - python setup.py sdist --formats=zip
   artifacts:
