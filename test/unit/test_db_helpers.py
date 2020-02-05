@@ -1,11 +1,12 @@
 """Unit tests for db_helpers module."""
-from unittest.mock import Mock
-import pytest
+import pyodbc
 import sqlite3
+from unittest.mock import Mock
 
 import cx_Oracle
-import pyodbc
+import ibm_db_dbi
 import psycopg2
+import pytest
 
 from etlhelper import DbParams
 from etlhelper.db_helper_factory import DB_HELPER_FACTORY
@@ -26,6 +27,8 @@ POSTGRESDB = DbParams(dbtype='PG', host='server', port='1521', dbname='testdb',
 
 SQLITEDB = DbParams(dbtype='SQLITE', filename='/myfile.db')
 
+INFORMIXDB = DbParams(dbtype='INFORMIX', database='testDb', hostname='localhost', port='1111', protocol='tcpip',uid='user' )
+
 
 def test_oracle_sql_exceptions():
     helper = OracleDbHelper()
@@ -43,7 +46,8 @@ def test_oracle_connect_exceptions():
      'DRIVER=test driver;SERVER=tcp:server;PORT=1521;DATABASE=testdb;UID=testuser;PWD=mypassword'), # NOQA
     (POSTGRESDB, psycopg2,
      'host=server port=1521 dbname=testdb user=testuser password=mypassword'),
-    (SQLITEDB, sqlite3, '/myfile.db')
+    (SQLITEDB, sqlite3, '/myfile.db'),
+    (INFORMIXDB, ibm_db_dbi, 'database=testDb;hostname=localhost;port=1111;protocol=tcpip;uid=user;pwd=mypassword')
 ])
 def test_connect(monkeypatch, db_params, driver, expected):
     # Arrange
