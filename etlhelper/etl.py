@@ -155,7 +155,7 @@ def dump_rows(select_query, conn, output_func, parameters=(),
         output_func(row)
 
 
-def executemany(query, rows, conn, commit_chunks=True):
+def executemany(query, conn, rows, commit_chunks=True):
     """
     Use query to insert/update data from rows to database at conn.  This
     method uses the executemany or execute_batch (PostgreSQL) commands to
@@ -216,7 +216,7 @@ def executemany(query, rows, conn, commit_chunks=True):
     logger.info(f'{processed} rows processed in total')
 
 
-def copy_rows(select_query, source_conn, insert_query, dest_conn,
+def copy_rows(select_query, insert_query, source_conn, dest_conn,
               parameters=(), transform=None, commit_chunks=True,
               read_lob=False):
     """
