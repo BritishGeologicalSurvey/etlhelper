@@ -63,7 +63,7 @@ def _create_symlinks(instantclient_dir):
 
     # General names
     occi_link = instantclient_dir / 'libocci.so'
-    clntsh_link = instantclient_dir / 'libclntsh.co'
+    clntsh_link = instantclient_dir / 'libclntsh.so'
 
     # Make links
     try:
