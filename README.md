@@ -126,6 +126,12 @@ MSSQLDB = DbParams(dbtype='MSSQL', host="localhost", port=5432,
 DbParams objects can also be created from environment variables using the
 `from_environment()` function.
 
+DbParams objects have a function to check if it can connect to a database given its attributes. 
+```
+if not ORACLEDB.is_reachable():
+    raise ETLHelperError("network problems")
+```
+
 
 #### Get rows
 
