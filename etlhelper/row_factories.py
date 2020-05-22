@@ -10,13 +10,24 @@ A row_factory function must:
 
 """
 from collections import namedtuple
+from warnings import warn
+import re
 
 
 def namedtuple_rowfactory(cursor):
     """Return output as a named tuple"""
     column_names = [d[0] for d in cursor.description]
 
-    Row = namedtuple('Row', field_names=column_names)
+    try:
+        Row = namedtuple('Row', field_names=column_names)
+    except ValueError:
+        Row = namedtuple('Row', field_names=column_names, rename=True)
+        renamed_columns = _find_renamed_columns(Row, column_names)
+        warn("One or more columns have been renamed. Names that cannot be "
+             "converted to namedtuple attributes are replaced by indices. To "
+             "prevent column renaming, either provide alias in SQL query, "
+             "e.g. 'SELECT count(*) AS c', or use dict_rowfactory. ")
+        warn(f"{renamed_columns}")
 
     def create_row(row):
         return Row(*row)
@@ -35,3 +46,14 @@ def dict_rowfactory(cursor):
         return row_dict
 
     return create_row
+
+
+def _find_renamed_columns(row_class, column_names):
+    regex = re.compile(r'^_\d+$')
+
+    renamed_column_ids = [int(f.replace("_", "")) for f in row_class._fields if regex.match(f)]
+
+    result = '\n'.join(f'{column_names[idx]} was renamed to {row_class._fields[idx]}'
+                       for idx in renamed_column_ids)
+
+    return result

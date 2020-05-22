@@ -43,7 +43,7 @@ def iter_chunks(select_query, conn, parameters=(),
                       returns an iterable of rows (possibly of different shape)
     :param read_lob: bool, convert Oracle LOB objects to strings
     """
-    logger.info(f"Fetching rows")
+    logger.info("Fetching rows")
     logger.debug(f"Fetching:\n\n{select_query}\n\nwith parameters:\n\n"
                  f"{parameters}\n\nagainst\n\n{conn}")
 
@@ -256,7 +256,7 @@ def execute(query, conn, parameters=()):
     :param conn: dbapi connection
     :param parameters: sequence or dict of bind variables to insert in the query
     """
-    logger.info(f"Executing query")
+    logger.info("Executing query")
     logger.debug(f"Executing:\n\n{query}\n\nwith parameters:\n\n"
                  f"{parameters}\n\nagainst\n\n{conn}")
 
