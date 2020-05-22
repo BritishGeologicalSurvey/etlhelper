@@ -1,37 +1,30 @@
-from unittest import mock
-import pytest
-from etlhelper.row_factories import namedtuple_rowfactory
+"""
+Tests for row factory methods.
+"""
 import sqlite3
+from unittest import mock
+
+import pytest
+
+from etlhelper.row_factories import namedtuple_rowfactory
 
 
-# Test uses sqlite3 cursor, but all dbapi compliant cursors will be the same.
-mock_cursor = mock.MagicMock(sqlite3.Cursor)
-mock_cursor.fetchmany.return_value = [
-    (1, 2, 3),
-    (4, 5, 6),
-]
+FAKE_ROWS = [(1, 2, 3), (4, 5, 6)]
 
 
-def test_valid_field_names():
+def test_valid_field_names(mock_cursor):
     mock_cursor.description = (('id', None, None, None, None, None, None),
                                ('name', None, None, None, None, None, None),
                                ('desc', None, None, None, None, None, None))
 
     create_row = namedtuple_rowfactory(mock_cursor)
+    rows = [create_row(row) for row in mock_cursor.fetchall()]
 
-    rows = (create_row(row) for row in mock_cursor.fetchmany(50))
-
-    for i, row in enumerate(rows):
-        assert row._fields[0] == "id"
-        assert row._fields[1] == "name"
-        assert row._fields[2] == "desc"
-
-        assert row[0] == mock_cursor.fetchmany.return_value[i][0]
-        assert row[1] == mock_cursor.fetchmany.return_value[i][1]
-        assert row[2] == mock_cursor.fetchmany.return_value[i][2]
+    assert rows[0]._fields == ("id", "name", "desc")
+    assert rows == FAKE_ROWS
 
 
-def test_invalid_field_names():
+def test_invalid_field_names(mock_cursor):
     mock_cursor.description = (('id', None, None, None, None, None, None),
                                ('count(*)', None, None, None, None, None, None),
                                ('spaced column', None, None, None, None, None, None))
@@ -39,16 +32,18 @@ def test_invalid_field_names():
     with pytest.warns(UserWarning) as warn:
         create_row = namedtuple_rowfactory(mock_cursor)
         assert len(warn) == 2
-        assert warn[1].message.args[0] == f"Columns renamed: {mock_cursor.description[1][0]} was renamed to _1," \
-            f" {mock_cursor.description[2][0]} was renamed to _2"
+        assert (warn[1].message.args[0]
+                == 'count(*) was renamed to _1\nspaced column was renamed to _2')
 
-    rows = (create_row(row) for row in mock_cursor.fetchmany(50))
+    rows = [create_row(row) for row in mock_cursor.fetchall()]
 
-    for i, row in enumerate(rows):
-        assert row._fields[0] == "id"
-        assert row._fields[1] == "_1"
-        assert row._fields[2] == "_2"
+    assert rows[0]._fields == ('id', '_1', '_2')
+    assert rows == FAKE_ROWS
 
-        assert row[0] == mock_cursor.fetchmany.return_value[i][0]
-        assert row[1] == mock_cursor.fetchmany.return_value[i][1]
-        assert row[2] == mock_cursor.fetchmany.return_value[i][2]
+
+@pytest.fixture(scope='function')
+def mock_cursor():
+    # Test uses sqlite3 cursor, but all dbapi compliant cursors will be the same.
+    mock_cursor = mock.MagicMock(sqlite3.Cursor)
+    mock_cursor.fetchall.return_value = FAKE_ROWS
+    return mock_cursor

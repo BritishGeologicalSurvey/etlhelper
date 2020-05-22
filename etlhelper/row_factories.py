@@ -22,11 +22,12 @@ def namedtuple_rowfactory(cursor):
         Row = namedtuple('Row', field_names=column_names)
     except ValueError:
         Row = namedtuple('Row', field_names=column_names, rename=True)
-        renamed_column_ids_str = _find_renamed_columns(Row, column_names)
-        warn("One or more columns have been renamed. Names that cannot be converted to namedtuple attributes are "
-             "replaced by indices. To prevent column renaming, either provide alias in SQL query, "
+        renamed_columns = _find_renamed_columns(Row, column_names)
+        warn("One or more columns have been renamed. Names that cannot be "
+             "converted to namedtuple attributes are replaced by indices. To "
+             "prevent column renaming, either provide alias in SQL query, "
              "e.g. 'SELECT count(*) AS c', or use dict_rowfactory. ")
-        warn(f"Columns renamed: {renamed_column_ids_str}")
+        warn(f"{renamed_columns}")
 
     def create_row(row):
         return Row(*row)
@@ -52,6 +53,7 @@ def _find_renamed_columns(row_class, column_names):
 
     renamed_column_ids = [int(f.replace("_", "")) for f in row_class._fields if regex.match(f)]
 
-    result = ', '.join(f'{column_names[idx]} was renamed to {row_class._fields[idx]}' for idx in renamed_column_ids)
+    result = '\n'.join(f'{column_names[idx]} was renamed to {row_class._fields[idx]}'
+                       for idx in renamed_column_ids)
 
     return result
