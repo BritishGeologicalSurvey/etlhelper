@@ -98,7 +98,7 @@ def _install_zipped_files(zip_location, install_dir):
     # Check for previous version
     if _get_instantclient_dir(zipfile_path).is_dir():
         logging.debug(
-            f'Zipfile already extracted.')
+            'Zipfile already extracted.')
         return zipfile_path
 
     # Unzip
@@ -213,10 +213,10 @@ def _create_path_export_script(instantclient_dir, script_dir):
             logging.debug(f"Symlink added to virtualenv PATH: {link_path.absolute()}")
             added_symlink = True
         except PermissionError:
-            logging.debug(f"Could not add symlink to PATH")
+            logging.debug("Could not add symlink to PATH")
             added_symlink = False
     else:
-        logging.debug(f"Could not add symlink to PATH")
+        logging.debug("Could not add symlink to PATH")
         added_symlink = False
 
     # Print instructions
