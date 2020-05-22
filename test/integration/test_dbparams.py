@@ -21,5 +21,5 @@ def test_sqlite_dbparam_not_supported():
         dbname='etlhelper',
         user='etlhelper_user')
 
-    with pytest.raises(ValueError) as e:
+    with pytest.raises(ValueError):
         SQLITEDB.is_reachable()
