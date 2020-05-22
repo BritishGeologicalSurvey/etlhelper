@@ -39,7 +39,7 @@ def test_invalid_field_names():
     with pytest.warns(UserWarning) as warn:
         create_row = namedtuple_rowfactory(mock_cursor)
         assert len(warn) == 2
-        assert warn[1].message.args[0] == f"Columns renamed: {mock_cursor.description[1][0]} was renamed to _1,/" \
+        assert warn[1].message.args[0] == f"Columns renamed: {mock_cursor.description[1][0]} was renamed to _1," \
             f" {mock_cursor.description[2][0]} was renamed to _2"
 
     rows = (create_row(row) for row in mock_cursor.fetchmany(50))
