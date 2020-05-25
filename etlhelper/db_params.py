@@ -3,9 +3,10 @@ This module defines the DbParams class for storing database connection
 parameters.
 """
 import os
+import socket
 
-from etlhelper.exceptions import ETLHelperDbParamsError, ETLHelperHelperError
 from etlhelper.db_helper_factory import DB_HELPER_FACTORY
+from etlhelper.exceptions import ETLHelperDbParamsError, ETLHelperHelperError
 
 
 class DbParams(dict):
@@ -72,6 +73,22 @@ class DbParams(dict):
             raise ETLHelperDbParamsError(msg)
 
         return cls(**dbparams_from_env)
+
+    def is_reachable(self):
+        items = dict(self.items())
+        if items['dbtype'] == 'SQLITE':
+            raise ValueError("SQLITE DbParam does not require connection over network")
+
+        s = socket.socket()
+        try:
+            # Connection succeeds
+            s.connect((items['host'], int(items['port'])))
+            return True
+        except OSError:
+            # Failed to connect
+            return False
+        finally:
+            s.close()
 
     def __repr__(self):
         key_val_str = ", ".join([f"{key}='{self[key]}'" for key in self.keys()])
