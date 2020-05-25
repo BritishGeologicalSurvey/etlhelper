@@ -1,5 +1,4 @@
 """Tests for db_params that require a database connection."""
-from copy import copy
 import pytest
 
 from etlhelper import DbParams
@@ -13,7 +12,7 @@ def test_is_reachable():
 
 
 def test_is_unreachable():
-    dbparam = copy(PGTESTDB)  # Copy so real PGTESTDB is not modified
+    dbparam = PGTESTDB.copy()  # Copy so real PGTESTDB is not modified
     dbparam['port'] = 1
     assert dbparam.is_reachable() is False
 
