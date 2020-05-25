@@ -75,6 +75,12 @@ class DbParams(dict):
         return cls(**dbparams_from_env)
 
     def is_reachable(self):
+        """
+        Test whether network allows opening of tcp/ip connection to database. No
+        username or password are required.
+
+        :return bool:
+        """
         items = dict(self.items())
         if items['dbtype'] == 'SQLITE':
             raise ValueError("SQLITE DbParam does not require connection over network")
