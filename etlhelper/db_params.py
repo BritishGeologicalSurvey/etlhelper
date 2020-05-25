@@ -96,6 +96,14 @@ class DbParams(dict):
         finally:
             s.close()
 
+    def copy(self):
+        """
+        Return a shallow copy of DbParams object.
+
+        :return DbParams: DbParams object with same attributes as original.
+        """
+        return self.__class__(**self)
+
     def __repr__(self):
         key_val_str = ", ".join([f"{key}='{self[key]}'" for key in self.keys()])
         return f"DbParams({key_val_str})"
