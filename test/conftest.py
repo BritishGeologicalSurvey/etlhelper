@@ -102,16 +102,16 @@ def pgtestdb_params():
     Create DbParams object for test PostGIS database. Override hostname from
     environment variable to allow CI pipeline to use its own database.
     """
-    pg_test_db = PGTESTDB
+    pg_test_db = PGTESTDB.copy()
 
     # Override host and port if defined in environment variable
     host = os.getenv('TEST_PG_HOST', None)
     if host:
-        pg_test_db.host = host
+        pg_test_db.update(host=host)
 
     port = os.getenv('TEST_PG_PORT', None)
     if port:
-        pg_test_db.port = port
+        pg_test_db.update(port=port)
 
     return pg_test_db
 
