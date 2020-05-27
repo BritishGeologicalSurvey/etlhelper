@@ -29,6 +29,12 @@ class DbParams(dict):
             # https://docs.python.org/3/library/functions.html#getattr
             raise AttributeError(f'No such attribute: {item}')
 
+    def __setattr__(self, item, value):
+        if item not in self.__dir__():
+            raise AttributeError(f"{item} is not a valid DbParams attribute")
+        # TODO: Check for string value?
+        super().__setattr__(item, value)
+
     def __dir__(self):
         return super().__dir__() + [str(k) for k in self.keys()]
 
