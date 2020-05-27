@@ -27,6 +27,22 @@ def test_db_params_repr():
     assert result == expected
 
 
+def test_db_params_setattr():
+    """Test that we can set a DbParams attribute using a __setattr__ approach"""
+    test_params = DbParams(
+        dbtype='PG',
+        host='localhost',
+        port=5432,
+        dbname='etlhelper',
+        user='etlhelper_user')
+
+    # Set a param using dot notation
+    test_params.user = "Data McDatabase"
+
+    assert test_params.user == "Data McDatabase"
+    # TODO: Test for false parameter
+
+
 def test_db_params_from_environment(monkeypatch):
     """
     Test capturing db params from environment settings.
