@@ -75,6 +75,12 @@ class DbParams(dict):
         return cls(**dbparams_from_env)
 
     def is_reachable(self):
+        """
+        Test whether network allows opening of tcp/ip connection to database. No
+        username or password are required.
+
+        :return bool:
+        """
         items = dict(self.items())
         if items['dbtype'] == 'SQLITE':
             raise ValueError("SQLITE DbParam does not require connection over network")
@@ -89,6 +95,14 @@ class DbParams(dict):
             return False
         finally:
             s.close()
+
+    def copy(self):
+        """
+        Return a shallow copy of DbParams object.
+
+        :return DbParams: DbParams object with same attributes as original.
+        """
+        return self.__class__(**self)
 
     def __repr__(self):
         key_val_str = ", ".join([f"{key}='{self[key]}'" for key in self.keys()])

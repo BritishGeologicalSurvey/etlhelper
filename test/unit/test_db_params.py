@@ -60,3 +60,24 @@ def test_db_params_from_environment_not_set(monkeypatch):
     with pytest.raises(ETLHelperDbParamsError,
                        match=r".*environment variable is not set.*"):
         DbParams.from_environment(prefix='TEST_')
+
+
+def test_db_params_copy():
+    """
+    Test db_params can copy themselves.
+    """
+    # Arrange
+    test_params = DbParams(
+        dbtype='PG',
+        host='localhost',
+        port=5432,
+        dbname='etlhelper',
+        user='etlhelper_user')
+
+    # Act
+    test_params2 = test_params.copy()
+
+    # Assert
+    assert test_params2 == test_params
+    assert test_params2 is not test_params
+    assert isinstance(test_params2, DbParams)
