@@ -7,7 +7,8 @@ from unittest.mock import Mock, call
 
 import pytest
 
-from etlhelper import iter_chunks, iter_rows, get_rows, dump_rows, execute
+from etlhelper import (iter_chunks, iter_rows, get_rows, dump_rows, execute,
+                       fetchone, fetchmany, fetchall)
 from etlhelper.etl import ETLHelperExtractError, ETLHelperQueryError
 from etlhelper.row_factories import dict_rowfactory, namedtuple_rowfactory
 
@@ -133,6 +134,28 @@ def test_get_rows_with_parameters(pgtestdb_test_tables, pgtestdb_conn,
     sql = "SELECT * FROM src where ID = %(identifier)s"
     result = get_rows(sql, pgtestdb_conn, parameters={'identifier': 1})
     assert result == [test_table_data[0]]
+
+
+def test_fetchone_happy_path(pgtestdb_test_tables, pgtestdb_conn,
+                             test_table_data):
+    sql = "SELECT * FROM src"
+    result = fetchone(sql, pgtestdb_conn)
+    assert result == test_table_data[0]
+
+
+@pytest.mark.parametrize('size', [1, 3, 1000])
+def test_fetchmany_happy_path(pgtestdb_test_tables, pgtestdb_conn,
+                              test_table_data, size):
+    sql = "SELECT * FROM src"
+    result = fetchmany(sql, pgtestdb_conn, size=size)
+    assert result == test_table_data[:size - 1]
+
+
+def test_fetchall_happy_path(pgtestdb_test_tables, pgtestdb_conn,
+                             test_table_data):
+    sql = "SELECT * FROM src"
+    result = fetchall(sql, pgtestdb_conn)
+    assert result == test_table_data[0]
 
 
 def test_dump_rows_happy_path(pgtestdb_test_tables, pgtestdb_conn,
