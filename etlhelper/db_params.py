@@ -30,10 +30,14 @@ class DbParams(dict):
             raise AttributeError(f'No such attribute: {item}')
 
     def __setattr__(self, item, value):
+        # Prepare set of valid_params
+        # dbtype has to be added as it is used to determine required_params
         valid_params = DB_HELPER_FACTORY.from_dbtype(self.dbtype).required_params
+        valid_params = valid_params.union({'dbtype'})
         if item not in valid_params:
             msg = f"'{item}' is not a valid DbParams attribute: {valid_params}"
             raise AttributeError(msg)
+
         self[item] = value
 
     def __dir__(self):
