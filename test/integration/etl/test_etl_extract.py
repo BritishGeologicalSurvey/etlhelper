@@ -9,6 +9,7 @@ import pytest
 
 from etlhelper import (iter_chunks, iter_rows, get_rows, dump_rows, execute,
                        fetchone, fetchmany, fetchall)
+import etlhelper.etl as eetl
 from etlhelper.etl import ETLHelperExtractError, ETLHelperQueryError
 from etlhelper.row_factories import dict_rowfactory, namedtuple_rowfactory
 
@@ -68,7 +69,7 @@ def test_iter_rows_dict_factory(pgtestdb_test_tables, pgtestdb_conn):
         {'id': 3, 'value': 2.234, 'simple_text': 'text', 'utf8_text': 'Öæ°\nz',
          'day': datetime.date(2018, 12, 9),
          'date_time': datetime.datetime(2018, 12, 9, 13, 1, 59)},
-         ]
+    ]
 
     assert list(result) == expected
 
@@ -156,6 +157,34 @@ def test_fetchall_happy_path(pgtestdb_test_tables, pgtestdb_conn,
     sql = "SELECT * FROM src"
     result = fetchall(sql, pgtestdb_conn)
     assert result == test_table_data
+
+@pytest.mark.parametrize('fetchmethod',
+                         ['fetchone', 'fetchmany', 'fetchall'])
+def test_named_arguments_passed_to_fetch_methods(
+        monkeypatch, fetchmethod, pgtestdb_test_tables, pgtestdb_conn):
+    # Arrange
+    mock_iter_rows = Mock()
+    monkeypatch.setattr(eetl, 'iter_rows', mock_iter_rows)
+    sql = "SELECT * FROM src"
+    parameters = 'p'
+    transform = Mock()
+
+    # Act
+    # Call fetchmethod with given parameters
+    method_func = getattr(eetl, fetchmethod)
+    try:
+        method_func(sql, pgtestdb_conn, parameters=parameters, transform=transform)
+    except TypeError:
+        # We expect an error here as the mock_iter_rows breaks the functions
+        # that called it.
+        pass
+
+    # Assert
+    import ipdb; ipdb.set_trace()
+
+    mock_iter_rows.assert_called_once_with(sql, pgtestdb_conn,
+                                             parameters=parameters,
+                                             transform=transform)
 
 
 def test_dump_rows_happy_path(pgtestdb_test_tables, pgtestdb_conn,
