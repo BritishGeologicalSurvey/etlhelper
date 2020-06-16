@@ -7,19 +7,25 @@ from etlhelper.db_params import DbParams
 from etlhelper.exceptions import ETLHelperDbParamsError
 
 
-def test_db_params_validate_params():
-    with pytest.raises(ETLHelperDbParamsError, match=r'.* not in valid types .*'):
-        DbParams(dbtype='not valid')
-
-
-def test_db_params_repr():
-    """Test DbParams string representation"""
-    test_params = DbParams(
+@pytest.fixture(scope='function')
+def test_params():
+    """Return an example DbParams class."""
+    test_params_example = DbParams(
         dbtype='PG',
         host='localhost',
         port=5432,
         dbname='etlhelper',
         user='etlhelper_user')
+    return test_params_example
+
+
+def test_db_params_validate_params():
+    with pytest.raises(ETLHelperDbParamsError, match=r'.* not in valid types .*'):
+        DbParams(dbtype='not valid')
+
+
+def test_db_params_repr(test_params):
+    """Test DbParams string representation"""
     result = str(test_params)
     expected = ("DbParams(host='localhost', "
                 "port='5432', dbname='etlhelper', "
@@ -27,20 +33,19 @@ def test_db_params_repr():
     assert result == expected
 
 
-def test_db_params_setattr():
+def test_db_params_setattr(test_params):
     """Test that we can set a DbParams attribute using a __setattr__ approach"""
-    test_params = DbParams(
-        dbtype='PG',
-        host='localhost',
-        port=5432,
-        dbname='etlhelper',
-        user='etlhelper_user')
-
     # Set a param using dot notation
     test_params.user = "Data McDatabase"
 
     assert test_params.user == "Data McDatabase"
-    # TODO: Test for false parameter
+
+
+def test_db_params_setattr_bad_param(test_params):
+    """Test that __setattr__ approach fails for bad parameter"""
+    with pytest.raises(AttributeError):
+        # Set a param using dot notation
+        test_params.some_bad_param = "Data McDatabase"
 
 
 def test_db_params_from_environment(monkeypatch):
@@ -78,18 +83,10 @@ def test_db_params_from_environment_not_set(monkeypatch):
         DbParams.from_environment(prefix='TEST_')
 
 
-def test_db_params_copy():
+def test_db_params_copy(test_params):
     """
     Test db_params can copy themselves.
     """
-    # Arrange
-    test_params = DbParams(
-        dbtype='PG',
-        host='localhost',
-        port=5432,
-        dbname='etlhelper',
-        user='etlhelper_user')
-
     # Act
     test_params2 = test_params.copy()
 
