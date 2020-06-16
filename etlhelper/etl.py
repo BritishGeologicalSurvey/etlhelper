@@ -1,7 +1,7 @@
 """
 Functions for transferring data in and out of databases.
 """
-from itertools import zip_longest
+from itertools import zip_longest, islice
 import logging
 
 from etlhelper.row_factories import namedtuple_rowfactory
@@ -133,6 +133,58 @@ def get_rows(select_query, conn, parameters=(),
     """
     return list(iter_rows(select_query, conn, row_factory=row_factory,
                           parameters=parameters, transform=transform))
+
+
+def fetchone(select_query, conn, parameters=(),
+             row_factory=namedtuple_rowfactory, transform=None):
+    """
+    Get first result of query.  See iter_rows for details.
+    :param select_query: str, SQL query to execute
+    :param conn: dbapi connection
+    :param parameters: sequence or dict of bind variables to insert in the query
+    :param row_factory: function that accepts a cursor and returns a function
+                        for parsing each row
+    :param transform: function that accepts an iterable (e.g. list) of rows and
+                      returns an iterable of rows (possibly of different shape)
+    """
+    return next(iter_rows(select_query, conn, row_factory=row_factory,
+                          parameters=parameters, transform=transform))
+
+
+def fetchmany(select_query, conn, parameters=(), size=1,
+              row_factory=namedtuple_rowfactory, transform=None):
+    """
+    Get first 'size' results of query as a list.  See iter_rows for details.
+    :param select_query: str, SQL query to execute
+    :param conn: dbapi connection
+    :param parameters: sequence or dict of bind variables to insert in the query
+    :param size: number of rows to return (defaults to 1)
+    :param row_factory: function that accepts a cursor and returns a function
+                        for parsing each row
+    :param transform: function that accepts an iterable (e.g. list) of rows and
+                      returns an iterable of rows (possibly of different shape)
+    """
+    return list(islice(iter_rows(select_query, conn, row_factory=row_factory,
+                                 parameters=parameters, transform=transform),
+                       size))
+
+
+def fetchall(select_query, conn, parameters=(),
+             row_factory=namedtuple_rowfactory, transform=None):
+    """
+    Get all results of query as a list.  See iter_rows for details.
+    :param select_query: str, SQL query to execute
+    :param conn: dbapi connection
+    :param parameters: sequence or dict of bind variables to insert in the query
+    :param row_factory: function that accepts a cursor and returns a function
+                        for parsing each row
+    :param transform: function that accepts an iterable (e.g. list) of rows and
+                      returns an iterable of rows (possibly of different shape)
+    """
+    return list(iter_rows(select_query, conn, row_factory=row_factory,
+                          parameters=parameters, transform=transform))
+
+
 
 
 def dump_rows(select_query, conn, output_func, parameters=(),

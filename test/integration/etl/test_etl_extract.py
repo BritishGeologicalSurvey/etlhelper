@@ -148,14 +148,14 @@ def test_fetchmany_happy_path(pgtestdb_test_tables, pgtestdb_conn,
                               test_table_data, size):
     sql = "SELECT * FROM src"
     result = fetchmany(sql, pgtestdb_conn, size=size)
-    assert result == test_table_data[:size - 1]
+    assert result == test_table_data[:size]
 
 
 def test_fetchall_happy_path(pgtestdb_test_tables, pgtestdb_conn,
                              test_table_data):
     sql = "SELECT * FROM src"
     result = fetchall(sql, pgtestdb_conn)
-    assert result == test_table_data[0]
+    assert result == test_table_data
 
 
 def test_dump_rows_happy_path(pgtestdb_test_tables, pgtestdb_conn,

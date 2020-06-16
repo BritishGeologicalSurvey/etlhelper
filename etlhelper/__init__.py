@@ -11,14 +11,17 @@ from etlhelper.etl import (
     dump_rows,
     execute,
     executemany,
+    fetchone,
+    fetchmany,
+    fetchall,
     get_rows,
     iter_chunks,
     iter_rows,
 )
 from etlhelper.connect import (
-    connect, 
+    connect,
     get_connection_string,
-    get_sqlalchemy_connection_string, 
+    get_sqlalchemy_connection_string,
 )
 
 from ._version import get_versions
