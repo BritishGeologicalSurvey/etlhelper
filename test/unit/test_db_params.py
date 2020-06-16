@@ -43,7 +43,7 @@ def test_db_params_setattr(test_params):
 
 def test_db_params_setattr_bad_param(test_params):
     """Test that __setattr__ approach fails for bad parameter"""
-    with pytest.raises(AttributeError):
+    with pytest.raises(AttributeError, match=r'.* is not a valid DbParams attribute: .*'):
         # Set a param using dot notation
         test_params.some_bad_param = "Data McDatabase"
 
