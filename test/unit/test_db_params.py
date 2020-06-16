@@ -63,11 +63,11 @@ def test_db_params_from_environment(monkeypatch):
     db_params = DbParams.from_environment(prefix='TEST_DB_PARAMS_ENV_')
 
     # Assert
-    db_params.dbtype = 'ORACLE'
-    db_params.host = 'test.host'
-    db_params.port = '1234'
-    db_params.dbname = 'testdb'
-    db_params.user = 'testuser'
+    assert db_params.dbtype == 'ORACLE'
+    assert db_params.host == 'test.host'
+    assert db_params.port == '1234'
+    assert db_params.dbname == 'testdb'
+    assert db_params.user == 'testuser'
 
 
 def test_db_params_from_environment_not_set(monkeypatch):
