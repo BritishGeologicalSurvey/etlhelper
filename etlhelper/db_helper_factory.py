@@ -7,6 +7,7 @@ from etlhelper.db_helpers.oracle import OracleDbHelper
 from etlhelper.db_helpers.postgres import PostgresDbHelper
 from etlhelper.db_helpers.mssql import MSSQLDbHelper
 from etlhelper.db_helpers.sqlite import SQLiteDbHelper
+from etlhelper.db_helpers.informix import InformixDbHelper
 from etlhelper.exceptions import ETLHelperHelperError
 
 
@@ -72,3 +73,5 @@ DB_HELPER_FACTORY.register_helper('MSSQL', "<class 'pyodbc.Connection'>",
                                   MSSQLDbHelper)
 DB_HELPER_FACTORY.register_helper('SQLITE', "<class 'sqlite3.Connection'>",
                                   SQLiteDbHelper)
+DB_HELPER_FACTORY.register_helper('INFORMIX', "<class 'ibm_db_dbi.Connection'>",
+                                  InformixDbHelper)
