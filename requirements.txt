@@ -1,7 +1,7 @@
 flake8
 ipdb
 ipython
-pytest
+pytest>=4.6
 pytest-cov
 Sphinx
 sphinxcontrib-applehelp
