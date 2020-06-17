@@ -137,7 +137,7 @@ def test_fetchone_happy_path(pgtestdb_test_tables, pgtestdb_conn,
 def test_fetchmany_happy_path(pgtestdb_test_tables, pgtestdb_conn,
                               test_table_data, size):
     sql = "SELECT * FROM src"
-    result = fetchmany(sql, pgtestdb_conn, size=size)
+    result = fetchmany(sql, pgtestdb_conn, size)
     assert result == test_table_data[:size]
 
 

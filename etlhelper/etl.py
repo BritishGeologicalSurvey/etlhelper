@@ -151,7 +151,7 @@ def fetchone(select_query, conn, parameters=(),
                           parameters=parameters, transform=transform))
 
 
-def fetchmany(select_query, conn, parameters=(), size=1,
+def fetchmany(select_query, conn, size=1, parameters=(),
               row_factory=namedtuple_rowfactory, transform=None):
     """
     Get first 'size' results of query as a list.  See iter_rows for details.
