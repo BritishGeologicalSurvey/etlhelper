@@ -3,6 +3,7 @@ Functions for transferring data in and out of databases.
 """
 from itertools import zip_longest
 import logging
+from warnings import warn
 
 from etlhelper.row_factories import namedtuple_rowfactory
 from etlhelper.db_helper_factory import DB_HELPER_FACTORY
@@ -174,6 +175,11 @@ def executemany(query, rows, conn, commit_chunks=True):
     :param commit_chunks: bool, commit after each chunk has been inserted/updated
     :return row_count: int, number of rows inserted/updated
     """
+    msg = ("executemany parameter order will be changed in a future release to "
+           "(query, conn, rows).  "
+           "Avoid breaking code by using named parameters for all e.g. "
+           "executemany(query=my_query, conn=my_conn, rows=my_rows)")
+    warn(msg, DeprecationWarning)
     logger.info(f"Executing many (chunksize={CHUNKSIZE})")
     logger.debug(f"Executing:\n\n{query}\n\nagainst\n\n{conn}")
 
