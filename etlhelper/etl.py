@@ -105,9 +105,9 @@ def iter_rows(select_query, conn, parameters=(),
 
     :param select_query: str, SQL query to execute
     :param conn: dbapi connection
+    :param parameters: sequence or dict of bind variables to insert in the query
     :param row_factory: function that accepts a cursor and returns a function
                         for parsing each row
-    :param parameters: sequence or dict of bind variables to insert in the query
     :param transform: function that accepts an iterable (e.g. list) of rows and
                       returns an iterable of rows (possibly of different shape)
     :param read_lob: bool, convert Oracle LOB objects to strings
@@ -125,9 +125,9 @@ def get_rows(select_query, conn, parameters=(),
     Get results of query as a list.  See iter_rows for details.
     :param select_query: str, SQL query to execute
     :param conn: dbapi connection
+    :param parameters: sequence or dict of bind variables to insert in the query
     :param row_factory: function that accepts a cursor and returns a function
                         for parsing each row
-    :param parameters: sequence or dict of bind variables to insert in the query
     :param transform: function that accepts an iterable (e.g. list) of rows and
                       returns an iterable of rows (possibly of different shape)
     """
