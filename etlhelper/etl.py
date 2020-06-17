@@ -138,7 +138,9 @@ def get_rows(select_query, conn, parameters=(),
 def fetchone(select_query, conn, parameters=(),
              row_factory=namedtuple_rowfactory, transform=None):
     """
-    Get first result of query.  See iter_rows for details.
+    Get first result of query.  See iter_rows for details.  Note: iter_rows is
+    recommended for looping over rows individually.
+
     :param select_query: str, SQL query to execute
     :param conn: dbapi connection
     :param parameters: sequence or dict of bind variables to insert in the query
@@ -155,6 +157,8 @@ def fetchmany(select_query, conn, size=1, parameters=(),
               row_factory=namedtuple_rowfactory, transform=None):
     """
     Get first 'size' results of query as a list.  See iter_rows for details.
+    Note: iter_chunks is recommended for looping over rows in batches.
+
     :param select_query: str, SQL query to execute
     :param conn: dbapi connection
     :param parameters: sequence or dict of bind variables to insert in the query
