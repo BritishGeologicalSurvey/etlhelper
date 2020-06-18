@@ -165,8 +165,10 @@ returns
 
 Data are accessible via index (`row[4]`) or name (`row.day`).
 
-`dump_rows` passes each row to a function, while `iter_rows` returns
-a generator for looping over results.
+Other functions are provided to select data.  `fetchone`, `fetchmany` and
+`fetchall` are equivalent to the cursor methods specified in the DBAPI v2.0.
+`dump_rows` passes each row to a function (default is `print`), while `iter_rows`
+returns a generator for looping over results.
 
 #### Copy rows
 

@@ -3,11 +3,13 @@ function and those that call it.
 These are run against PostgreSQL."""
 # pylint: disable=unused-argument, missing-docstring
 import datetime
-from unittest.mock import Mock, call
+from unittest.mock import Mock, call, sentinel
 
 import pytest
 
-from etlhelper import iter_chunks, iter_rows, get_rows, dump_rows, execute
+import etlhelper.etl as etlhelper_etl
+from etlhelper import (iter_chunks, iter_rows, get_rows, dump_rows, execute,
+                       fetchone, fetchmany, fetchall)
 from etlhelper.etl import ETLHelperExtractError, ETLHelperQueryError
 from etlhelper.row_factories import dict_rowfactory, namedtuple_rowfactory
 
@@ -35,6 +37,21 @@ def test_iter_rows_happy_path(pgtestdb_test_tables, pgtestdb_conn,
     sql = "SELECT * FROM src"
     result = iter_rows(sql, pgtestdb_conn)
     assert list(result) == test_table_data
+
+
+def test_iter_rows_with_parameters(pgtestdb_test_tables, pgtestdb_conn,
+                                   test_table_data):
+    # parameters=None is tested by default in other tests
+
+    # Bind by index
+    sql = "SELECT * FROM src where ID = %s"
+    result = iter_rows(sql, pgtestdb_conn, parameters=(1,))
+    assert list(result) == [test_table_data[0]]
+
+    # Bind by name
+    sql = "SELECT * FROM src where ID = %(identifier)s"
+    result = iter_rows(sql, pgtestdb_conn, parameters={'identifier': 1})
+    assert list(result) == [test_table_data[0]]
 
 
 def test_iter_rows_transform(pgtestdb_test_tables, pgtestdb_conn,
@@ -67,7 +84,7 @@ def test_iter_rows_dict_factory(pgtestdb_test_tables, pgtestdb_conn):
         {'id': 3, 'value': 2.234, 'simple_text': 'text', 'utf8_text': 'Öæ°\nz',
          'day': datetime.date(2018, 12, 9),
          'date_time': datetime.datetime(2018, 12, 9, 13, 1, 59)},
-         ]
+    ]
 
     assert list(result) == expected
 
@@ -109,30 +126,26 @@ def test_get_rows_happy_path(pgtestdb_test_tables, pgtestdb_conn,
     assert result == test_table_data
 
 
-def test_get_rows_with_transform(pgtestdb_test_tables, pgtestdb_conn):
+def test_fetchone_happy_path(pgtestdb_test_tables, pgtestdb_conn,
+                             test_table_data):
     sql = "SELECT * FROM src"
-
-    def my_transform(rows):
-        # Simple transform function that changes size and number of rows
-        return [row.id for row in rows if row.id > 1]
-
-    result = get_rows(sql, pgtestdb_conn, transform=my_transform)
-    assert result == [2, 3]
+    result = fetchone(sql, pgtestdb_conn)
+    assert result == test_table_data[0]
 
 
-def test_get_rows_with_parameters(pgtestdb_test_tables, pgtestdb_conn,
-                                  test_table_data):
-    # parameters=None is tested by default in other tests
+@pytest.mark.parametrize('size', [1, 3, 1000])
+def test_fetchmany_happy_path(pgtestdb_test_tables, pgtestdb_conn,
+                              test_table_data, size):
+    sql = "SELECT * FROM src"
+    result = fetchmany(sql, pgtestdb_conn, size)
+    assert result == test_table_data[:size]
 
-    # Bind by index
-    sql = "SELECT * FROM src where ID = %s"
-    result = get_rows(sql, pgtestdb_conn, parameters=(1,))
-    assert result == [test_table_data[0]]
 
-    # Bind by name
-    sql = "SELECT * FROM src where ID = %(identifier)s"
-    result = get_rows(sql, pgtestdb_conn, parameters={'identifier': 1})
-    assert result == [test_table_data[0]]
+def test_fetchall_happy_path(pgtestdb_test_tables, pgtestdb_conn,
+                             test_table_data):
+    sql = "SELECT * FROM src"
+    result = fetchall(sql, pgtestdb_conn)
+    assert result == test_table_data
 
 
 def test_dump_rows_happy_path(pgtestdb_test_tables, pgtestdb_conn,
@@ -149,22 +162,44 @@ def test_dump_rows_happy_path(pgtestdb_test_tables, pgtestdb_conn,
     assert mock.mock_calls == expected_calls
 
 
-def test_dump_rows_with_transform(pgtestdb_test_tables, pgtestdb_conn):
-    # Arrange
-    sql = "SELECT * FROM src"
+@pytest.mark.parametrize('fetchmethod',
+                         ['get_rows', 'dump_rows', 'fetchone', 'fetchmany',
+                          'fetchall'])
+def test_arguments_passed_to_iter_rows(
+        monkeypatch, fetchmethod, pgtestdb_test_tables, pgtestdb_conn):
+    """Each of these functions calls iter_rows.  This tests check that the
+    correct parameters are passed through, which confirms parameters,
+    row_factory and transform can all be used."""
 
-    def my_transform(rows):
-        # Simple transform function that changes size and number of rows
-        return [row.id for row in rows if row.id > 1]
+    # Arrange - patch 'iter_rows' function within etlhelper.etl module
+    mock_iter_rows = Mock()
+    monkeypatch.setattr(etlhelper_etl, 'iter_rows', mock_iter_rows)
 
-    mock = Mock()
-    expected_calls = [call(2), call(3)]
+    # Sentinel items are unique so confirm object that was passed through
+    sql = sentinel.sql
+    parameters = sentinel.parameters
+    transform = sentinel.transform
 
     # Act
-    dump_rows(sql, pgtestdb_conn, mock, transform=my_transform)
+    # getattr returns fetchmethod, which we call  with given parameters
+    # Use real connection parameters to ensure we reach the call to iter_rows
+    # Use dict_rowfactory to demonstrate the default (namedtuple_rowfactory)
+    # isn't called
+    try:
+        getattr(etlhelper_etl, fetchmethod)(sql, pgtestdb_conn,
+                                            parameters=parameters,
+                                            row_factory=dict_rowfactory,
+                                            transform=transform)
+    except TypeError:
+        # We expect an error here as the mock_iter_rows breaks the functions
+        # that called it.
+        pass
 
     # Assert
-    assert mock.mock_calls == expected_calls
+    mock_iter_rows.assert_called_once_with(sql, pgtestdb_conn,
+                                           parameters=parameters,
+                                           row_factory=dict_rowfactory,
+                                           transform=transform)
 
 
 def test_execute_happy_path(pgtestdb_test_tables, pgtestdb_conn):
