@@ -133,6 +133,13 @@ def test_fetchone_happy_path(pgtestdb_test_tables, pgtestdb_conn,
     assert result == test_table_data[0]
 
 
+def test_fetchone_none(pgtestdb_test_tables, pgtestdb_conn,
+                             test_table_data):
+    sql = "SELECT * FROM src WHERE id=999"
+    result = fetchone(sql, pgtestdb_conn)
+    assert not result
+
+
 @pytest.mark.parametrize('size', [1, 3, 1000])
 def test_fetchmany_happy_path(pgtestdb_test_tables, pgtestdb_conn,
                               test_table_data, size):
