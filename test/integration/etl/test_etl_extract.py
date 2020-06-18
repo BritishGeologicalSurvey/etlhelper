@@ -134,7 +134,7 @@ def test_fetchone_happy_path(pgtestdb_test_tables, pgtestdb_conn,
 
 
 def test_fetchone_none(pgtestdb_test_tables, pgtestdb_conn,
-                             test_table_data):
+                       test_table_data):
     sql = "SELECT * FROM src WHERE id=999"
     result = fetchone(sql, pgtestdb_conn)
     assert not result
