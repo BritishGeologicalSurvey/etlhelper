@@ -5,8 +5,10 @@ once per module.
 """
 import datetime as dt
 import os
+from pathlib import Path
 import socket
 from textwrap import dedent
+from zipfile import ZipFile
 
 import pytest
 from psycopg2.extras import execute_batch
@@ -133,3 +135,34 @@ def db_is_unreachable(host, port):
         return True
     finally:
         s.close()
+
+
+@pytest.fixture()
+def dummy_zipfile(tmp_path):
+    """
+    Return a mocked up zip file for testing setup_oracle_client.py
+    """
+    names = ['instantclient_19_6/adrci', 'instantclient_19_6/BASIC_LICENSE',
+             'instantclient_19_6/BASIC_README', 'instantclient_19_6/genezi',
+             'instantclient_19_6/libclntshcore.so.19.1', 'instantclient_19_6/libclntsh.so',
+             'instantclient_19_6/libclntsh.so.10.1', 'instantclient_19_6/libclntsh.so.11.1',
+             'instantclient_19_6/libclntsh.so.12.1', 'instantclient_19_6/libclntsh.so.18.1',
+             'instantclient_19_6/libclntsh.so.19.1', 'instantclient_19_6/libipc1.so',
+             'instantclient_19_6/libmql1.so', 'instantclient_19_6/libnnz19.so',
+             'instantclient_19_6/libocci.so', 'instantclient_19_6/libocci.so.10.1',
+             'instantclient_19_6/libocci.so.11.1', 'instantclient_19_6/libocci.so.12.1',
+             'instantclient_19_6/libocci.so.18.1', 'instantclient_19_6/libocci.so.19.1',
+             'instantclient_19_6/libociei.so', 'instantclient_19_6/libocijdbc19.so',
+             'instantclient_19_6/liboramysql19.so', 'instantclient_19_6/network/',
+             'instantclient_19_6/ojdbc8.jar', 'instantclient_19_6/ucp.jar',
+             'instantclient_19_6/uidrvci', 'instantclient_19_6/xstreams.jar',
+             'instantclient_19_6/network/admin/', 'instantclient_19_6/network/admin/README']
+
+    dummy_zipfile = ZipFile(tmp_path / 'instantclient.zip', 'w')
+
+    # Create files in the archive that just contain filename
+    for name in names:
+        dummy_zipfile.writestr(name, name)
+    dummy_zipfile.close()
+
+    return Path(dummy_zipfile.filename)
