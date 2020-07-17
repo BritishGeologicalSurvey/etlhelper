@@ -20,7 +20,7 @@ def get_working_dirs():
     install_dir = Path(__file__).parent / 'oracle_instantclient'
     script_dir = Path(inspect.getfile(sys._getframe(1))).parent
     bin_dir = script_dir.parent.parent.parent.parent / 'bin'
-
+    logging.debug(f"Install dir: {install_dir}, script_dir: {script_dir}, bin dir: {bin_dir}")
     return install_dir, script_dir, bin_dir
 
 
@@ -69,7 +69,7 @@ def setup_oracle_client(zip_location):
 
     logging.debug(f"Target directory for script installation: {script_dir}")
     try:
-        _create_path_export_script(instantclient_dir, script_dir)
+        _create_path_export_script(instantclient_dir, script_dir, bin_dir)
     except PermissionError:
         print(dedent(f"""
             Permission denied to required Python directory: {script_dir}
@@ -87,14 +87,30 @@ def _create_symlinks(instantclient_dir):
     occi_link = instantclient_dir / 'libocci.so'
     clntsh_link = instantclient_dir / 'libclntsh.so'
 
-    # Make links
+    # Return early if the links already both exist
+    if os.path.islink(occi_link) and os.path.islink(clntsh_link):
+        return
+
+    # Some versions of InstantClient will have a placeholder file
+    # for where the symlink should be, rahter than a symlink.
+    # It must be removed before trying to create a real symlink.
+
+    # unlink(missing_ok=True) would be possible in Python 3.8+
+    # occi_link.unlink(missing_ok=True)
+    # clntsh_link.unlink(missing_ok=True)
     try:
-        os.symlink(occi, occi_link)
-        os.symlink(clntsh, clntsh_link)
-        logging.debug(f'Symlinks created for: {[occi, clntsh]}')
-    except FileExistsError:
-        logging.debug(f'Symlinks exist for: {[occi, clntsh]}')
+        occi_link.unlink()
+    except FileNotFoundError:
         pass
+    try:
+        clntsh_link.unlink()
+    except FileNotFoundError:
+        pass
+
+    # Make links
+    os.symlink(occi, occi_link)
+    os.symlink(clntsh, clntsh_link)
+    logging.debug('Symlinks created for: %s, %s', occi, clntsh)
 
 
 def _get_instantclient_dir(zipfile_path):
@@ -195,7 +211,7 @@ def _oracle_client_is_configured():
         return False
 
 
-def _create_path_export_script(instantclient_dir, script_dir):
+def _create_path_export_script(instantclient_dir, script_dir, bin_dir):
     """
     Write an executable Python file to the virtual environment path (or current
     directory if not available) that prints an updated PATH variable including
@@ -224,9 +240,8 @@ def _create_path_export_script(instantclient_dir, script_dir):
     os.chmod(script_file, 0o755)
 
     # Try to add symlink to virtualenv PATH
-    virtualenv_bin_dir = script_dir.parent.parent.parent.parent / 'bin'
-    if virtualenv_bin_dir.is_dir():
-        link_path = virtualenv_bin_dir / script_file.name
+    if bin_dir.is_dir():
+        link_path = bin_dir / script_file.name
         try:
             os.symlink(script_file.absolute(), link_path)
             logging.debug(f"Symlink added to virtualenv PATH: {link_path.absolute()}")
@@ -259,7 +274,8 @@ WINDOWS_INSTALL_MESSAGE = dedent("""
 
 CLNTSH_MESSAGE = dedent(f"""
     Oracle Instant Client library (libclntsh.so) is not on LD_LIBRARY_PATH.
-    Current LD_LIBRARY_PATH: {os.getenv('LD_LIBRARY_PATH', '<not set>')}
+    Or, the libclntsh.so file is a placeholder and a symlink must be created first.
+    Current LD_LIBRARY_PATH: {os.getenv('LD_LIBRARY_PATH', '<not set>')},
                         """).strip()
 
 NSL_MESSAGE = dedent("""
