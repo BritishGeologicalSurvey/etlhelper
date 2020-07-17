@@ -15,6 +15,15 @@ import cx_Oracle
 logging.basicConfig()
 
 
+def get_working_dirs():
+    """Return a dictionary of the directories needed for install"""
+    install_dir = Path(__file__).parent / 'oracle_instantclient'
+    script_dir = Path(inspect.getfile(sys._getframe(1))).parent
+    bin_dir = script_dir.parent.parent.parent.parent / 'bin'
+
+    return install_dir, script_dir, bin_dir
+
+
 def setup_oracle_client(zip_location):
     """
     Check platform and install Oracle Instant Client.  Download file if zip
@@ -33,14 +42,10 @@ def setup_oracle_client(zip_location):
         print(WINDOWS_INSTALL_MESSAGE)
         sys.exit(1)
 
-
     # GATHER FACTS
-    directories = get_working_dirs()
-    # Directories is a dictionary 
-    dirdict = {"unpack dir": "/dir/name",  # 'install dir' here  (figure out from __file__)
-               "script_dir": "/dir/blah",  # where the export path script goes (getframe func)
-               "bin_dir": "dir/foo"}       # symlink export path script  (figure out from script dir)
+    install_dir, script_dir, bin_dir = get_working_dirs()
 
+    """
     progress = check_progress(directories)  # should return the dict below
     check_progress = { "unpack_dir_exists" : False,  # oracle_instantclient dir
                        "zipfile_unpacked" :  False,  # have we unzipped the zip
@@ -48,13 +53,12 @@ def setup_oracle_client(zip_location):
                        "libclntsh_symlinked" : False,
                        "export_path_script_exists" : False,
                        "export_path_script_symlinked_to_bindir" : False}
+    """
 
-
-    # Create install_dir NEW
-    if !progress["unpack_dir_exists"]:
-        _create_install_dir()
-    # OLD version
-    install_dir = _create_install_dir()
+    # Create install_dir
+    # if not progress["unpack_dir_exists"]:
+    #     _create_install_dir()
+    _create_install_dir(install_dir)  # Instead of figuring out the dir in the func
 
     # Install from zipfile
     zipfile_path = _install_zipped_files(zip_location, install_dir)
@@ -63,8 +67,6 @@ def setup_oracle_client(zip_location):
     instantclient_dir = _get_instantclient_dir(zipfile_path)
     _create_symlinks(instantclient_dir)
 
-    # Create path export script
-    script_dir = Path(inspect.getfile(sys._getframe(1))).parent
     logging.debug(f"Target directory for script installation: {script_dir}")
     try:
         _create_path_export_script(instantclient_dir, script_dir)
@@ -130,9 +132,8 @@ def _install_zipped_files(zip_location, install_dir):
     return zipfile_path
 
 
-def _create_install_dir():
+def _create_install_dir(install_dir):
     """Create directory for installation in etlhelper directory."""
-    install_dir = Path(__file__).parent / 'oracle_instantclient'
     if not install_dir.is_dir():
         try:
             os.mkdir(install_dir)
@@ -141,8 +142,6 @@ def _create_install_dir():
                 Permission denied to required Python directory: {install_dir}
                 Consider using a virtual environment.""".strip()))
             sys.exit(1)
-
-    return install_dir
 
 
 def _download_zipfile(zip_location, install_dir):
