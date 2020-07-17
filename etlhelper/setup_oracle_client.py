@@ -33,7 +33,27 @@ def setup_oracle_client(zip_location):
         print(WINDOWS_INSTALL_MESSAGE)
         sys.exit(1)
 
-    # Create install_dir
+
+    # GATHER FACTS
+    directories = get_working_dirs()
+    # Directories is a dictionary 
+    dirdict = {"unpack dir": "/dir/name",  # 'install dir' here  (figure out from __file__)
+               "script_dir": "/dir/blah",  # where the export path script goes (getframe func)
+               "bin_dir": "dir/foo"}       # symlink export path script  (figure out from script dir)
+
+    progress = check_progress(directories)  # should return the dict below
+    check_progress = { "unpack_dir_exists" : False,  # oracle_instantclient dir
+                       "zipfile_unpacked" :  False,  # have we unzipped the zip
+                       "libocci_symlinked" : False,
+                       "libclntsh_symlinked" : False,
+                       "export_path_script_exists" : False,
+                       "export_path_script_symlinked_to_bindir" : False}
+
+
+    # Create install_dir NEW
+    if !progress["unpack_dir_exists"]:
+        _create_install_dir()
+    # OLD version
     install_dir = _create_install_dir()
 
     # Install from zipfile
