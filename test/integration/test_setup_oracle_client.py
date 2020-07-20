@@ -1,5 +1,5 @@
 """Tests for setup_oracle_client.py script."""
-from etlhelper.setup_oracle_client import install
+from etlhelper.setup_oracle_client import install_instantclient
 
 
 def test_dummy_zipfile(dummy_zipfile):
@@ -8,11 +8,11 @@ def test_dummy_zipfile(dummy_zipfile):
     assert dummy_zipfile.name == 'instantclient.zip'
 
 
-def test_install(dummy_zipfile, tmp_path):
+def test_install_instantclient(dummy_zipfile, tmp_path):
     install_dir = tmp_path / 'oracle_instantclient'
 
     # Act
-    install(dummy_zipfile, install_dir)
+    install_instantclient(dummy_zipfile, install_dir, None, None)
 
     # Assert driver files are present
     assert list(install_dir.glob('libocci.so.*.*')) != []

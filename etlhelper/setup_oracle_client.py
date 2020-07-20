@@ -5,6 +5,7 @@ import logging
 from pathlib import Path
 import os
 from shutil import copyfile, copytree
+import shutil
 import sys
 from textwrap import dedent
 import urllib.request
@@ -82,28 +83,63 @@ def setup_oracle_client(zip_location):
         sys.exit(1)
 
 
-def install_instantclient(zipfile_path, directories):
+def install_instantclient(zipfile_location, install_dir, script_dir, bin_dir):
     """
-    Install Oracle Instant Client files by unzipping zip file (downloading if requrie
+    Install Oracle Instant Client files. by unzipping zip file (downloading if requrie
     """
-    pass
+    #cleanup(install_dir, script_dir, bin_dir)
+    #create_install_dir()
+
+    #zipfile_path = check_or_get_zipfile(zipfile_location)
+    zipfile_path = zipfile_location  # TODO: replace with check_or_get_zipfile
+
+    install_libraries(zipfile_path, install_dir)
+    symlink_libraries(install_dir)
+
+    #write_ld_library_path_export_script(script_dir)
 
 
-def install(zipfile_path, install_dir):
+def install_libraries(zipfile_path, install_dir):
     """
-    Install zipfile contents to install_dir and create symlinks for
-    libclntsh.so and libocci.so.
+    Install zipfile contents to install_dir.
     """
     # Extract all the files
-    zipfile.ZipFile(zipfile_path).extractall(install_dir)
+    shutil.unpack_archive(zipfile_path, extract_dir=install_dir)
 
-    import ipdb; ipdb.set_trace()
     # Files are initially extracted into a subdirectory - copy them out
+    # and remove subdirectory
     subdir = next(install_dir.glob("instantclient_*"))
-    copytree(subdir, install_dir)
+
+    for item in subdir.iterdir():
+        item.rename(item.parent.parent / item.name)
+
+    subdir.rmdir()
 
 
-    pass
+def symlink_libraries(install_dir):
+    """Link specific .so file versions to general name."""
+    # Specific versions of libraries
+    occi = next(install_dir.glob('libocci.so.*.*'))
+    clntsh = next(install_dir.glob('libclntsh.so.*.*'))
+
+    # Link names
+    occi_link = install_dir / 'libocci.so'
+    clntsh_link = install_dir / 'libclntsh.so'
+
+    # Some versions of InstantClient will have a placeholder file
+    # for where the symlink should be, rahter than a symlink.
+    # It must be removed before trying to create a real symlink.
+
+    # unlink(missing_ok=True) would be possible in Python 3.8+
+    if occi_link.exists():
+        occi_link.unlink()
+    if clntsh_link.exists():
+        clntsh_link.unlink()
+
+    # Make links (note Pathlib's reverse syntax)
+    occi_link.symlink_to(occi)
+    clntsh_link.symlink_to(clntsh)
+    logging.debug('Symlinks created for: %s, %s', occi, clntsh)
 
 
 def get_working_dirs():
@@ -135,42 +171,6 @@ def check_status(install_dir, script_dir, bin_dir):
     }
 
     return status
-
-
-def _create_symlinks(instantclient_dir):
-    """Link specific .so file versions to general name."""
-    # Specific versions
-    occi = next(instantclient_dir.glob('libocci.so.*.*'))
-    clntsh = next(instantclient_dir.glob('libclntsh.so.*.*'))
-
-    # General names
-    occi_link = instantclient_dir / 'libocci.so'
-    clntsh_link = instantclient_dir / 'libclntsh.so'
-
-    # Return early if the links already both exist
-    if os.path.islink(occi_link) and os.path.islink(clntsh_link):
-        return
-
-    # Some versions of InstantClient will have a placeholder file
-    # for where the symlink should be, rahter than a symlink.
-    # It must be removed before trying to create a real symlink.
-
-    # unlink(missing_ok=True) would be possible in Python 3.8+
-    # occi_link.unlink(missing_ok=True)
-    # clntsh_link.unlink(missing_ok=True)
-    try:
-        occi_link.unlink()
-    except FileNotFoundError:
-        pass
-    try:
-        clntsh_link.unlink()
-    except FileNotFoundError:
-        pass
-
-    # Make links
-    os.symlink(occi, occi_link)
-    os.symlink(clntsh, clntsh_link)
-    logging.debug('Symlinks created for: %s, %s', occi, clntsh)
 
 
 def _get_instantclient_dir(zipfile_path):
