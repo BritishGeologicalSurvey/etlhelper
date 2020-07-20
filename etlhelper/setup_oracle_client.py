@@ -4,7 +4,7 @@ import inspect
 import logging
 from pathlib import Path
 import os
-from shutil import copyfile
+from shutil import copyfile, copytree
 import sys
 from textwrap import dedent
 import urllib.request
@@ -86,6 +86,23 @@ def install_instantclient(zipfile_path, directories):
     """
     Install Oracle Instant Client files by unzipping zip file (downloading if requrie
     """
+    pass
+
+
+def install(zipfile_path, install_dir):
+    """
+    Install zipfile contents to install_dir and create symlinks for
+    libclntsh.so and libocci.so.
+    """
+    # Extract all the files
+    zipfile.ZipFile(zipfile_path).extractall(install_dir)
+
+    import ipdb; ipdb.set_trace()
+    # Files are initially extracted into a subdirectory - copy them out
+    subdir = next(install_dir.glob("instantclient_*"))
+    copytree(subdir, install_dir)
+
+
     pass
 
 
