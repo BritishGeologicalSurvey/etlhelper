@@ -15,15 +15,6 @@ import cx_Oracle
 logging.basicConfig()
 
 
-def get_working_dirs():
-    """Return a dictionary of the directories needed for install"""
-    install_dir = Path(__file__).parent / 'oracle_instantclient'
-    script_dir = Path(inspect.getfile(sys._getframe(1))).parent
-    bin_dir = script_dir.parent.parent.parent.parent / 'bin'
-    logging.debug(f"Install dir: {install_dir}, script_dir: {script_dir}, bin dir: {bin_dir}")
-    return install_dir, script_dir, bin_dir
-
-
 def setup_oracle_client(zip_location):
     """
     Check platform and install Oracle Instant Client.  Download file if zip
@@ -44,16 +35,30 @@ def setup_oracle_client(zip_location):
 
     # GATHER FACTS
     install_dir, script_dir, bin_dir = get_working_dirs()
+    status = check_status(install_dir, script_dir, bin_dir)
 
     """
-    progress = check_progress(directories)  # should return the dict below
-    check_progress = { "unpack_dir_exists" : False,  # oracle_instantclient dir
-                       "zipfile_unpacked" :  False,  # have we unzipped the zip
-                       "libocci_symlinked" : False,
-                       "libclntsh_symlinked" : False,
-                       "export_path_script_exists" : False,
-                       "export_path_script_symlinked_to_bindir" : False}
-    """
+    get directories
+    already_installed = check_install_status(directories)
+    
+    if not already_installed or reinstall:
+      # All the code below in `install_instantclient(zipfile_location, directories)`
+      wipe existing directories and scripts (catching errors if files don't exist)  # Don't get caught by broken installs
+    
+      create install dir (if not already)
+      confirm zip file (download if required and check is a file)
+    
+      unzip into install_dir (making sure *.so.*.* is in root and not in subfolder)
+      make symlinks to .so files
+    
+      write oracle_path_lib_export
+      make symlink to bin_dir()
+    
+    if bin_dir == install_dir:  # this happens if not in virtual environment so script_dir.parent.parent.... / bin is non-existent or not writable
+       print message (with oracle_lib_path_export)
+    else:
+       print message (with absolute location of script file)
+        """
 
     # Create install_dir
     # if not progress["unpack_dir_exists"]:
@@ -75,6 +80,40 @@ def setup_oracle_client(zip_location):
             Permission denied to required Python directory: {script_dir}
             Consider using a virtual environment.""".strip()))
         sys.exit(1)
+
+
+def install_instantclient(zipfile_path, directories):
+    """
+    Install Oracle Instant Client files by unzipping zip file (downloading if requrie
+    """
+    pass
+
+
+def get_working_dirs():
+    """Return a dictionary of the directories needed for install"""
+    install_dir = Path(__file__).parent / 'oracle_instantclient'
+    script_dir = Path(inspect.getfile(sys._getframe(1))).parent
+    bin_dir = script_dir.parent.parent.parent.parent / 'bin'  # or install_dir
+    logging.debug(f"Install dir: {install_dir}, script_dir: {script_dir}, bin dir: {bin_dir}")
+    return install_dir, script_dir, bin_dir
+
+
+def check_status(install_dir, script_dir, bin_dir):
+    """Examine directories to determine which installation stages have been
+    completed.  Return dictionary with status.
+    """
+
+    status = {
+        "install_dir exists": install_dir.exists(),
+        "unpacked_client_dir_exists": False,  # oracle_instantclient dir
+        "zipfile_unpacked":  False,  # have we unzipped the zip
+        "libocci_symlinked": False,
+        "libclntsh_symlinked": False,
+        "export_path_script_exists": False,
+        "export_path_script_symlinked_to_bindir": False
+    }
+
+    return status
 
 
 def _create_symlinks(instantclient_dir):
