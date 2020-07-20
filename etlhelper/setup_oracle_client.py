@@ -38,7 +38,7 @@ def setup_oracle_client(zip_location):
     status = check_status(install_dir, script_dir, bin_dir)
 
     """
-    get directories
+    get_working_dirs()
     already_installed = check_install_status(directories)
     
     if not already_installed or reinstall:
@@ -90,11 +90,15 @@ def install_instantclient(zipfile_path, directories):
 
 
 def get_working_dirs():
-    """Return a dictionary of the directories needed for install"""
+    """Return the directories needed for install"""
     install_dir = Path(__file__).parent / 'oracle_instantclient'
     script_dir = Path(inspect.getfile(sys._getframe(1))).parent
+
+    # bin directory must exist and be writable, otherwise use script_dir
     bin_dir = script_dir.parent.parent.parent.parent / 'bin'  # or install_dir
+
     logging.debug(f"Install dir: {install_dir}, script_dir: {script_dir}, bin dir: {bin_dir}")
+    # TODO: return dict with keys for install, script, bin.
     return install_dir, script_dir, bin_dir
 
 
