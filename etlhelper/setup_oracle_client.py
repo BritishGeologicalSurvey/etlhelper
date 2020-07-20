@@ -8,11 +8,15 @@ from shutil import copyfile
 import sys
 from textwrap import dedent
 import urllib.request
+from urllib import urlparse
 import zipfile
 
 import cx_Oracle
 
 logging.basicConfig()
+
+
+ORACLE_DEFAULT_ZIP_URL = "https://download.oracle.com/otn_software/linux/instantclient/19600/instantclient-basic-linux.x64-19.6.0.0.0dbru.zip"
 
 
 def get_working_dirs():
@@ -158,6 +162,34 @@ def _create_install_dir(install_dir):
                 Permission denied to required Python directory: {install_dir}
                 Consider using a virtual environment.""".strip()))
             sys.exit(1)
+
+
+def _check_or_get_zipfile(zipfile_location):
+    # Zipfile path can be path, URL or None
+
+    if zipfile_location is None:
+        print(f'Downloading default Oracle zipfile')
+        zipurl_split = urlparse.urlsplit(ORACLE_DEFAULT_ZIP_URL)
+        zipfile_name = zipurl_split.path.split("/")[-1]
+        zipfile_download_target = Path("/tmp") / zipfile_name
+        urllib.request.urlretrieve(ORACLE_DEFAULT_ZIP_URL,
+                                   filename=zipfile_download_target.absolute())
+        return zipfile_download_target.absolute()
+
+    if zipfile_location.is_file():
+        logging.debug(f'Zipfile already downloaded: {zipfile_location.absolute()}')
+        return Path(zipfile_location)
+
+    try:
+        print(f'Downloading Oracle zipfile from {zipfile_location}')
+        zipurl_split = urlparse.urlsplit(zipfile_location)
+        zipfile_name = zipurl_split.path.split("/")[-1]
+        zipfile_download_target = Path("/tmp") / zipfile_name
+        urllib.request.urlretrieve(zipfile_location,
+                                   filename=zipfile_download_target.absolute())
+        return zipfile_download_target.absolute()
+    except Exception as exc:
+        logging.debug(f'Unepected error downloading zipfile from {zipfile_location}, ({exc})')
 
 
 def _download_zipfile(zip_location, install_dir):
