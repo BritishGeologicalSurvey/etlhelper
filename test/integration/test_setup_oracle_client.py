@@ -14,9 +14,11 @@ def test_dummy_zipfile(dummy_zipfile):
 def test_install_instantclient(dummy_zipfile, tmp_path):
     # Arrange
     install_dir = tmp_path / 'oracle_instantclient'
+    script_dir = tmp_path / 'scripts'
+    bin_dir = tmp_path / 'bin'
 
     # Act
-    install_instantclient(dummy_zipfile, install_dir, None, None)
+    install_instantclient(dummy_zipfile, install_dir, script_dir, bin_dir)
 
     # Assert driver files are present
     assert list(install_dir.glob('libocci.so.*.*')) != []
@@ -25,6 +27,9 @@ def test_install_instantclient(dummy_zipfile, tmp_path):
     # Assert symlinks are created
     assert install_dir.joinpath('libocci.so').is_symlink()
     assert install_dir.joinpath('libclntsh.so').is_symlink()
+
+    # Final check - use our own check of install status
+    #assert check_install_status(install_dir, script_dir, bin_dir)
 
 
 def test_check_install_status_installed(mock_installation):

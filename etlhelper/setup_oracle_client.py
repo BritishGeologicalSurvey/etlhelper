@@ -1,10 +1,9 @@
 """Commandline script to configure Oracle Instant Client"""
 import argparse
-import inspect
 import logging
 from pathlib import Path
 import os
-from shutil import copyfile, copytree
+from shutil import copyfile
 import shutil
 import sys
 from textwrap import dedent
@@ -40,10 +39,9 @@ def setup_oracle_client(zip_location):
         print(WINDOWS_INSTALL_MESSAGE)
         sys.exit(1)
 
-    # GATHER FACTS
+    # Gather facts
     install_dir, script_dir, bin_dir = get_working_dirs()
-
-    status = check_status(install_dir, script_dir, bin_dir)
+    already_installed = check_install_status(install_dir, script_dir, bin_dir)
 
     """
     get_working_dirs()
