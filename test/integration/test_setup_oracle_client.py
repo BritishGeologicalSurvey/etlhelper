@@ -1,7 +1,7 @@
 """Tests for setup_oracle_client.py script."""
 import pytest
 from etlhelper.setup_oracle_client import (
-    install_instantclient, check_install_status
+    install_instantclient, check_install_status, cleanup
 )
 
 
@@ -54,6 +54,21 @@ def test_check_install_status_no_links(mock_installation):
 
     # Assert
     assert already_installed is False
+
+
+def test_cleanup(mock_installation):
+    # Arrange
+    install_dir = mock_installation / 'install'
+    script_dir = mock_installation / 'script'
+    bin_dir = mock_installation / 'bin'
+
+    # Act
+    cleanup(install_dir, script_dir, bin_dir)
+
+    # Assert
+    assert not install_dir.exists()
+    assert not script_dir.joinpath('oracle_lib_path_export').exists()
+    assert not bin_dir.joinpath('oracle_lib_path_export').exists()
 
 
 @pytest.fixture(scope="function")

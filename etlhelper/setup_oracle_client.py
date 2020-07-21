@@ -96,9 +96,9 @@ def setup_oracle_client(zip_location):
 
 def install_instantclient(zipfile_location, install_dir, script_dir, bin_dir):
     """
-    Install Oracle Instant Client files. by unzipping zip file (downloading if requrie
+    Install Oracle Instant Client files.
     """
-    # cleanup(install_dir, script_dir, bin_dir)
+    cleanup(install_dir, script_dir, bin_dir)
     # create_install_dir()
 
     # zipfile_path = check_or_get_zipfile(zipfile_location)
@@ -108,6 +108,21 @@ def install_instantclient(zipfile_location, install_dir, script_dir, bin_dir):
     symlink_libraries(install_dir)
 
     # write_ld_library_path_export_script(script_dir)
+
+
+def cleanup(install_dir, script_dir, bin_dir):
+    """
+    Remove files that may remain from previous installations.
+    """
+    shutil.rmtree(install_dir, ignore_errors=True)
+
+    path_export_script = script_dir / 'oracle_lib_path_export'
+    if path_export_script.exists():
+        path_export_script.unlink()
+
+    path_export_script_link = bin_dir / 'oracle_lib_path_export'
+    if path_export_script_link.exists():
+        path_export_script_link.unlink()
 
 
 def install_libraries(zipfile_path, install_dir):
