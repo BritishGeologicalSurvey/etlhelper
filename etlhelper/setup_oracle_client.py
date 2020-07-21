@@ -97,15 +97,19 @@ def install_instantclient(zipfile_location, install_dir, script_dir, bin_dir):
     Install Oracle Instant Client files.
     """
     cleanup(install_dir, script_dir, bin_dir)
-    # create_install_dir()
+    _create_install_dir(install_dir)
 
-    # zipfile_path = check_or_get_zipfile(zipfile_location)
-    zipfile_path = zipfile_location  # TODO: replace with check_or_get_zipfile
+    zipfile_path = _check_or_get_zipfile(zipfile_location)
 
     install_libraries(zipfile_path, install_dir)
     symlink_libraries(install_dir)
 
-    # write_ld_library_path_export_script(script_dir)
+    _create_path_export_script(install_dir, script_dir)
+
+    # Symlink onto PATH if bin_dir is writeable
+    if bin_dir != script_dir:
+        (bin_dir / 'oracle_lib_path_export').symlink_to(
+            (script_dir / 'oracle_lib_path_export'))
 
 
 def cleanup(install_dir, script_dir, bin_dir):
@@ -276,12 +280,13 @@ def _create_install_dir(install_dir):
 def _check_or_get_zipfile(zipfile_location):
     """
     args:
-        zipfile_location: Path (str) or URL or None
+        zipfile_location: (str) path to file, URL or None
     returns:
         zipfile_path (Path-object)
     raises: Exception if URL is invalid or path none-existent or not zipfile.
     """
-    if not zipfile_location:
+    assert isinstance(zipfile_location, str), "zipfile_location should be string"
+    if zipfile_location is None:
         print('Downloading default Oracle zipfile')
         zip_path = _download_zipfile(ORACLE_DEFAULT_ZIP_URL)
     elif zipfile_location.startswith("http"):
