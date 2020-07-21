@@ -20,11 +20,12 @@ ORACLE_DEFAULT_ZIP_URL = ("https://download.oracle.com/otn_software/linux/instan
 
 def setup_oracle_client(zipfile_location):
     """
-    Check platform and install Oracle Instant Client.  Download file if zip
-    location is a url.
+    Install and configure Oracle Instant Client.  The function will:
+        + download Oracle libraries from internet or custom URL if required
+        + unzip file and create required symlinks
+        + create script that prints command to add libraries to LD_LIBRARY_PATH
 
     :param zip_location: str, path or URL of instantclient zip file
-    :param with_utils: bool, determine if utils are also installed
     """
     # Return if configured already
     if _oracle_client_is_configured():
@@ -44,8 +45,8 @@ def setup_oracle_client(zipfile_location):
     # Install if required
     # TODO: Add reinstall option
     if not already_installed:
-        _install_instantclient(zipfile_location,
-                               install_dir, script_dir, bin_dir)
+        _install_instantclient(zipfile_location, install_dir, script_dir,
+                               bin_dir)
 
     # Print instructions for setting library path
     if bin_dir != script_dir:
@@ -65,11 +66,11 @@ def _get_working_dirs():
     # Location for driver files
     install_dir = Path(__file__).parent / 'oracle_instantclient'
 
-    # Location for lib_path_export script
+    # Location for path_export_script
     script_dir = Path(__file__).parent
 
     # We want a bin_dir that is writeable and on the $PATH where we can link
-    # to the lib_path_export script.  The location of the Python executable is
+    # to the path_export_script.  The location of the Python executable is
     # a good candidate.
     python_dir = Path(sys.executable).parent
     try:
@@ -115,8 +116,10 @@ def _check_install_status(install_dir, script_dir, bin_dir):
     else:
         script_link_on_path = bin_dir.joinpath('oracle_lib_path_export').exists()
 
-    return (drivers_installed and symlinks_created and script_exists
-            and script_link_on_path)
+    already_installed = (drivers_installed and symlinks_created and script_exists
+                         and script_link_on_path)
+    logging.debug("Already installed: %s", already_installed)
+    return already_installed
 
 
 def _install_instantclient(zipfile_location, install_dir, script_dir, bin_dir):
@@ -156,14 +159,13 @@ def _cleanup(install_dir, script_dir, bin_dir):
 
 def _create_install_dir(install_dir):
     """Create directory for installation in etlhelper directory."""
-    if not install_dir.is_dir():
-        try:
-            os.mkdir(install_dir)
-        except PermissionError:
-            print(dedent(f"""
-                Permission denied to required Python directory: {install_dir}
-                Consider using a virtual environment.""".strip()))
-            sys.exit(1)
+    try:
+        install_dir.mkdir()
+    except PermissionError:
+        print(dedent(f"""
+            Permission denied to required Python directory: {install_dir}
+            Consider using a virtual environment.""".strip()))
+        sys.exit(1)
 
 
 def _check_or_get_zipfile(zipfile_location):
@@ -176,16 +178,17 @@ def _check_or_get_zipfile(zipfile_location):
     """
     assert isinstance(zipfile_location, str), "zipfile_location should be string"
     if zipfile_location is None:
-        print('Downloading default Oracle zipfile')
-        zip_path = _download_zipfile(ORACLE_DEFAULT_ZIP_URL)
+        zipfile_path = _download_zipfile(ORACLE_DEFAULT_ZIP_URL)
     elif zipfile_location.startswith("http"):
-        zip_path = _download_zipfile(zipfile_location)
+        zipfile_path = _download_zipfile(zipfile_location)
     else:
-        zip_path = Path(zipfile_location)
+        zipfile_path = Path(zipfile_location)
 
-    if not (zip_path.is_file() and zip_path.suffix == ".zip"):
-        raise OSError(f"Zip path {zip_path} is not a valid zip file")
-    return zip_path
+    if not (zipfile_path.is_file() and zipfile_path.suffix == ".zip"):
+        raise OSError(f"Zip path {zipfile_path} is not a valid zip file")
+
+    logging.debug("Using zip file at: %s", zipfile_path)
+    return zipfile_path
 
 
 def _download_zipfile(zip_download_source):
@@ -201,6 +204,7 @@ def _download_zipfile(zip_download_source):
     zipfile_download_target = Path(tempfile.gettempdir()) / zipfile_name
     urllib.request.urlretrieve(zip_download_source,
                                filename=zipfile_download_target.absolute())
+    logging.debug("Zip file downloaded from: %s", zip_download_source)
     return zipfile_download_target.absolute()
 
 
@@ -214,11 +218,10 @@ def _install_libraries(zipfile_path, install_dir):
     # Files are initially extracted into a subdirectory - copy them out
     # and remove subdirectory
     subdir = next(install_dir.glob("instantclient_*"))
-
     for item in subdir.iterdir():
         item.rename(item.parent.parent / item.name)
-
     subdir.rmdir()
+    logging.debug('Library files unzipped to %s', install_dir)
 
 
 def _symlink_libraries(install_dir):
@@ -250,9 +253,8 @@ def _symlink_libraries(install_dir):
 
 def _create_path_export_script(install_dir, script_dir):
     """
-    Write an executable Python file
-    that prints an updated LD_LIBRARY_PATH variable including
-    the Oracle libraries.
+    Write an executable Python file that prints an updated LD_LIBRARY_PATH
+    variable including the directory containing the Oracle libraries.
     :param install_dir: location of Oracle libraries
     :param script_dir: location to write the script
     """
@@ -271,10 +273,9 @@ def _create_path_export_script(install_dir, script_dir):
 
     script_file = script_dir / 'oracle_lib_path_export'
     script_file.write_text(contents)
-    msg = (f"LD_LIBRARY_PATH export printer script written to "
-           f"{script_file.absolute()}")
-    logging.debug(msg)
     os.chmod(script_file, 0o755)
+    logging.debug("LD_LIBRARY_PATH export printer script written to %s",
+                  script_file)
 
 
 def _oracle_client_is_configured():
@@ -348,7 +349,7 @@ NSL_MESSAGE = dedent("""
 
 
 def main():
-    """Parse args and run setup function."""
+    """Parse args and run setup_oracle_client function."""
     parser = argparse.ArgumentParser(
         description="Install Oracle Instant Client to Python environment")
     parser.add_argument(
