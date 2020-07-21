@@ -92,7 +92,7 @@ def mock_installation(tmp_path):
     # Dummy drivers
     libocci_19 = install_dir / 'libocci.so.19.1'
     libocci_19.touch()
-    libclntsh_19 = install_dir / 'libclnsh.so.19.1'
+    libclntsh_19 = install_dir / 'libclntsh.so.19.1'
     libclntsh_19.touch()
 
     # Symlinks

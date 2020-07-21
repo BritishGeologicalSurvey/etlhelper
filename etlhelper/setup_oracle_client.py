@@ -142,9 +142,9 @@ def install_libraries(zipfile_path, install_dir):
 
 def symlink_libraries(install_dir):
     """Link specific .so file versions to general name."""
-    # Specific versions of libraries
-    occi = next(install_dir.glob('libocci.so.*.*'))
-    clntsh = next(install_dir.glob('libclntsh.so.*.*'))
+    # Multiple versions of driver exist, choose the highest
+    libocci_latest = sorted(install_dir.glob('libocci.so.*.*'))[-1]
+    libclntsh_latest = sorted(install_dir.glob('libclntsh.so.*.*'))[-1]
 
     # Link names
     occi_link = install_dir / 'libocci.so'
@@ -161,9 +161,10 @@ def symlink_libraries(install_dir):
         clntsh_link.unlink()
 
     # Make links (note Pathlib's reverse syntax)
-    occi_link.symlink_to(occi)
-    clntsh_link.symlink_to(clntsh)
-    logging.debug('Symlinks created for: %s, %s', occi, clntsh)
+    occi_link.symlink_to(libocci_latest)
+    clntsh_link.symlink_to(libclntsh_latest)
+    logging.debug('Symlinks created for: %s, %s',
+                  libocci_latest, libclntsh_latest)
 
 
 def get_working_dirs():
@@ -198,10 +199,13 @@ def check_install_status(install_dir, script_dir, bin_dir):
     Determine whether files required for installation are present.
     """
     # Drivers are installed
-    libocci_19 = install_dir / 'libocci.so.19.1'
-    libclntsh_19 = install_dir / 'libclnsh.so.19.1'
-    drivers_installed = (libocci_19.is_file()
-                         and libclntsh_19.is_file())
+    try:
+        libocci_latest = sorted(install_dir.glob('libocci.so.*.*'))[-1]
+        libclntsh_latest = sorted(install_dir.glob('libclntsh.so.*.*'))[-1]
+        drivers_installed = (libocci_latest.is_file()
+                             and libclntsh_latest.is_file())
+    except IndexError:  # means no files are found
+        return False
 
     # Symlinks
     libocci_link = install_dir / 'libocci.so'
