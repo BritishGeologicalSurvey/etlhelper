@@ -3,13 +3,10 @@ import argparse
 import logging
 from pathlib import Path
 import os
-from shutil import copyfile
 import shutil
 import sys
 from textwrap import dedent
 import urllib.request
-from urllib.parse import urlparse, urlsplit
-import zipfile
 import tempfile
 
 import cx_Oracle
@@ -92,85 +89,6 @@ def setup_oracle_client(zip_location):
         sys.exit(1)
 
 
-def install_instantclient(zipfile_location, install_dir, script_dir, bin_dir):
-    """
-    Install Oracle Instant Client files.
-    """
-    cleanup(install_dir, script_dir, bin_dir)
-    _create_install_dir(install_dir)
-
-    zipfile_path = _check_or_get_zipfile(zipfile_location)
-
-    install_libraries(zipfile_path, install_dir)
-    symlink_libraries(install_dir)
-
-    _create_path_export_script(install_dir, script_dir)
-
-    # Symlink onto PATH if bin_dir is writeable
-    if bin_dir != script_dir:
-        (bin_dir / 'oracle_lib_path_export').symlink_to(
-            (script_dir / 'oracle_lib_path_export'))
-
-
-def cleanup(install_dir, script_dir, bin_dir):
-    """
-    Remove files that may remain from previous installations.
-    """
-    shutil.rmtree(install_dir, ignore_errors=True)
-
-    path_export_script = script_dir / 'oracle_lib_path_export'
-    if path_export_script.exists():
-        path_export_script.unlink()
-
-    path_export_script_link = bin_dir / 'oracle_lib_path_export'
-    if path_export_script_link.exists():
-        path_export_script_link.unlink()
-
-
-def install_libraries(zipfile_path, install_dir):
-    """
-    Install zipfile contents to install_dir.
-    """
-    # Extract all the files
-    shutil.unpack_archive(zipfile_path, extract_dir=install_dir)
-
-    # Files are initially extracted into a subdirectory - copy them out
-    # and remove subdirectory
-    subdir = next(install_dir.glob("instantclient_*"))
-
-    for item in subdir.iterdir():
-        item.rename(item.parent.parent / item.name)
-
-    subdir.rmdir()
-
-
-def symlink_libraries(install_dir):
-    """Link specific .so file versions to general name."""
-    # Multiple versions of driver exist, choose the highest
-    libocci_latest = sorted(install_dir.glob('libocci.so.*.*'))[-1]
-    libclntsh_latest = sorted(install_dir.glob('libclntsh.so.*.*'))[-1]
-
-    # Link names
-    occi_link = install_dir / 'libocci.so'
-    clntsh_link = install_dir / 'libclntsh.so'
-
-    # Some versions of InstantClient will have a placeholder file
-    # for where the symlink should be, rahter than a symlink.
-    # It must be removed before trying to create a real symlink.
-
-    # unlink(missing_ok=True) would be possible in Python 3.8+
-    if occi_link.exists():
-        occi_link.unlink()
-    if clntsh_link.exists():
-        clntsh_link.unlink()
-
-    # Make links (note Pathlib's reverse syntax)
-    occi_link.symlink_to(libocci_latest)
-    clntsh_link.symlink_to(libclntsh_latest)
-    logging.debug('Symlinks created for: %s, %s',
-                  libocci_latest, libclntsh_latest)
-
-
 def get_working_dirs():
     """Return the directories needed for install"""
     # Location for driver files
@@ -230,39 +148,39 @@ def check_install_status(install_dir, script_dir, bin_dir):
             and script_link_on_path)
 
 
-def _get_instantclient_dir(zipfile_path):
-    """Get directory_name for instantclient based on version"""
-    version = zipfile_path.stem.split('linux.x64-')[-1].split('.')[:2]
-    dirname = '_'.join(['instantclient'] + version)
-    return zipfile_path.parent / dirname
+def install_instantclient(zipfile_location, install_dir, script_dir, bin_dir):
+    """
+    Install Oracle Instant Client files.
+    """
+    cleanup(install_dir, script_dir, bin_dir)
+    _create_install_dir(install_dir)
+
+    zipfile_path = _check_or_get_zipfile(zipfile_location)
+
+    install_libraries(zipfile_path, install_dir)
+    symlink_libraries(install_dir)
+
+    _create_path_export_script(install_dir, script_dir)
+
+    # Symlink onto PATH if bin_dir is writeable
+    if bin_dir != script_dir:
+        (bin_dir / 'oracle_lib_path_export').symlink_to(
+            (script_dir / 'oracle_lib_path_export'))
 
 
-def _install_zipped_files(zip_location, install_dir):
-    """Unzip files from archive (downloading if required)."""
-    # Check file and download if required
-    if zip_location.lower().startswith('http'):
-        zipfile_path = _download_zipfile(zip_location, install_dir)
-    else:
-        if not os.path.isfile(zip_location):
-            raise FileNotFoundError(zip_location)
-        zipfile_path = install_dir / Path(zip_location).name
-        if not os.path.isfile(zipfile_path):
-            logging.debug(f'Copying zipfile to {zipfile_path.absolute()}')
-            copyfile(zip_location, zipfile_path)
+def cleanup(install_dir, script_dir, bin_dir):
+    """
+    Remove files that may remain from previous installations.
+    """
+    shutil.rmtree(install_dir, ignore_errors=True)
 
-    # Check for previous version
-    if _get_instantclient_dir(zipfile_path).is_dir():
-        logging.debug(
-            'Zipfile already extracted.')
-        return zipfile_path
+    path_export_script = script_dir / 'oracle_lib_path_export'
+    if path_export_script.exists():
+        path_export_script.unlink()
 
-    # Unzip
-    print(
-        f'Extracting {zipfile_path} into {install_dir.absolute()}')
-    with zipfile.ZipFile(zipfile_path, 'r') as zf:
-        zf.extractall(install_dir)
-
-    return zipfile_path
+    path_export_script_link = bin_dir / 'oracle_lib_path_export'
+    if path_export_script_link.exists():
+        path_export_script_link.unlink()
 
 
 def _create_install_dir(install_dir):
@@ -308,12 +226,84 @@ def _download_zipfile(zip_download_source):
 
     Fails gracefully if download fails. Sys exit -1 with helpful msg
     """
-    zipurl_split = urlsplit(zip_download_source)
-    zipfile_name = zipurl_split.path.split("/")[-1]
+    zipfile_name = zip_download_source.split("/")[-1]
     zipfile_download_target = Path(tempfile.gettempdir()) / zipfile_name
     urllib.request.urlretrieve(zip_download_source,
                                filename=zipfile_download_target.absolute())
     return zipfile_download_target.absolute()
+
+
+def install_libraries(zipfile_path, install_dir):
+    """
+    Install zipfile contents to install_dir.
+    """
+    # Extract all the files
+    shutil.unpack_archive(zipfile_path, extract_dir=install_dir)
+
+    # Files are initially extracted into a subdirectory - copy them out
+    # and remove subdirectory
+    subdir = next(install_dir.glob("instantclient_*"))
+
+    for item in subdir.iterdir():
+        item.rename(item.parent.parent / item.name)
+
+    subdir.rmdir()
+
+
+def symlink_libraries(install_dir):
+    """Link specific .so file versions to general name."""
+    # Multiple versions of driver exist, choose the highest
+    libocci_latest = sorted(install_dir.glob('libocci.so.*.*'))[-1]
+    libclntsh_latest = sorted(install_dir.glob('libclntsh.so.*.*'))[-1]
+
+    # Link names
+    occi_link = install_dir / 'libocci.so'
+    clntsh_link = install_dir / 'libclntsh.so'
+
+    # Some versions of InstantClient will have a placeholder file
+    # for where the symlink should be, rahter than a symlink.
+    # It must be removed before trying to create a real symlink.
+
+    # unlink(missing_ok=True) would be possible in Python 3.8+
+    if occi_link.exists():
+        occi_link.unlink()
+    if clntsh_link.exists():
+        clntsh_link.unlink()
+
+    # Make links (note Pathlib's reverse syntax)
+    occi_link.symlink_to(libocci_latest)
+    clntsh_link.symlink_to(libclntsh_latest)
+    logging.debug('Symlinks created for: %s, %s',
+                  libocci_latest, libclntsh_latest)
+
+
+def _create_path_export_script(install_dir, script_dir):
+    """
+    Write an executable Python file
+    that prints an updated LD_LIBRARY_PATH variable including
+    the Oracle libraries.
+    :param install_dir: location of Oracle libraries
+    :param script_dir: location to write the script
+    """
+    # Write Python code within 'here document'
+    # https://stackoverflow.com/questions/35533473/avoiding-syntax-error-near-unexpected-token-in-bash?rq=1
+    logging.debug("Path to add to LD_LIBRARY_PATH: %s", install_dir.absolute())
+    contents = dedent(f"""
+        #!/bin/sh
+        # Script to print PATH variable including Oracle drivers, suitable
+        # for use with `export` command.
+
+        python << EOF
+        print("LD_LIBRARY_PATH={install_dir.absolute()}:{os.getenv('LD_LIBRARY_PATH', '')}")
+        EOF
+        """).strip()
+
+    script_file = script_dir / 'oracle_lib_path_export'
+    script_file.write_text(contents)
+    msg = (f"LD_LIBRARY_PATH export printer script written to "
+           f"{script_file.absolute()}")
+    logging.debug(msg)
+    os.chmod(script_file, 0o755)
 
 
 def _oracle_client_is_configured():
@@ -352,35 +342,6 @@ def _oracle_client_is_configured():
         # Unhandled error
         print(f'cx_Oracle Instant Client Error: {msg}')
         return False
-
-
-def _create_path_export_script(install_dir, script_dir):
-    """
-    Write an executable Python file
-    that prints an updated LD_LIBRARY_PATH variable including
-    the Oracle libraries.
-    :param install_dir: location of Oracle libraries
-    :param script_dir: location to write the script
-    """
-    # Write Python code within 'here document'
-    # https://stackoverflow.com/questions/35533473/avoiding-syntax-error-near-unexpected-token-in-bash?rq=1
-    logging.debug("Path to add to LD_LIBRARY_PATH: %s", install_dir.absolute())
-    contents = dedent(f"""
-        #!/bin/sh
-        # Script to print PATH variable including Oracle drivers, suitable
-        # for use with `export` command.
-
-        python << EOF
-        print("LD_LIBRARY_PATH={install_dir.absolute()}:{os.getenv('LD_LIBRARY_PATH', '')}")
-        EOF
-        """).strip()
-
-    script_file = script_dir / 'oracle_lib_path_export'
-    script_file.write_text(contents)
-    msg = (f"LD_LIBRARY_PATH export printer script written to "
-           f"{script_file.absolute()}")
-    logging.debug(msg)
-    os.chmod(script_file, 0o755)
 
 
 WINDOWS_INSTALL_MESSAGE = dedent("""
