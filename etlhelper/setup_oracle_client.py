@@ -11,6 +11,7 @@ from textwrap import dedent
 import urllib.request
 from urllib.parse import urlparse, urlsplit
 import zipfile
+import tempfile
 
 import cx_Oracle
 
@@ -240,44 +241,43 @@ def _create_install_dir(install_dir):
 
 
 def _check_or_get_zipfile(zipfile_location):
-    # Zipfile path can be path, URL or None
-
-    if zipfile_location is None:
+    """
+    args:
+        zipfile_location: Path (str) or URL or None
+    returns:
+        zipfile_path (Path-object)
+    raises: Exception if URL is invalid or path none-existent or not zipfile.
+    """
+    if not zipfile_location:
         print('Downloading default Oracle zipfile')
-        zipurl_split = urlsplit(ORACLE_DEFAULT_ZIP_URL)
-        zipfile_name = zipurl_split.path.split("/")[-1]
-        zipfile_download_target = Path("/tmp") / zipfile_name
-        urllib.request.urlretrieve(ORACLE_DEFAULT_ZIP_URL,
-                                   filename=zipfile_download_target.absolute())
-        return zipfile_download_target.absolute()
-
+        zip_path = _download_zipfile(ORACLE_DEFAULT_ZIP_URL)
+        return zip_path
     if zipfile_location.is_file():
         logging.debug(f'Zipfile already downloaded: {zipfile_location.absolute()}')
         return Path(zipfile_location)
-
     try:
         print(f'Downloading Oracle zipfile from {zipfile_location}')
-        zipurl_split = urlsplit(zipfile_location)
-        zipfile_name = zipurl_split.path.split("/")[-1]
-        zipfile_download_target = Path("/tmp") / zipfile_name
-        urllib.request.urlretrieve(zipfile_location,
-                                   filename=zipfile_download_target.absolute())
-        return zipfile_download_target.absolute()
+        zip_path = _download_zipfile(zipfile_location)
+        return zip_path
     except Exception as exc:
-        logging.debug(f'Unepected error downloading zipfile from {zipfile_location}, ({exc})')
+        logging.debug('Unexpected error downloading zipfile from %s, %s', zipfile_location, exc)
 
 
-def _download_zipfile(zip_location, install_dir):
-    """Download zipfile to specified directory."""
-    filename = zip_location.split('/')[-1]
-    target = Path(install_dir) / filename
-    if target.is_file():
-        logging.debug(f'Zipfile already downloaded: {target.absolute()}')
-    else:
-        print(f'Downloading {zip_location} to {target}')
-        urllib.request.urlretrieve(zip_location,
-                                   filename=target.absolute())
-    return target.absolute()
+def _download_zipfile(zip_download_source):
+    """Download zipfile to specified directory.
+    args:
+        zipfile_location
+    returns:
+        path to downloaded zipfile
+
+    Fails gracefully if download fails. Sys exit -1 with helpful msg
+    """
+    zipurl_split = urlsplit(zip_download_source)
+    zipfile_name = zipurl_split.path.split("/")[-1]
+    zipfile_download_target = Path("/tmp") / zipfile_name
+    urllib.request.urlretrieve(zip_download_source,
+                               filename=zipfile_download_target.absolute())
+    return zipfile_download_target.absolute()
 
 
 def _oracle_client_is_configured():
@@ -318,7 +318,7 @@ def _oracle_client_is_configured():
         return False
 
 
-def _create_path_export_script(instantclient_dir, script_dir, bin_dir):
+def _create_path_export_script(instantclient_dir, script_dir):
     """
     Write an executable Python file to the virtual environment path (or current
     directory if not available) that prints an updated PATH variable including
@@ -328,7 +328,7 @@ def _create_path_export_script(instantclient_dir, script_dir, bin_dir):
     """
     # Write Python code within 'here document'
     # https://stackoverflow.com/questions/35533473/avoiding-syntax-error-near-unexpected-token-in-bash?rq=1
-    logging.debug(f"Path to add to LD_LIBRARY_PATH: {instantclient_dir.absolute()}")
+    logging.debug("Path to add to LD_LIBRARY_PATH: %s", instantclient_dir.absolute())
     contents = dedent(f"""
         #!/bin/sh
         # Script to print PATH variable including Oracle drivers, suitable
@@ -345,32 +345,6 @@ def _create_path_export_script(instantclient_dir, script_dir, bin_dir):
            f"{script_file.absolute()}")
     logging.debug(msg)
     os.chmod(script_file, 0o755)
-
-    # Try to add symlink to virtualenv PATH
-    if bin_dir.is_dir():
-        link_path = bin_dir / script_file.name
-        try:
-            os.symlink(script_file.absolute(), link_path)
-            logging.debug(f"Symlink added to virtualenv PATH: {link_path.absolute()}")
-            added_symlink = True
-        except PermissionError:
-            logging.debug("Could not add symlink to PATH")
-            added_symlink = False
-    else:
-        logging.debug("Could not add symlink to PATH")
-        added_symlink = False
-
-    # Print instructions
-    if added_symlink:
-        command = 'oracle_lib_path_export'
-    else:
-        command = script_file.absolute()
-
-    print(dedent(f"""
-        Run the following to set LD_LIBRARY_PATH:
-
-        export "$({command})"
-        """).strip() + '\n')
 
 
 WINDOWS_INSTALL_MESSAGE = dedent("""
