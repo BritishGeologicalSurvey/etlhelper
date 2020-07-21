@@ -180,22 +180,33 @@ def get_working_dirs():
     return install_dir, script_dir, bin_dir
 
 
-def check_status(install_dir, script_dir, bin_dir):
-    """Examine directories to determine which installation stages have been
-    completed.  Return dictionary with status.
+def check_install_status(install_dir, script_dir, bin_dir):
     """
+    Determine whether files required for installation are present.
+    """
+    # Drivers are installed
+    libocci_19 = install_dir / 'libocci.so.19.1'
+    libclntsh_19 = install_dir / 'libclnsh.so.19.1'
+    drivers_installed = (libocci_19.is_file()
+                         and libclntsh_19.is_file())
 
-    status = {
-        "install_dir exists": install_dir.exists(),
-        "unpacked_client_dir_exists": False,  # oracle_instantclient dir
-        "zipfile_unpacked":  False,  # have we unzipped the zip
-        "libocci_symlinked": False,
-        "libclntsh_symlinked": False,
-        "export_path_script_exists": False,
-        "export_path_script_symlinked_to_bindir": False
-    }
+    # Symlinks
+    libocci_link = install_dir / 'libocci.so'
+    libclntsh_link = install_dir / 'libclntsh.so'
+    symlinks_created = (libocci_link.is_symlink()
+                        and libclntsh_link.is_symlink())
 
-    return status
+    # Script exists
+    script_exists = script_dir.joinpath('oracle_lib_path_export').exists()
+
+    # Export script linked on path (if required)
+    if bin_dir == script_dir:
+        script_link_on_path = True
+    else:
+        script_link_on_path = bin_dir.joinpath('oracle_lib_path_export').exists()
+
+    return (drivers_installed and symlinks_created and script_exists
+            and script_link_on_path)
 
 
 def _get_instantclient_dir(zipfile_path):
