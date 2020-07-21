@@ -1,7 +1,7 @@
 """Tests for setup_oracle_client.py script."""
 import pytest
 from etlhelper.setup_oracle_client import (
-    install_instantclient, check_install_status, cleanup
+    _install_instantclient, _check_install_status, _cleanup
 )
 
 
@@ -21,7 +21,7 @@ def test_install_instantclient_happy_path(dummy_zipfile, tmp_path):
         directory.mkdir()
 
     # Act
-    install_instantclient(zipfile_location, install_dir, script_dir, bin_dir)
+    _install_instantclient(zipfile_location, install_dir, script_dir, bin_dir)
 
     # Assert driver files are present
     assert list(install_dir.glob('libocci.so.*.*')) != []
@@ -32,7 +32,7 @@ def test_install_instantclient_happy_path(dummy_zipfile, tmp_path):
     assert install_dir.joinpath('libclntsh.so').is_symlink()
 
     # Final check - use our own check of install status
-    assert check_install_status(install_dir, script_dir, bin_dir)
+    assert _check_install_status(install_dir, script_dir, bin_dir)
 
 
 def test_check_install_status_installed(mock_installation):
@@ -42,7 +42,7 @@ def test_check_install_status_installed(mock_installation):
     bin_dir = mock_installation / 'bin'
 
     # Act
-    already_installed = check_install_status(install_dir, script_dir, bin_dir)
+    already_installed = _check_install_status(install_dir, script_dir, bin_dir)
 
     # Assert
     assert already_installed
@@ -58,7 +58,7 @@ def test_check_install_status_no_links(mock_installation):
     (install_dir / 'libclntsh.so').unlink()
 
     # Act
-    already_installed = check_install_status(install_dir, script_dir, bin_dir)
+    already_installed = _check_install_status(install_dir, script_dir, bin_dir)
 
     # Assert
     assert already_installed is False
@@ -71,7 +71,7 @@ def test_cleanup(mock_installation):
     bin_dir = mock_installation / 'bin'
 
     # Act
-    cleanup(install_dir, script_dir, bin_dir)
+    _cleanup(install_dir, script_dir, bin_dir)
 
     # Assert
     assert not install_dir.exists()

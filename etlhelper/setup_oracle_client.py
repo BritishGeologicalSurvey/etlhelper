@@ -18,7 +18,7 @@ ORACLE_DEFAULT_ZIP_URL = ("https://download.oracle.com/otn_software/linux/instan
                           "19600/instantclient-basic-linux.x64-19.6.0.0.0dbru.zip")
 
 
-def setup_oracle_client(zip_location):
+def setup_oracle_client(zipfile_location):
     """
     Check platform and install Oracle Instant Client.  Download file if zip
     location is a url.
@@ -26,70 +26,41 @@ def setup_oracle_client(zip_location):
     :param zip_location: str, path or URL of instantclient zip file
     :param with_utils: bool, determine if utils are also installed
     """
+    # Return if configured already
     if _oracle_client_is_configured():
         print('Oracle Client library is correctly configured')
         return
 
-    # Quit if not Linux
+    # Quit with help message if not Linux
     if sys.platform != 'linux':
         # Message for Windows and Mac users
         print(WINDOWS_INSTALL_MESSAGE)
         sys.exit(1)
 
     # Gather facts
-    install_dir, script_dir, bin_dir = get_working_dirs()
-    already_installed = check_install_status(install_dir, script_dir, bin_dir)
+    install_dir, script_dir, bin_dir = _get_working_dirs()
+    already_installed = _check_install_status(install_dir, script_dir, bin_dir)
 
-    """
-    get_working_dirs()
-    already_installed = check_install_status(directories)
+    # Install if required
+    # TODO: Add reinstall option
+    if not already_installed:
+        _install_instantclient(zipfile_location,
+                               install_dir, script_dir, bin_dir)
 
-    if not already_installed or reinstall:
-      # All the code below in `install_instantclient(zipfile_location, directories)`
-    wipe existing directories and scripts (catching errors if files don't exist)
-    # Don't get caught by broken installs
-
-      create install dir (if not already)
-      confirm zip file (download if required and check is a file)
-
-      unzip into install_dir (making sure *.so.*.* is in root and not in subfolder)
-      make symlinks to .so files
-
-      write oracle_path_lib_export
-      make symlink to bin_dir()
-
-    if bin_dir == install_dir:
-    # this happens if not in virtual environment so script_dir.parent.parent.... /
-       bin is non-existent or not writable
-       print message (with oracle_lib_path_export)
+    # Print instructions for setting library path
+    if bin_dir != script_dir:
+        command = 'oracle_lib_path_export'
     else:
-       print message (with absolute location of script file)
-        """
+        command = script_dir / 'oracle_lib_path_export'
 
-    # Create install_dir
-    _create_install_dir(install_dir)  # Instead of figuring out the dir in the func
+    print(dedent(f"""
+        Run the following to set LD_LIBRARY_PATH:
 
-    # Check if zip file is downloaded, if not, download
-    zipfile_path = _check_or_get_zipfile(zip_location)
-
-    # Install from zipfile
-    instantclient_dir = _install_zipped_files(zipfile_path, install_dir)
-
-    # Create symlinks
-    # instantclient_dir = _get_instantclient_dir(zipfile_path)
-    symlink_libraries(install_dir)
-
-    logging.debug(f"Target directory for script installation: {script_dir}")
-    try:
-        _create_path_export_script(instantclient_dir, script_dir, bin_dir)
-    except PermissionError:
-        print(dedent(f"""
-            Permission denied to required Python directory: {script_dir}
-            Consider using a virtual environment.""".strip()))
-        sys.exit(1)
+        export "$({command})"
+        """).strip() + '\n')
 
 
-def get_working_dirs():
+def _get_working_dirs():
     """Return the directories needed for install"""
     # Location for driver files
     install_dir = Path(__file__).parent / 'oracle_instantclient'
@@ -116,7 +87,7 @@ def get_working_dirs():
     return install_dir, script_dir, bin_dir
 
 
-def check_install_status(install_dir, script_dir, bin_dir):
+def _check_install_status(install_dir, script_dir, bin_dir):
     """
     Determine whether files required for installation are present.
     """
@@ -148,17 +119,17 @@ def check_install_status(install_dir, script_dir, bin_dir):
             and script_link_on_path)
 
 
-def install_instantclient(zipfile_location, install_dir, script_dir, bin_dir):
+def _install_instantclient(zipfile_location, install_dir, script_dir, bin_dir):
     """
     Install Oracle Instant Client files.
     """
-    cleanup(install_dir, script_dir, bin_dir)
+    _cleanup(install_dir, script_dir, bin_dir)
     _create_install_dir(install_dir)
 
     zipfile_path = _check_or_get_zipfile(zipfile_location)
 
-    install_libraries(zipfile_path, install_dir)
-    symlink_libraries(install_dir)
+    _install_libraries(zipfile_path, install_dir)
+    _symlink_libraries(install_dir)
 
     _create_path_export_script(install_dir, script_dir)
 
@@ -168,7 +139,7 @@ def install_instantclient(zipfile_location, install_dir, script_dir, bin_dir):
             (script_dir / 'oracle_lib_path_export'))
 
 
-def cleanup(install_dir, script_dir, bin_dir):
+def _cleanup(install_dir, script_dir, bin_dir):
     """
     Remove files that may remain from previous installations.
     """
@@ -233,7 +204,7 @@ def _download_zipfile(zip_download_source):
     return zipfile_download_target.absolute()
 
 
-def install_libraries(zipfile_path, install_dir):
+def _install_libraries(zipfile_path, install_dir):
     """
     Install zipfile contents to install_dir.
     """
@@ -250,7 +221,7 @@ def install_libraries(zipfile_path, install_dir):
     subdir.rmdir()
 
 
-def symlink_libraries(install_dir):
+def _symlink_libraries(install_dir):
     """Link specific .so file versions to general name."""
     # Multiple versions of driver exist, choose the highest
     libocci_latest = sorted(install_dir.glob('libocci.so.*.*'))[-1]
