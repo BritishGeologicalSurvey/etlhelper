@@ -251,16 +251,14 @@ def _check_or_get_zipfile(zipfile_location):
     if not zipfile_location:
         print('Downloading default Oracle zipfile')
         zip_path = _download_zipfile(ORACLE_DEFAULT_ZIP_URL)
-        return zip_path
-    if zipfile_location.is_file():
-        logging.debug(f'Zipfile already downloaded: {zipfile_location.absolute()}')
-        return Path(zipfile_location)
-    try:
-        print(f'Downloading Oracle zipfile from {zipfile_location}')
+    elif zipfile_location.startswith("http"):
         zip_path = _download_zipfile(zipfile_location)
-        return zip_path
-    except Exception as exc:
-        logging.debug('Unexpected error downloading zipfile from %s, %s', zipfile_location, exc)
+    else:
+        zip_path = Path(zipfile_location)
+
+    if not (zip_path.is_file() and zip_path.suffix == ".zip"):
+        raise OSError(f"Zip path {zip_path} is not a valid zip file")
+    return zip_path
 
 
 def _download_zipfile(zip_download_source):
@@ -274,7 +272,7 @@ def _download_zipfile(zip_download_source):
     """
     zipurl_split = urlsplit(zip_download_source)
     zipfile_name = zipurl_split.path.split("/")[-1]
-    zipfile_download_target = Path("/tmp") / zipfile_name
+    zipfile_download_target = Path(tempfile.gettempdir()) / zipfile_name
     urllib.request.urlretrieve(zip_download_source,
                                filename=zipfile_download_target.absolute())
     return zipfile_download_target.absolute()
@@ -318,24 +316,24 @@ def _oracle_client_is_configured():
         return False
 
 
-def _create_path_export_script(instantclient_dir, script_dir):
+def _create_path_export_script(install_dir, script_dir):
     """
-    Write an executable Python file to the virtual environment path (or current
-    directory if not available) that prints an updated PATH variable including
+    Write an executable Python file
+    that prints an updated LD_LIBRARY_PATH variable including
     the Oracle libraries.
-    :param lib_dir: location of Oracle libraries
-    :param bin_dir: location of created script (on PATH)
+    :param install_dir: location of Oracle libraries
+    :param script_dir: location to write the script
     """
     # Write Python code within 'here document'
     # https://stackoverflow.com/questions/35533473/avoiding-syntax-error-near-unexpected-token-in-bash?rq=1
-    logging.debug("Path to add to LD_LIBRARY_PATH: %s", instantclient_dir.absolute())
+    logging.debug("Path to add to LD_LIBRARY_PATH: %s", install_dir.absolute())
     contents = dedent(f"""
         #!/bin/sh
         # Script to print PATH variable including Oracle drivers, suitable
         # for use with `export` command.
 
         python << EOF
-        print("LD_LIBRARY_PATH={instantclient_dir.absolute()}:{os.getenv('LD_LIBRARY_PATH', '')}")
+        print("LD_LIBRARY_PATH={install_dir.absolute()}:{os.getenv('LD_LIBRARY_PATH', '')}")
         EOF
         """).strip()
 
