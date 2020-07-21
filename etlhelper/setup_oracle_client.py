@@ -9,7 +9,7 @@ import shutil
 import sys
 from textwrap import dedent
 import urllib.request
-from urllib import urlparse
+from urllib.parse import urlparse
 import zipfile
 
 import cx_Oracle
