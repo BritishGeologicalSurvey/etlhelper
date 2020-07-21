@@ -1,5 +1,8 @@
 """Tests for setup_oracle_client.py script."""
-from etlhelper.setup_oracle_client import install_instantclient
+import pytest
+from etlhelper.setup_oracle_client import (
+    install_instantclient, check_install_status
+)
 
 
 def test_dummy_zipfile(dummy_zipfile):
@@ -9,6 +12,7 @@ def test_dummy_zipfile(dummy_zipfile):
 
 
 def test_install_instantclient(dummy_zipfile, tmp_path):
+    # Arrange
     install_dir = tmp_path / 'oracle_instantclient'
 
     # Act

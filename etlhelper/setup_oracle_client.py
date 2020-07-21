@@ -22,15 +22,6 @@ ORACLE_DEFAULT_ZIP_URL = ("https://download.oracle.com/otn_software/linux/instan
                           "19600/instantclient-basic-linux.x64-19.6.0.0.0dbru.zip")
 
 
-def get_working_dirs():
-    """Return a dictionary of the directories needed for install"""
-    install_dir = Path(__file__).parent / 'oracle_instantclient'
-    script_dir = Path(inspect.getfile(sys._getframe(1))).parent
-    bin_dir = script_dir.parent.parent.parent.parent / 'bin'
-    logging.debug(f"Install dir: {install_dir}, script_dir: {script_dir}, bin dir: {bin_dir}")
-    return install_dir, script_dir, bin_dir
-
-
 def setup_oracle_client(zip_location):
     """
     Check platform and install Oracle Instant Client.  Download file if zip
@@ -164,14 +155,28 @@ def symlink_libraries(install_dir):
 
 def get_working_dirs():
     """Return the directories needed for install"""
+    # Location for driver files
     install_dir = Path(__file__).parent / 'oracle_instantclient'
-    script_dir = Path(inspect.getfile(sys._getframe(1))).parent
 
-    # bin directory must exist and be writable, otherwise use script_dir
-    bin_dir = script_dir.parent.parent.parent.parent / 'bin'  # or install_dir
+    # Location for lib_path_export script
+    script_dir = Path(__file__).parent
+
+    # We want a bin_dir that is writeable and on the $PATH where we can link
+    # to the lib_path_export script.  The location of the Python executable is
+    # a good candidate.
+    python_dir = Path(sys.executable).parent
+    try:
+        # Try to write a file
+        testfile = python_dir / 'test'
+        testfile.touch
+        testfile.unlink()
+        # Success!  Use this directory
+        bin_dir = python_dir
+    except PermissionError:
+        # Fall back to script dir
+        bin_dir = script_dir
 
     logging.debug(f"Install dir: {install_dir}, script_dir: {script_dir}, bin dir: {bin_dir}")
-    # TODO: return dict with keys for install, script, bin.
     return install_dir, script_dir, bin_dir
 
 
