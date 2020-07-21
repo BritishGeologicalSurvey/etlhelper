@@ -76,7 +76,7 @@ def _get_working_dirs():
     try:
         # Try to write a file
         testfile = python_dir / 'test'
-        testfile.touch
+        testfile.touch()
         testfile.unlink()
         # Success!  Use this directory
         bin_dir = python_dir
@@ -139,13 +139,14 @@ def _install_instantclient(zipfile_location, install_dir, script_dir, bin_dir):
     # Symlink onto PATH if bin_dir is writeable
     if bin_dir != script_dir:
         (bin_dir / 'oracle_lib_path_export').symlink_to(
-            (script_dir / 'oracle_lib_path_export'))
+            (script_dir / 'oracle_lib_path_export').absolute())
 
 
 def _cleanup(install_dir, script_dir, bin_dir):
     """
     Remove files that may remain from previous installations.
     """
+    logging.debug('Cleaning up previous installation')
     shutil.rmtree(install_dir, ignore_errors=True)
 
     path_export_script = script_dir / 'oracle_lib_path_export'
@@ -166,6 +167,7 @@ def _create_install_dir(install_dir):
             Permission denied to required Python directory: {install_dir}
             Consider using a virtual environment.""".strip()))
         sys.exit(1)
+    logging.debug('Install directory created at %s', install_dir)
 
 
 def _check_or_get_zipfile(zipfile_location):
@@ -177,7 +179,7 @@ def _check_or_get_zipfile(zipfile_location):
     raises: Exception if URL is invalid or path none-existent or not zipfile.
     """
     assert isinstance(zipfile_location, str), "zipfile_location should be string"
-    if zipfile_location is None:
+    if zipfile_location == '':
         zipfile_path = _download_zipfile(ORACLE_DEFAULT_ZIP_URL)
     elif zipfile_location.startswith("http"):
         zipfile_path = _download_zipfile(zipfile_location)
@@ -200,11 +202,11 @@ def _download_zipfile(zip_download_source):
 
     Fails gracefully if download fails. Sys exit -1 with helpful msg
     """
+    logging.debug("Downloading drivers from: %s", zip_download_source)
     zipfile_name = zip_download_source.split("/")[-1]
     zipfile_download_target = Path(tempfile.gettempdir()) / zipfile_name
     urllib.request.urlretrieve(zip_download_source,
                                filename=zipfile_download_target.absolute())
-    logging.debug("Zip file downloaded from: %s", zip_download_source)
     return zipfile_download_target.absolute()
 
 
@@ -303,7 +305,6 @@ def _oracle_client_is_configured():
                 # instructions for missing oracle drivers
                 # these are printed anyway if the function returns false? (DV)
                 logging.debug(msg)
-                print(CLNTSH_MESSAGE)
                 return False
             if 'libnsl.so.1' in msg:
                 # instructions for network services library
@@ -353,7 +354,7 @@ def main():
     parser = argparse.ArgumentParser(
         description="Install Oracle Instant Client to Python environment")
     parser.add_argument(
-        'zip_location', type=str,
+        '--zip_location', type=str, default='',
         help="Path or URL of instantclient-*-linux-*.zip")
     parser.add_argument(
         "--log", dest="log_level", default='INFO',
