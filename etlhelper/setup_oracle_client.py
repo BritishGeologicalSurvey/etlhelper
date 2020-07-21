@@ -9,7 +9,7 @@ import shutil
 import sys
 from textwrap import dedent
 import urllib.request
-from urllib.parse import urlparse
+from urllib.parse import urlparse, urlsplit
 import zipfile
 
 import cx_Oracle
@@ -17,7 +17,8 @@ import cx_Oracle
 logging.basicConfig()
 
 
-ORACLE_DEFAULT_ZIP_URL = "https://download.oracle.com/otn_software/linux/instantclient/19600/instantclient-basic-linux.x64-19.6.0.0.0dbru.zip"
+ORACLE_DEFAULT_ZIP_URL = ("https://download.oracle.com/otn_software/linux/instantclient/"
+                          "19600/instantclient-basic-linux.x64-19.6.0.0.0dbru.zip")
 
 
 def get_working_dirs():
@@ -42,49 +43,54 @@ def setup_oracle_client(zip_location):
         return
 
     # Quit if not Linux
-    if not sys.platform == 'linux':
+    if sys.platform != 'linux':
         # Message for Windows and Mac users
         print(WINDOWS_INSTALL_MESSAGE)
         sys.exit(1)
 
     # GATHER FACTS
     install_dir, script_dir, bin_dir = get_working_dirs()
+
     status = check_status(install_dir, script_dir, bin_dir)
 
     """
     get_working_dirs()
     already_installed = check_install_status(directories)
-    
+
     if not already_installed or reinstall:
       # All the code below in `install_instantclient(zipfile_location, directories)`
-      wipe existing directories and scripts (catching errors if files don't exist)  # Don't get caught by broken installs
-    
+    wipe existing directories and scripts (catching errors if files don't exist)
+    # Don't get caught by broken installs
+
       create install dir (if not already)
       confirm zip file (download if required and check is a file)
-    
+
       unzip into install_dir (making sure *.so.*.* is in root and not in subfolder)
       make symlinks to .so files
-    
+
       write oracle_path_lib_export
       make symlink to bin_dir()
-    
-    if bin_dir == install_dir:  # this happens if not in virtual environment so script_dir.parent.parent.... / bin is non-existent or not writable
+
+    if bin_dir == install_dir:
+    # this happens if not in virtual environment so script_dir.parent.parent.... /
+       bin is non-existent or not writable
        print message (with oracle_lib_path_export)
     else:
        print message (with absolute location of script file)
         """
 
     # Create install_dir
-    # if not progress["unpack_dir_exists"]:
-    #     _create_install_dir()
     _create_install_dir(install_dir)  # Instead of figuring out the dir in the func
 
+    # Check if zip file is downloaded, if not, download
+    zipfile_path = _check_or_get_zipfile(zip_location)
+
     # Install from zipfile
-    zipfile_path = _install_zipped_files(zip_location, install_dir)
+    instantclient_dir = _install_zipped_files(zipfile_path, install_dir)
 
     # Create symlinks
-    instantclient_dir = _get_instantclient_dir(zipfile_path)
-    _create_symlinks(instantclient_dir)
+    # instantclient_dir = _get_instantclient_dir(zipfile_path)
+    symlink_libraries(install_dir)
 
     logging.debug(f"Target directory for script installation: {script_dir}")
     try:
@@ -100,16 +106,16 @@ def install_instantclient(zipfile_location, install_dir, script_dir, bin_dir):
     """
     Install Oracle Instant Client files. by unzipping zip file (downloading if requrie
     """
-    #cleanup(install_dir, script_dir, bin_dir)
-    #create_install_dir()
+    # cleanup(install_dir, script_dir, bin_dir)
+    # create_install_dir()
 
-    #zipfile_path = check_or_get_zipfile(zipfile_location)
+    # zipfile_path = check_or_get_zipfile(zipfile_location)
     zipfile_path = zipfile_location  # TODO: replace with check_or_get_zipfile
 
     install_libraries(zipfile_path, install_dir)
     symlink_libraries(install_dir)
 
-    #write_ld_library_path_export_script(script_dir)
+    # write_ld_library_path_export_script(script_dir)
 
 
 def install_libraries(zipfile_path, install_dir):
@@ -237,8 +243,8 @@ def _check_or_get_zipfile(zipfile_location):
     # Zipfile path can be path, URL or None
 
     if zipfile_location is None:
-        print(f'Downloading default Oracle zipfile')
-        zipurl_split = urlparse.urlsplit(ORACLE_DEFAULT_ZIP_URL)
+        print('Downloading default Oracle zipfile')
+        zipurl_split = urlsplit(ORACLE_DEFAULT_ZIP_URL)
         zipfile_name = zipurl_split.path.split("/")[-1]
         zipfile_download_target = Path("/tmp") / zipfile_name
         urllib.request.urlretrieve(ORACLE_DEFAULT_ZIP_URL,
@@ -251,7 +257,7 @@ def _check_or_get_zipfile(zipfile_location):
 
     try:
         print(f'Downloading Oracle zipfile from {zipfile_location}')
-        zipurl_split = urlparse.urlsplit(zipfile_location)
+        zipurl_split = urlsplit(zipfile_location)
         zipfile_name = zipurl_split.path.split("/")[-1]
         zipfile_download_target = Path("/tmp") / zipfile_name
         urllib.request.urlretrieve(zipfile_location,
@@ -286,8 +292,8 @@ def _oracle_client_is_configured():
     try:
         # This will always fail, as 'test' is not a valid database.
         cx_Oracle.connect('test')
-    except cx_Oracle.DatabaseError as e:
-        msg = e.args[0].message
+    except cx_Oracle.DatabaseError as exc:
+        msg = exc.args[0].message
 
         # Incorrectly specified service error - this is good!
         if msg.startswith('ORA-12162'):
