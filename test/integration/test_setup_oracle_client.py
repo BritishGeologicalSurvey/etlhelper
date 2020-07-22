@@ -103,7 +103,9 @@ def mock_installation(tmp_path):
     (install_dir / 'libclntsh.so').symlink_to(libclntsh_19)
 
     # Script files
-    script_dir.joinpath('oracle_lib_path_export').touch()
-    bin_dir.joinpath('oracle_lib_path_export').touch()
+    path_export_script = script_dir.joinpath('oracle_lib_path_export')
+    path_export_script.touch()
+    path_export_script_link = bin_dir.joinpath('oracle_lib_path_export')
+    path_export_script_link.symlink_to(path_export_script)
 
     return mock_installation

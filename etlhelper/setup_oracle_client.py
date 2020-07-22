@@ -223,7 +223,7 @@ def _install_libraries(zipfile_path, install_dir):
     Install zipfile contents to install_dir.
     """
     # Extract all the files
-    shutil.unpack_archive(zipfile_path, extract_dir=install_dir)
+    shutil.unpack_archive(str(zipfile_path), extract_dir=install_dir)
 
     # Files are initially extracted into a subdirectory - copy them out
     # and remove subdirectory
