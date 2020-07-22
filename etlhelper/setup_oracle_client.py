@@ -312,17 +312,19 @@ def _oracle_client_is_configured():
             if 'libclntsh.so' in msg:
                 # instructions for missing oracle drivers
                 # these are printed anyway if the function returns false? (DV)
+                logging.debug("Oracle drivers are not correctly installed.")
                 logging.debug(msg)
                 return False
             if 'libnsl.so.1' in msg:
                 # instructions for network services library
+                logging.debug("System dependency not correctly configured.")
                 logging.debug(msg)
                 print(NSL_MESSAGE)
-                return False
+                sys.exit(1)
 
         # Unhandled error
-        print(f'cx_Oracle Instant Client Error: {msg}')
-        return False
+        logging.error('cx_Oracle Instant Client Error: %s', msg)
+        sys.exit(1)
 
 
 WINDOWS_INSTALL_MESSAGE = dedent("""
@@ -342,18 +344,16 @@ NSL_MESSAGE = dedent("""
 
     If you have already installed libnsl, you may have a **newer**, but incompatible version.
 
-    A workaround for Fedora 28+ users is detailed here:
+    A workaround is to create a symlink to your installed version of libnsl, for example:
     https://github.com/oracle/node-oracledb/issues/892#issuecomment-387082011
-
-    i.e. create a symlink to the newer library on the LD_LIBRARY_PATH
 
     ln -s [PATH TO SYSTEM libnsl.so.2] [PATH TO LOCAL LIBRARY FOLDER]/libnsl.so.1
 
-    etlhelper adds the Oracle Instant Client directory to the LD_LIBRARY_PATH.  When
-    using a virtual environment, the command will look something like:
+    etlhelper adds the Oracle Instant Client directory to the LD_LIBRARY_PATH.
+    When using a virtual environment, the command will look something like:
 
     ln -s /usr/lib64/libnsl.so.2 \
-        ${VIRTUAL_ENV}/lib/python3.7/site-packages/etlhelper/oracle_instantclient/instantclient_12_2/libnsl.so.1
+        ${VIRTUAL_ENV}/lib/python3.7/site-packages/etlhelper/oracle_instantclient/libnsl.so.1
     """).strip() + '\n'
 
 
