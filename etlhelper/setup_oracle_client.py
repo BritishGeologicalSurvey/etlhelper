@@ -359,7 +359,7 @@ def main():
     parser = argparse.ArgumentParser(
         description="Install Oracle Instant Client to Python environment")
     parser.add_argument(
-        '--zip_location', type=str, default='',
+        'zip_location', type=str, nargs='*',
         help="Path or URL of instantclient-*-linux-*.zip")
     parser.add_argument(
         "--log", dest="log_level", default='INFO',
@@ -367,10 +367,17 @@ def main():
         help="Set the logging level")
     args = parser.parse_args()
 
+    # This syntax is used to maintain backwards compatiblity and to make
+    # zip_location optional but without requiring a flag e.g. --zip_location
+    if args.zip_location:
+        zip_location = args.zip_location[0]
+    else:
+        zip_location = ''
+
     if args.log_level:
         logging.getLogger().setLevel(getattr(logging, args.log_level))
 
-    setup_oracle_client(args.zip_location)
+    setup_oracle_client(zip_location)
 
 
 if __name__ == '__main__':
