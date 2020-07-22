@@ -41,4 +41,4 @@ ARG INSTANT_CLIENT_ZIP
 RUN python -m pip install .
 RUN setup_oracle_client ${INSTANT_CLIENT_ZIP} --log DEBUG
 # Have to hard-code oracle_lib_export as ENV can't use result of command
-ENV LD_LIBRARY_PATH=/app/etlhelper/oracle_instantclient/instantclient_12_2
+ENV LD_LIBRARY_PATH=/app/etlhelper/oracle_instantclient

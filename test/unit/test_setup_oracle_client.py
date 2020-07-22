@@ -44,6 +44,7 @@ def test_oracle_client_is_configured(monkeypatch, caplog, emsg, expected_return,
     if caplog.record_tuples:
         assert caplog.record_tuples[-1][2] == expected_text
 
+
 @pytest.mark.parametrize("emsg, expected_text",
                          [("DPI-1047: libnsl.so.1", NSL_MESSAGE),
                           ("DPI-9999: Some weird error",
