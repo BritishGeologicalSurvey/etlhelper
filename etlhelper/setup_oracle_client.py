@@ -11,7 +11,10 @@ import tempfile
 
 import cx_Oracle
 
-logging.basicConfig()
+formatter = logging.Formatter('... %(message)s')
+handler = logging.StreamHandler()
+handler.setFormatter(formatter)
+logging.basicConfig(handlers=[handler])
 
 
 ORACLE_DEFAULT_ZIP_URL = ("https://download.oracle.com/otn_software/linux/instantclient/"
@@ -84,7 +87,10 @@ def _get_working_dirs():
         # Fall back to script dir
         bin_dir = script_dir
 
-    logging.debug(f"Install dir: {install_dir}, script_dir: {script_dir}, bin dir: {bin_dir}")
+    logging.debug("install_dir: %s", install_dir)
+    logging.debug("script_dir: %s", script_dir)
+    logging.debug("bin_dir: %s", bin_dir)
+
     return install_dir, script_dir, bin_dir
 
 
