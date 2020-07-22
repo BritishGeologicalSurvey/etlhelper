@@ -58,24 +58,26 @@ def setup_oracle_client(zipfile_location):
         command = script_dir / 'oracle_lib_path_export'
 
     print(dedent(f"""
-        Run the following to set LD_LIBRARY_PATH:
+        InstantClient installed.  Run the following to set LD_LIBRARY_PATH:
 
         export "$({command})"
         """).strip() + '\n')
 
 
 def _get_working_dirs():
-    """Return the directories needed for install"""
+    """
+    Return the directories needed for install.
+    """
     # Location for driver files
-    install_dir = Path(__file__).parent / 'oracle_instantclient'
+    install_dir = Path(__file__).parent.absolute() / 'oracle_instantclient'
 
     # Location for path_export_script
-    script_dir = Path(__file__).parent
+    script_dir = Path(__file__).parent.absolute()
 
     # We want a bin_dir that is writeable and on the $PATH where we can link
     # to the path_export_script.  The location of the Python executable is
     # a good candidate.
-    python_dir = Path(sys.executable).parent
+    python_dir = Path(sys.executable).parent.absolute()
     try:
         # Try to write a file
         testfile = python_dir / 'test'
@@ -156,11 +158,11 @@ def _cleanup(install_dir, script_dir, bin_dir):
     shutil.rmtree(install_dir, ignore_errors=True)
 
     path_export_script = script_dir / 'oracle_lib_path_export'
-    if path_export_script.exists():
+    if path_export_script.is_file():
         path_export_script.unlink()
 
     path_export_script_link = bin_dir / 'oracle_lib_path_export'
-    if path_export_script_link.exists():
+    if path_export_script_link.is_symlink():
         path_export_script_link.unlink()
 
 
