@@ -311,15 +311,12 @@ def _oracle_client_is_configured():
         if msg.startswith('DPI-1047'):
             if 'libclntsh.so' in msg:
                 # instructions for missing oracle drivers
-                # these are printed anyway if the function returns false? (DV)
-                logging.debug("Oracle drivers are not correctly installed.")
-                logging.debug(msg)
+                logging.debug(CLNTSH_MESSAGE)
                 return False
+
             if 'libnsl.so.1' in msg:
                 # instructions for network services library
-                logging.debug("System dependency not correctly configured.")
-                logging.debug(msg)
-                print(NSL_MESSAGE)
+                logging.debug(NSL_MESSAGE)
                 sys.exit(1)
 
         # Unhandled error
