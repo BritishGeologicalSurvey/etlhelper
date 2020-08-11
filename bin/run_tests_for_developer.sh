@@ -1,12 +1,11 @@
 #! /bin/sh
+echo "Flake8 checks"
+flake8 etlhelper test || exit 1
+
 echo "Building container"
 docker build \
   --build-arg INSTANT_CLIENT_ZIP=${INSTANT_CLIENT_ZIP} \
   -t etlhelper-test-runner . || exit 1
-
-echo "Flake8 checks"
-docker run \
-  etlhelper-test-runner flake8 etlhelper test || exit 1
 
 echo "Unit and integration tests"
 docker run \
@@ -25,8 +24,9 @@ docker run \
   -e TEST_MSSQL_PASSWORD="${TEST_MSSQL_PASSWORD}" \
   --net=host \
   --name=etlhelper-test-runner \
+  -it \
   etlhelper-test-runner \
-  pytest -vs -rsx --cov=etlhelper --cov-report html --cov-report term test/
+  pytest -vs -rsx --pdb --cov=etlhelper --cov-report html --cov-report term test/
 
 # Copy coverage files out of container to local if tests passed
 if [ $? -eq 0 ]; then
