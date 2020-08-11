@@ -3,14 +3,6 @@ ipdb
 ipython
 pytest>=4.6
 pytest-cov
-Sphinx
-sphinxcontrib-applehelp
-sphinxcontrib-devhelp
-sphinxcontrib-htmlhelp
-sphinxcontrib-jsmath
-sphinxcontrib-qthelp
-sphinxcontrib-serializinghtml
-sphinx_rtd_theme
 versioneer
 cx-oracle
 pyodbc
