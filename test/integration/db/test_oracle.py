@@ -63,7 +63,7 @@ INSERT_SQL = dedent("""
 
 @pytest.fixture(scope='function')
 def testdb_conn():
-    """Get connection to test MS SQL database."""
+    """Get connection to test Oracle database."""
     with connect(ORADB, 'TEST_ORACLE_PASSWORD', encoding="UTF-8",
                  nencoding="UTF-8") as conn:
         yield conn
