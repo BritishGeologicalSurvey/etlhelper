@@ -12,7 +12,7 @@ class PostgresDbHelper(DbHelper):
         super().__init__()
         try:
             import psycopg2
-            self.sql_exceptions = (psycopg2.ProgrammingError)
+            self.sql_exceptions = (psycopg2.ProgrammingError, psycopg2.InterfaceError, psycopg2.InternalError)
             self._connect_func = psycopg2.connect
             self.connect_exceptions = (psycopg2.OperationalError)
             self.required_params = {'host', 'port', 'dbname', 'user'}
