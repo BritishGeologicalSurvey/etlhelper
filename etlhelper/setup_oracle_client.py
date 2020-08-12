@@ -362,9 +362,8 @@ def main():
         'zip_location', type=str, nargs='*',
         help="Path or URL of instantclient-*-linux-*.zip")
     parser.add_argument(
-        "--log", dest="log_level", default='INFO',
-        choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'],
-        help="Set the logging level")
+        "-v", "--verbose", help="print debug-level logging output",
+        action="store_true")
     args = parser.parse_args()
 
     # This syntax is used to maintain backwards compatiblity and to make
@@ -374,8 +373,8 @@ def main():
     else:
         zip_location = ''
 
-    if args.log_level:
-        logging.getLogger().setLevel(getattr(logging, args.log_level))
+    if args.verbose:
+        logging.getLogger().setLevel(logging.DEBUG)
 
     setup_oracle_client(zip_location)
 
