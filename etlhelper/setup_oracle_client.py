@@ -17,18 +17,19 @@ handler.setFormatter(formatter)
 logging.basicConfig(handlers=[handler])
 
 
-ORACLE_DEFAULT_ZIP_URL = ("https://download.oracle.com/otn_software/linux/instantclient/"
-                          "19600/instantclient-basic-linux.x64-19.6.0.0.0dbru.zip")
+# Get the latest basiclite client by default.  Other versions can be specified using
+# the --zip_location parameter.
+ORACLE_DEFAULT_ZIP_URL = ("https://download.oracle.com/otn_software/linux/instantclient/instantclient-basiclite-linuxx64.zip")  # noqa
 
 
-def setup_oracle_client(zipfile_location):
+def setup_oracle_client(zip_location):
     """
     Install and configure Oracle Instant Client.  The function will:
         + download Oracle libraries from internet or custom URL if required
         + unzip file and create required symlinks
         + create script that prints command to add libraries to LD_LIBRARY_PATH
 
-    :param zip_location: str, path or URL of instantclient zip file
+    :param zip_location: str, URL or local file path of instantclient zip file
     """
     # Return if configured already
     if _oracle_client_is_configured():
@@ -48,7 +49,7 @@ def setup_oracle_client(zipfile_location):
     # Install if required
     # TODO: Add reinstall option
     if not already_installed:
-        _install_instantclient(zipfile_location, install_dir, script_dir,
+        _install_instantclient(zip_location, install_dir, script_dir,
                                bin_dir)
 
     # Print instructions for setting library path
@@ -130,14 +131,14 @@ def _check_install_status(install_dir, script_dir, bin_dir):
     return already_installed
 
 
-def _install_instantclient(zipfile_location, install_dir, script_dir, bin_dir):
+def _install_instantclient(zip_location, install_dir, script_dir, bin_dir):
     """
     Install Oracle Instant Client files.
     """
     _cleanup(install_dir, script_dir, bin_dir)
     _create_install_dir(install_dir)
 
-    zipfile_path = _check_or_get_zipfile(zipfile_location)
+    zipfile_path = _check_or_get_zipfile(zip_location)
 
     _install_libraries(zipfile_path, install_dir)
     _symlink_libraries(install_dir)
@@ -178,21 +179,18 @@ def _create_install_dir(install_dir):
     logging.debug('Install directory created at %s', install_dir)
 
 
-def _check_or_get_zipfile(zipfile_location):
+def _check_or_get_zipfile(zip_location):
     """
     args:
-        zipfile_location: (str) path to file, URL or None
+        zip_location: (str) URL or path to local file.
     returns:
         zipfile_path (Path-object)
     raises: Exception if URL is invalid or path none-existent or not zipfile.
     """
-    assert isinstance(zipfile_location, str), "zipfile_location should be string"
-    if zipfile_location == '':
-        zipfile_path = _download_zipfile(ORACLE_DEFAULT_ZIP_URL)
-    elif zipfile_location.startswith("http"):
-        zipfile_path = _download_zipfile(zipfile_location)
+    if zip_location.startswith("http"):
+        zipfile_path = _download_zipfile(zip_location)
     else:
-        zipfile_path = Path(zipfile_location)
+        zipfile_path = Path(zip_location)
 
     if not (zipfile_path.is_file() and zipfile_path.suffix == ".zip"):
         raise OSError(f"Zip path {zipfile_path} is not a valid zip file")
@@ -204,7 +202,7 @@ def _check_or_get_zipfile(zipfile_location):
 def _download_zipfile(zip_download_source):
     """Download zipfile to specified directory.
     args:
-        zipfile_location
+        zip_download_source
     returns:
         path to downloaded zipfile
 
@@ -353,25 +351,28 @@ NSL_MESSAGE = dedent("""
         ${VIRTUAL_ENV}/lib/python3.7/site-packages/etlhelper/oracle_instantclient/libnsl.so.1
     """).strip() + '\n'
 
+HELP_DESCRIPTION = dedent("""
+    Install Oracle Instant Client from URL or local file into Python environment.
+    See Oracle website (https://www.oracle.com/database/technologies/instant-client/linux-x86-64-downloads.html)
+    for available versions.
+    """).strip() + '\n'
+
 
 def main():
     """Parse args and run setup_oracle_client function."""
-    parser = argparse.ArgumentParser(
-        description="Install Oracle Instant Client to Python environment")
+    parser = argparse.ArgumentParser(description=HELP_DESCRIPTION)
     parser.add_argument(
-        'zip_location', type=str, nargs='*',
-        help="Path or URL of instantclient-*-linux-*.zip")
+        '-z', '--zip_location', type=str,
+        help="URL or local file path of instantclient-*-linux-*.zip")
     parser.add_argument(
         "-v", "--verbose", help="print debug-level logging output",
         action="store_true")
     args = parser.parse_args()
 
-    # This syntax is used to maintain backwards compatiblity and to make
-    # zip_location optional but without requiring a flag e.g. --zip_location
     if args.zip_location:
-        zip_location = args.zip_location[0]
+        zip_location = args.zip_location
     else:
-        zip_location = ''
+        zip_location = ORACLE_DEFAULT_ZIP_URL
 
     if args.verbose:
         logging.getLogger().setLevel(logging.DEBUG)
