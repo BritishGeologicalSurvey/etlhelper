@@ -11,7 +11,7 @@ import etlhelper.etl as etlhelper_etl
 from etlhelper import (iter_chunks, iter_rows, get_rows, dump_rows, execute,
                        fetchone, fetchmany, fetchall)
 from etlhelper.etl import ETLHelperExtractError, ETLHelperQueryError
-from etlhelper.row_factories import dict_rowfactory, namedtuple_rowfactory
+from etlhelper.row_factories import dict_row_factory, namedtuple_row_factory
 
 
 @pytest.mark.parametrize('chunk_size, slices', [
@@ -73,7 +73,7 @@ def test_iter_rows_transform(pgtestdb_test_tables, pgtestdb_conn,
 
 def test_iter_rows_dict_factory(pgtestdb_test_tables, pgtestdb_conn):
     sql = "SELECT * FROM src"
-    result = iter_rows(sql, pgtestdb_conn, row_factory=dict_rowfactory)
+    result = iter_rows(sql, pgtestdb_conn, row_factory=dict_row_factory)
     expected = [
         {'id': 1, 'value': 1.234, 'simple_text': 'text', 'utf8_text': 'Öæ°\nz',
          'day': datetime.date(2018, 12, 7),
@@ -92,7 +92,7 @@ def test_iter_rows_dict_factory(pgtestdb_test_tables, pgtestdb_conn):
 def test_iter_rows_namedtuple_factory(
         pgtestdb_test_tables, pgtestdb_conn, test_table_data):
     sql = "SELECT * FROM src"
-    result = iter_rows(sql, pgtestdb_conn, row_factory=namedtuple_rowfactory)
+    result = iter_rows(sql, pgtestdb_conn, row_factory=namedtuple_row_factory)
     row = list(result)[0]
 
     assert row.id == 1
@@ -183,12 +183,12 @@ def test_arguments_passed_to_iter_rows(
     # Act
     # getattr returns fetchmethod, which we call  with given parameters
     # Use real connection parameters to ensure we reach the call to iter_rows
-    # Use dict_rowfactory to demonstrate the default (namedtuple_rowfactory)
+    # Use dict_row_factory to demonstrate the default (namedtuple_row_factory)
     # isn't called
     try:
         getattr(etlhelper_etl, fetchmethod)(sql, pgtestdb_conn,
                                             parameters=parameters,
-                                            row_factory=dict_rowfactory,
+                                            row_factory=dict_row_factory,
                                             transform=transform)
     except TypeError:
         # We expect an error here as the mock_iter_rows breaks the functions
@@ -198,7 +198,7 @@ def test_arguments_passed_to_iter_rows(
     # Assert
     mock_iter_rows.assert_called_once_with(sql, pgtestdb_conn,
                                            parameters=parameters,
-                                           row_factory=dict_rowfactory,
+                                           row_factory=dict_row_factory,
                                            transform=transform)
 
 
