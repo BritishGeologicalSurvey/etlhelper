@@ -11,10 +11,10 @@ import tempfile
 
 import cx_Oracle
 
-formatter = logging.Formatter('... %(message)s')
+formatter = logging.Formatter('setup_oracle_client: %(message)s')
 handler = logging.StreamHandler()
 handler.setFormatter(formatter)
-logging.basicConfig(handlers=[handler])
+logging.basicConfig(handlers=[handler], level=logging.INFO)
 
 
 # Get the latest basiclite client by default.  Other versions can be specified using
@@ -27,13 +27,18 @@ def setup_oracle_client(zip_location):
     Install and configure Oracle Instant Client.  The function will:
         + download Oracle libraries from internet or custom URL if required
         + unzip file and create required symlinks
-        + create script that prints command to add libraries to LD_LIBRARY_PATH
+        + create script that prepends installation directory to LD_LIBRARY_PATH
+          environment variable
+        + print the name of the script to <stdout>
 
     :param zip_location: str, URL or local file path of instantclient zip file
     """
+    install_dir, ld_library_prepend_script = _get_install_paths()
+
     # Return if configured already
     if _oracle_client_is_configured():
-        print('Oracle Client library is correctly configured')
+        logging.info('Oracle Client library is correctly configured')
+        print(ld_library_prepend_script.absolute())
         return
 
     # Quit with help message if not Linux
@@ -43,61 +48,37 @@ def setup_oracle_client(zip_location):
         sys.exit(1)
 
     # Gather facts
-    install_dir, script_dir, bin_dir = _get_working_dirs()
-    already_installed = _check_install_status(install_dir, script_dir, bin_dir)
+    already_installed = _check_install_status(install_dir,
+                                              ld_library_prepend_script)
 
     # Install if required
     # TODO: Add reinstall option
     if not already_installed:
-        _install_instantclient(zip_location, install_dir, script_dir,
-                               bin_dir)
+        _install_instantclient(zip_location, install_dir,
+                               ld_library_prepend_script)
 
     # Print instructions for setting library path
-    if bin_dir != script_dir:
-        command = 'oracle_lib_path_export'
-    else:
-        command = script_dir / 'oracle_lib_path_export'
-
-    print(dedent(f"""
-        InstantClient installed.  Run the following to set LD_LIBRARY_PATH:
-
-        export "$({command})"
-        """).strip() + '\n')
+    logging.info('Oracle Client files installed successfully.  Ensure '
+                 'ld_library_prepend script is "sourced" to complete '
+                 'configuration.')
+    print(ld_library_prepend_script.absolute())
 
 
-def _get_working_dirs():
+def _get_install_paths():
     """
-    Return the directories needed for install.
+    Return file paths for the installation directory and ld_library_prepend
+    script.  This function can be mocked out for testing.
     """
-    # Location for driver files
     install_dir = Path(__file__).parent.absolute() / 'oracle_instantclient'
-
-    # Location for path_export_script
-    script_dir = Path(__file__).parent.absolute()
-
-    # We want a bin_dir that is writeable and on the $PATH where we can link
-    # to the path_export_script.  The location of the Python executable is
-    # a good candidate.
-    python_dir = Path(sys.executable).parent.absolute()
-    try:
-        # Try to write a file
-        testfile = python_dir / 'test'
-        testfile.touch()
-        testfile.unlink()
-        # Success!  Use this directory
-        bin_dir = python_dir
-    except PermissionError:
-        # Fall back to script dir
-        bin_dir = script_dir
+    ld_library_prepend_script = install_dir / 'ld_library_prepend.sh'
 
     logging.debug("install_dir: %s", install_dir)
-    logging.debug("script_dir: %s", script_dir)
-    logging.debug("bin_dir: %s", bin_dir)
+    logging.debug("ld_library_prepend_script: %s", ld_library_prepend_script)
 
-    return install_dir, script_dir, bin_dir
+    return install_dir, ld_library_prepend_script
 
 
-def _check_install_status(install_dir, script_dir, bin_dir):
+def _check_install_status(install_dir, ld_library_prepend_script):
     """
     Determine whether files required for installation are present.
     """
@@ -117,25 +98,21 @@ def _check_install_status(install_dir, script_dir, bin_dir):
                         and libclntsh_link.is_symlink())
 
     # Script exists
-    script_exists = script_dir.joinpath('oracle_lib_path_export').exists()
+    script_exists = install_dir.joinpath('ld_library_prepend.sh').is_file()
 
-    # Export script linked on path (if required)
-    if bin_dir == script_dir:
-        script_link_on_path = True
-    else:
-        script_link_on_path = bin_dir.joinpath('oracle_lib_path_export').exists()
+    already_installed = (drivers_installed and symlinks_created
+                         and script_exists)
 
-    already_installed = (drivers_installed and symlinks_created and script_exists
-                         and script_link_on_path)
     logging.debug("Already installed: %s", already_installed)
     return already_installed
 
 
-def _install_instantclient(zip_location, install_dir, script_dir, bin_dir):
+def _install_instantclient(zip_location, install_dir,
+                           ld_library_prepend_script):
     """
     Install Oracle Instant Client files.
     """
-    _cleanup(install_dir, script_dir, bin_dir)
+    _cleanup(install_dir)
     _create_install_dir(install_dir)
 
     zipfile_path = _check_or_get_zipfile(zip_location)
@@ -143,28 +120,15 @@ def _install_instantclient(zip_location, install_dir, script_dir, bin_dir):
     _install_libraries(zipfile_path, install_dir)
     _symlink_libraries(install_dir)
 
-    _create_path_export_script(install_dir, script_dir)
-
-    # Symlink onto PATH if bin_dir is writeable
-    if bin_dir != script_dir:
-        (bin_dir / 'oracle_lib_path_export').symlink_to(
-            (script_dir / 'oracle_lib_path_export').absolute())
+    _create_ld_library_prepend_script(install_dir, ld_library_prepend_script)
 
 
-def _cleanup(install_dir, script_dir, bin_dir):
+def _cleanup(install_dir):
     """
     Remove files that may remain from previous installations.
     """
     logging.debug('Cleaning up previous installation')
     shutil.rmtree(install_dir, ignore_errors=True)
-
-    path_export_script = script_dir / 'oracle_lib_path_export'
-    if path_export_script.is_file():
-        path_export_script.unlink()
-
-    path_export_script_link = bin_dir / 'oracle_lib_path_export'
-    if path_export_script_link.is_symlink():
-        path_export_script_link.unlink()
 
 
 def _create_install_dir(install_dir):
@@ -259,31 +223,30 @@ def _symlink_libraries(install_dir):
                   libocci_latest, libclntsh_latest)
 
 
-def _create_path_export_script(install_dir, script_dir):
+def _create_ld_library_prepend_script(install_dir, ld_library_prepend_script):
     """
-    Write an executable Python file that prints an updated LD_LIBRARY_PATH
-    variable including the directory containing the Oracle libraries.
-    :param install_dir: location of Oracle libraries
-    :param script_dir: location to write the script
+    Write Bash script that prepends the directory containing the Oracle
+    libraries to the LD_LIBRARY_PATH environment variable, providing that
+    it isn't already present.  This file can be "sourced" by the end user to
+    allow cx_Oracle to find the libraries.
+
+    :param install_dir: location of Instant Client libraries.
+    :param ld_library_prepend_script: location to write Bash script.
     """
-    # Write Python code within 'here document'
-    # https://stackoverflow.com/questions/35533473/avoiding-syntax-error-near-unexpected-token-in-bash?rq=1
-    logging.debug("Path to add to LD_LIBRARY_PATH: %s", install_dir.absolute())
-    contents = dedent(f"""
-        #!/bin/sh
-        # Script to print PATH variable including Oracle drivers, suitable
-        # for use with `export` command.
+    # Ensure inputs are Paths
+    install_dir = Path(install_dir)
+    ld_library_prepend_script = Path(ld_library_prepend_script)
 
-        python << EOF
-        print("LD_LIBRARY_PATH={install_dir.absolute()}:{os.getenv('LD_LIBRARY_PATH', '')}")
-        EOF
-        """).strip()
+    # Prepare file contents
+    lib_path = install_dir.absolute()
+    logging.debug("Path to add to LD_LIBRARY_PATH: %s", lib_path)
+    contents = dedent(f"""\
+        if [[ "${{LD_LIBRARY_PATH}}" != "{lib_path}"* ]]
+        then
+            export LD_LIBRARY_PATH="{lib_path}:${{LD_LIBRARY_PATH}}"
+        fi""").strip()
 
-    script_file = script_dir / 'oracle_lib_path_export'
-    script_file.write_text(contents)
-    os.chmod(script_file, 0o755)
-    logging.debug("LD_LIBRARY_PATH export printer script written to %s",
-                  script_file)
+    ld_library_prepend_script.write_text(contents)
 
 
 def _oracle_client_is_configured():
@@ -309,6 +272,8 @@ def _oracle_client_is_configured():
         if msg.startswith('DPI-1047'):
             if 'libclntsh.so' in msg:
                 # instructions for missing oracle drivers
+                logging.debug("Current LD_LIBRARY_PATH: %s",
+                              os.getenv('LD_LIBRARY_PATH', '<not set>'))
                 logging.debug(CLNTSH_MESSAGE)
                 return False
 
@@ -328,11 +293,10 @@ WINDOWS_INSTALL_MESSAGE = dedent("""
     https://www.oracle.com/technetwork/database/database-technologies/instant-client/downloads/index.html
     """).strip() + '\n'
 
-CLNTSH_MESSAGE = dedent(f"""
-    Oracle Instant Client library (libclntsh.so) is not on LD_LIBRARY_PATH.
-    Or, the libclntsh.so file is a placeholder and a symlink must be created first.
-    Current LD_LIBRARY_PATH: {os.getenv('LD_LIBRARY_PATH', '<not set>')},
-                        """).strip()
+CLNTSH_MESSAGE = dedent("""
+    Oracle Instant Client library (libclntsh.so) is not on LD_LIBRARY_PATH or
+    libclntsh.so is a placeholder and a symlink must be created first.
+    """).strip()
 
 NSL_MESSAGE = dedent("""
     The Network Services Library, libnsl.so.1, could not be found.
@@ -352,15 +316,27 @@ NSL_MESSAGE = dedent("""
     """).strip() + '\n'
 
 HELP_DESCRIPTION = dedent("""
-    Install Oracle Instant Client from URL or local file into Python environment.
-    See Oracle website (https://www.oracle.com/database/technologies/instant-client/linux-x86-64-downloads.html)
-    for available versions.
-    """).strip() + '\n'
+    Install Oracle Instant Client from URL or local file into Python
+    environment.  After installing files, their location must be added to the
+    LD_LIBRARY_PATH.  setup_oracle_client writes a script to do this and outputs
+    its location to the console.
+
+    All logging output is sent to <stderr>, only the ld_library_prepend script
+    location is sent to <stdout>.  This way, the script file can be "sourced"
+    with:
+
+    source $(setup_oracle_client)
+
+    The script defaults to Oracle Instant Client Basic Lite.  See Oracle website
+    (https://www.oracle.com/database/technologies/instant-client/linux-x86-64-downloads.html)
+    for alternatives.
+    """).strip()
 
 
 def main():
     """Parse args and run setup_oracle_client function."""
-    parser = argparse.ArgumentParser(description=HELP_DESCRIPTION)
+    parser = argparse.ArgumentParser(description=HELP_DESCRIPTION,
+                                     formatter_class=argparse.RawTextHelpFormatter)
     parser.add_argument(
         '-z', '--zip_location', type=str,
         help="URL or local file path of instantclient-*-linux-*.zip")
