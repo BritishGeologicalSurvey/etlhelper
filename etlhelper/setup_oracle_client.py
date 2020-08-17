@@ -143,10 +143,6 @@ def _oracle_client_is_configured():
     Check if cx_Oracle can communicate with Oracle Instant Client driver.
     :return: boolean
     """
-    # See https://cx-oracle.readthedocs.io/en/latest/installation.html?highlight=DPI-1047
-    # Check for libocci.so in LD_LIBRARY_PATH on linux
-    # Check for oci.dll in PATH directories on windows
-    # Check for libnsl.so.1 *must be v.1* - if only libnsl.so.2 is installed, need hint for user.
     try:
         # This will always fail, as 'test' is not a valid database.
         cx_Oracle.connect('test')
@@ -159,6 +155,7 @@ def _oracle_client_is_configured():
 
         # Driver errors
         if msg.startswith('DPI-1047'):
+            # See https://cx-oracle.readthedocs.io/en/latest/installation.html?highlight=DPI-1047
             if 'libclntsh.so' in msg:
                 # instructions for missing oracle drivers
                 # these are printed anyway if the function returns false? (DV)
