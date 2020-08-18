@@ -22,7 +22,7 @@ logging.basicConfig(handlers=[handler], level=logging.INFO)
 ORACLE_DEFAULT_ZIP_URL = ("https://download.oracle.com/otn_software/linux/instantclient/instantclient-basiclite-linuxx64.zip")  # noqa
 
 
-def setup_oracle_client(zip_location):
+def setup_oracle_client(zip_location, reinstall=False):
     """
     Install and configure Oracle Instant Client.  The function will:
         + download Oracle libraries from internet or custom URL if required
@@ -32,11 +32,12 @@ def setup_oracle_client(zip_location):
         + print the name of the script to <stdout>
 
     :param zip_location: str, URL or local file path of instantclient zip file
+    :param reinstall: bool, reinstall option
     """
     install_dir, ld_library_prepend_script = _get_install_paths()
 
     # Return if configured already
-    if _oracle_client_is_configured():
+    if _oracle_client_is_configured() and not reinstall:
         logging.info('Oracle Client library is correctly configured')
         print(ld_library_prepend_script.absolute())
         return
@@ -52,8 +53,7 @@ def setup_oracle_client(zip_location):
                                               ld_library_prepend_script)
 
     # Install if required
-    # TODO: Add reinstall option
-    if not already_installed:
+    if not already_installed or reinstall:
         _install_instantclient(zip_location, install_dir,
                                ld_library_prepend_script)
 
@@ -343,6 +343,9 @@ def main():
     parser.add_argument(
         "-v", "--verbose", help="print debug-level logging output",
         action="store_true")
+    parser.add_argument(
+        "--reinstall", dest="reinstall", action="store_true",
+        help="Reinstall the client, whether already installed or not")
     args = parser.parse_args()
 
     if args.zip_location:
@@ -353,7 +356,7 @@ def main():
     if args.verbose:
         logging.getLogger().setLevel(logging.DEBUG)
 
-    setup_oracle_client(zip_location)
+    setup_oracle_client(zip_location, reinstall=args.reinstall)
 
 
 if __name__ == '__main__':

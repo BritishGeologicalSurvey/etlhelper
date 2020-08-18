@@ -6,7 +6,9 @@ from cx_Oracle import DatabaseError, _Error
 import pytest
 
 from unittest.mock import MagicMock
+import etlhelper.setup_oracle_client as soc
 from etlhelper.setup_oracle_client import (
+    setup_oracle_client,
     _oracle_client_is_configured,
     NSL_MESSAGE,
     CLNTSH_MESSAGE,
@@ -66,3 +68,24 @@ def test_oracle_client_is_configured_sys_exits(monkeypatch, caplog, emsg, expect
     # Assert
     if caplog.record_tuples:
         assert caplog.record_tuples[-1][2] == expected_text
+
+
+@pytest.mark.parametrize("client_config_status, install_status",
+                         [(False, True), (True, True), (False, False)])
+def test_reinstall_installed_not_configured(monkeypatch, client_config_status, install_status):
+    """Test that reinstall option calls the instant client set up
+       once if doing a reinstall, whatever the current setup status."""
+    # Arrange
+
+    # Setting return values of the check functions.
+    monkeypatch.setattr(soc, "_oracle_client_is_configured", lambda: client_config_status)
+    monkeypatch.setattr(soc, "_check_install_status", lambda x, y: install_status)
+
+    mock_install_instant_client = MagicMock()
+    monkeypatch.setattr(soc, "_install_instantclient", mock_install_instant_client)
+
+    # Act
+    setup_oracle_client("mock_url_string", reinstall=True)
+
+    # Assert
+    mock_install_instant_client.assert_called_once()
