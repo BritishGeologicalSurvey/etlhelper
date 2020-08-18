@@ -6,7 +6,7 @@ from unittest import mock
 
 import pytest
 
-from etlhelper.row_factories import namedtuple_rowfactory
+from etlhelper.row_factories import namedtuple_row_factory
 
 
 FAKE_ROWS = [(1, 2, 3), (4, 5, 6)]
@@ -17,7 +17,7 @@ def test_valid_field_names(mock_cursor):
                                ('name', None, None, None, None, None, None),
                                ('desc', None, None, None, None, None, None))
 
-    create_row = namedtuple_rowfactory(mock_cursor)
+    create_row = namedtuple_row_factory(mock_cursor)
     rows = [create_row(row) for row in mock_cursor.fetchall()]
 
     assert rows[0]._fields == ("id", "name", "desc")
@@ -30,7 +30,7 @@ def test_invalid_field_names(mock_cursor):
                                ('spaced column', None, None, None, None, None, None))
 
     with pytest.warns(UserWarning) as warn:
-        create_row = namedtuple_rowfactory(mock_cursor)
+        create_row = namedtuple_row_factory(mock_cursor)
         assert len(warn) == 2
         assert (warn[1].message.args[0]
                 == 'count(*) was renamed to _1\nspaced column was renamed to _2')

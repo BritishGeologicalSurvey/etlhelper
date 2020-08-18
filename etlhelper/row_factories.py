@@ -14,7 +14,7 @@ from warnings import warn
 import re
 
 
-def namedtuple_rowfactory(cursor):
+def namedtuple_row_factory(cursor):
     """Return output as a named tuple"""
     column_names = [d[0] for d in cursor.description]
 
@@ -26,7 +26,7 @@ def namedtuple_rowfactory(cursor):
         warn("One or more columns have been renamed. Names that cannot be "
              "converted to namedtuple attributes are replaced by indices. To "
              "prevent column renaming, either provide alias in SQL query, "
-             "e.g. 'SELECT count(*) AS c', or use dict_rowfactory. ")
+             "e.g. 'SELECT count(*) AS c', or use dict_row_factory. ")
         warn(f"{renamed_columns}")
 
     def create_row(row):
@@ -35,7 +35,7 @@ def namedtuple_rowfactory(cursor):
     return create_row
 
 
-def dict_rowfactory(cursor):
+def dict_row_factory(cursor):
     """Replace the default tuple output with a dict"""
     column_names = [d[0] for d in cursor.description]
 

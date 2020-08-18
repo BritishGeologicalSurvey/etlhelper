@@ -5,7 +5,7 @@ from itertools import zip_longest, islice
 import logging
 from warnings import warn
 
-from etlhelper.row_factories import namedtuple_rowfactory
+from etlhelper.row_factories import namedtuple_row_factory
 from etlhelper.db_helper_factory import DB_HELPER_FACTORY
 from etlhelper.exceptions import (
     ETLHelperExtractError,
@@ -20,14 +20,14 @@ CHUNKSIZE = 5000
 # iter_chunks is where data are retrieved from source database
 # All data extraction processes call this function.
 def iter_chunks(select_query, conn, parameters=(),
-                row_factory=namedtuple_rowfactory,
+                row_factory=namedtuple_row_factory,
                 transform=None, read_lob=False):
     """
     Run SQL query against connection and return iterator object to loop over
     results in batches of etlhelper.etl.CHUNKSIZE (default 5000).
 
     The row_factory changes the output format of the results.  Other row
-    factories e.g. dict_rowfactory are available.
+    factories e.g. dict_row_factory are available.
 
     The transform function is applied to chunks of data as they are extracted
     from the database.
@@ -98,7 +98,7 @@ def iter_chunks(select_query, conn, parameters=(),
 
 
 def iter_rows(select_query, conn, parameters=(),
-              row_factory=namedtuple_rowfactory,
+              row_factory=namedtuple_row_factory,
               transform=None, read_lob=False):
     """
     Run SQL query against connection and return iterator object to loop over
@@ -121,7 +121,7 @@ def iter_rows(select_query, conn, parameters=(),
 
 
 def get_rows(select_query, conn, parameters=(),
-             row_factory=namedtuple_rowfactory, transform=None):
+             row_factory=namedtuple_row_factory, transform=None):
     """
     Get results of query as a list.  See iter_rows for details.
     :param select_query: str, SQL query to execute
@@ -137,7 +137,7 @@ def get_rows(select_query, conn, parameters=(),
 
 
 def fetchone(select_query, conn, parameters=(),
-             row_factory=namedtuple_rowfactory, transform=None):
+             row_factory=namedtuple_row_factory, transform=None):
     """
     Get first result of query.  See iter_rows for details.  Note: iter_rows is
     recommended for looping over rows individually.
@@ -155,7 +155,7 @@ def fetchone(select_query, conn, parameters=(),
 
 
 def fetchmany(select_query, conn, size=1, parameters=(),
-              row_factory=namedtuple_rowfactory, transform=None):
+              row_factory=namedtuple_row_factory, transform=None):
     """
     Get first 'size' results of query as a list.  See iter_rows for details.
     Note: iter_chunks is recommended for looping over rows in batches.
@@ -175,7 +175,7 @@ def fetchmany(select_query, conn, size=1, parameters=(),
 
 
 def fetchall(select_query, conn, parameters=(),
-             row_factory=namedtuple_rowfactory, transform=None):
+             row_factory=namedtuple_row_factory, transform=None):
     """
     Get all results of query as a list.  See iter_rows for details.
     :param select_query: str, SQL query to execute
@@ -191,7 +191,7 @@ def fetchall(select_query, conn, parameters=(),
 
 
 def dump_rows(select_query, conn, output_func=print, parameters=(),
-              row_factory=namedtuple_rowfactory, transform=None):
+              row_factory=namedtuple_row_factory, transform=None):
     """
     Call output_func(row) one-by-one on results of query.  See iter_rows for
     details.

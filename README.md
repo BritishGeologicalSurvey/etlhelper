@@ -341,15 +341,15 @@ For example, to return each row as a dictionary, use the following:
 
 ```python
 from etlhelper import connect, iter_rows
-from etlhelper.row_factories import dict_rowfactory
+from etlhelper.row_factories import dict_row_factory
 
 conn = connect(ORACLEDB, 'ORACLE_PASSWORD')
 sql = "SELECT * FROM my_table"
-for row in iter_rows(sql, conn, row_factory=dict_rowfactory):
+for row in iter_rows(sql, conn, row_factory=dict_row_factory):
     print(row['id'])
 ```
 
-The `dict_rowfactory` is useful when getting data to be serialised
+The `dict_row_factory` is useful when getting data to be serialised
 into JSON.
 When combined with [Hug](http://pypi.org/project/hug), an HTTP API can be
 created in fewer than 20 lines of code.
