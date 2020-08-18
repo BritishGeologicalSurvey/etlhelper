@@ -13,8 +13,9 @@ class MSSQLDbHelper(DbHelper):
         try:
             import pyodbc
             self.sql_exceptions = (pyodbc.DatabaseError)
-            self._connect_func = pyodbc.connect
             self.connect_exceptions = (pyodbc.DatabaseError, pyodbc.InterfaceError)
+            self.paramstyle = pyodbc.paramstyle
+            self._connect_func = pyodbc.connect
             self.required_params = {'host', 'port', 'dbname', 'user', 'odbc_driver'}
         except ImportError:
             print("The pyodc Python package could not be found.\n"

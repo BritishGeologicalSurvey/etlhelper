@@ -10,7 +10,7 @@ import psycopg2
 from etlhelper import DbParams
 from etlhelper.db_helper_factory import DB_HELPER_FACTORY
 from etlhelper.db_helpers import (
-    OracleDbHelper,
+    OracleDbHelper, MSSQLDbHelper, PostgresDbHelper, SQLiteDbHelper
 )
 
 # pylint: disable=missing-docstring
@@ -35,6 +35,16 @@ def test_oracle_sql_exceptions():
 def test_oracle_connect_exceptions():
     helper = OracleDbHelper()
     assert helper.connect_exceptions == (cx_Oracle.DatabaseError)
+
+
+@pytest.mark.parametrize('helper, expected', [
+    (OracleDbHelper, 'named'),
+    (MSSQLDbHelper, 'qmark'),
+    (PostgresDbHelper, 'pyformat'),
+    (SQLiteDbHelper, 'qmark')
+])
+def test_paramstyle(helper, expected):
+    assert helper().paramstyle == expected
 
 
 @pytest.mark.parametrize('db_params, driver, expected', [

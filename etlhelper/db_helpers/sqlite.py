@@ -15,8 +15,9 @@ class SQLiteDbHelper(DbHelper):
             import sqlite3
             self.sql_exceptions = (sqlite3.OperationalError,
                                    sqlite3.IntegrityError)
-            self._connect_func = sqlite3.connect
             self.connect_exceptions = (sqlite3.OperationalError)
+            self.paramstyle = sqlite3.paramstyle
+            self._connect_func = sqlite3.connect
             self.required_params = {'filename'}
         except ImportError:
             print("The sqlite3 module was not found. Check configuration as "
