@@ -3,7 +3,6 @@ Functions for transferring data in and out of databases.
 """
 from itertools import zip_longest, islice
 import logging
-from warnings import warn
 
 from etlhelper.row_factories import namedtuple_row_factory
 from etlhelper.db_helper_factory import DB_HELPER_FACTORY
@@ -210,7 +209,7 @@ def dump_rows(select_query, conn, output_func=print, parameters=(),
         output_func(row)
 
 
-def executemany(query, rows, conn, commit_chunks=True):
+def executemany(query, conn, rows, commit_chunks=True):
     """
     Use query to insert/update data from rows to database at conn.  This
     method uses the executemany or execute_batch (PostgreSQL) commands to
@@ -224,16 +223,11 @@ def executemany(query, rows, conn, commit_chunks=True):
     which records have been successfully transferred.
 
     :param query: str, SQL insert command with placeholders for data
-    :param rows: List of tuples containing data to be inserted/updated
     :param conn: dbapi connection
+    :param rows: List of tuples containing data to be inserted/updated
     :param commit_chunks: bool, commit after each chunk has been inserted/updated
     :return row_count: int, number of rows inserted/updated
     """
-    msg = ("executemany parameter order will be changed in a future release to "
-           "(query, conn, rows).  "
-           "Avoid breaking code by using named parameters for all e.g. "
-           "executemany(query=my_query, conn=my_conn, rows=my_rows)")
-    warn(msg, DeprecationWarning)
     logger.info(f"Executing many (chunksize={CHUNKSIZE})")
     logger.debug(f"Executing:\n\n{query}\n\nagainst\n\n{conn}")
 
@@ -304,7 +298,7 @@ def copy_rows(select_query, source_conn, insert_query, dest_conn,
     rows_generator = iter_rows(select_query, source_conn,
                                parameters=parameters, transform=transform,
                                read_lob=read_lob)
-    executemany(insert_query, rows_generator, dest_conn,
+    executemany(insert_query, dest_conn, rows_generator,
                 commit_chunks=commit_chunks)
 
 

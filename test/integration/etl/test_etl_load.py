@@ -16,7 +16,7 @@ def test_insert_rows_happy_path(pgtestdb_conn, pgtestdb_test_tables,
     insert_sql = pgtestdb_insert_sql.replace('src', 'dest')
 
     # Act
-    executemany(insert_sql, test_table_data, pgtestdb_conn,
+    executemany(insert_sql, pgtestdb_conn, test_table_data,
                 commit_chunks=commit_chunks)
 
     # Assert
@@ -34,7 +34,7 @@ def test_insert_rows_chunked(pgtestdb_conn, pgtestdb_test_tables,
     insert_sql = pgtestdb_insert_sql.replace('src', 'dest')
 
     # Act
-    executemany(insert_sql, test_table_data, pgtestdb_conn)
+    executemany(insert_sql, pgtestdb_conn, test_table_data)
 
     # Assert
     sql = "SELECT * FROM dest"
@@ -48,7 +48,7 @@ def test_insert_rows_no_rows(pgtestdb_conn, pgtestdb_test_tables,
     insert_sql = pgtestdb_insert_sql.replace('src', 'dest')
 
     # Act
-    executemany(insert_sql, [], pgtestdb_conn)
+    executemany(insert_sql, pgtestdb_conn, [])
 
     # Assert
     sql = "SELECT * FROM dest"
@@ -62,4 +62,4 @@ def test_insert_rows_bad_query(pgtestdb_conn, test_table_data):
 
     # Act and assert
     with pytest.raises(ETLHelperInsertError):
-        executemany(insert_sql, test_table_data, pgtestdb_conn)
+        executemany(insert_sql, pgtestdb_conn, test_table_data)

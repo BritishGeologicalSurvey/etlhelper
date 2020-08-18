@@ -51,7 +51,7 @@ class PostgresDbHelper(DbHelper):
         :param chunk: list, Rows of parameters.
         """
         # Here we use execute_batch to send multiple inserts to db at once.
-        # This is faster than execute_many() because it results in fewer db
+        # This is faster than executemany() because it results in fewer db
         # calls.  execute_values() or preparing single statement with
         # mogrify() were not used because resulting input statement is less
         # clear and selective formatting of inputs for spatial vs non-spatial
