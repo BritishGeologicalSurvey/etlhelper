@@ -364,7 +364,7 @@ rows = [(1, 'value'), (2, 'another value')]
 insert_sql = "INSERT INTO some_table (col1, col2) VALUES (%s, %s)"
 
 with connect(some_db, 'SOME_DB_PASSWORD') as conn:
-    executemany(insert_sql, rows, conn)
+    executemany(insert_sql, conn, rows)
 ```
 
 ## Development
