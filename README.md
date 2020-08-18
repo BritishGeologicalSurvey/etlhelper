@@ -58,16 +58,20 @@ Centos / Fedora:
 #### Oracle Instant Client
 
 Oracle Instant Client libraries are required to connect to Oracle databases.
-`etlhelper` provides a script to install these on Linux systems from a zip file downloaded from the [Oracle website](https://www.oracle.com/technetwork/database/database-technologies/instant-client/downloads/index.html) and made available locally.
-
+`etlhelper` provides a script to download and unzip them from the [Oracle
+website](https://www.oracle.com/database/technologies/instant-client/linux-x86-64-downloads.html).
+Once the drivers are installed, their location must be added to LD_LIBRARY_PATH
+environment variable before they can be used.  `setup_oracle_client` writes
+a file that can be "sourced" to do this for the current shell.  These two steps
+can be executed in a single command as:
 
 ```bash
-setup_oracle_client /path/or/url/for/instantclient-basic-linux.x64-12.2.0.1.0.zip
-export "$(oracle_lib_path_export)"
+source $(setup_oracle_client)
 ```
 
-If you are outside a virtual environment, the export command may be different.
-See terminal output for details.
+See `setup_oracle_client --help` for further command line flags, including
+specifying an alternative URL or filesystem path for the zipfile location.
+
 Run `setup_oracle_client` again to confirm setup has worked.
 
 
