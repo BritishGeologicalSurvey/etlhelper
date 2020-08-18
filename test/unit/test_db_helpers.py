@@ -27,14 +27,25 @@ POSTGRESDB = DbParams(dbtype='PG', host='server', port='1521', dbname='testdb',
 SQLITEDB = DbParams(dbtype='SQLITE', filename='/myfile.db')
 
 
-def test_oracle_sql_exceptions():
-    helper = OracleDbHelper()
-    assert helper.sql_exceptions == (cx_Oracle.DatabaseError)
+@pytest.mark.parametrize('helper, expected', [
+    (OracleDbHelper, (cx_Oracle.DatabaseError)),
+    (MSSQLDbHelper, (pyodbc.DatabaseError)),
+    (PostgresDbHelper, (psycopg2.ProgrammingError, psycopg2.InterfaceError,
+                        psycopg2.InternalError)),
+    (SQLiteDbHelper, (sqlite3.OperationalError, sqlite3.IntegrityError))
+])
+def test_sql_exceptions(helper, expected):
+    assert helper().sql_exceptions == expected
 
 
-def test_oracle_connect_exceptions():
-    helper = OracleDbHelper()
-    assert helper.connect_exceptions == (cx_Oracle.DatabaseError)
+@pytest.mark.parametrize('helper, expected', [
+    (OracleDbHelper, (cx_Oracle.DatabaseError)),
+    (MSSQLDbHelper, (pyodbc.DatabaseError, pyodbc.InterfaceError)),
+    (PostgresDbHelper, (psycopg2.OperationalError)),
+    (SQLiteDbHelper, (sqlite3.OperationalError))
+])
+def test_connect_exceptions(helper, expected):
+    assert helper().connect_exceptions == expected
 
 
 @pytest.mark.parametrize('helper, expected', [
