@@ -1,11 +1,12 @@
 """Unit tests for setup_oracle_client."""
 import logging
+import sys
 import cx_Oracle
 
 from cx_Oracle import DatabaseError, _Error
 import pytest
 
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, Mock
 import etlhelper.setup_oracle_client as soc
 from etlhelper.setup_oracle_client import (
     setup_oracle_client,
@@ -89,3 +90,17 @@ def test_reinstall_installed_not_configured(monkeypatch, client_config_status, i
 
     # Assert
     mock_install_instant_client.assert_called_once()
+
+
+def test_cmd_line_arguments(monkeypatch):
+    """Test that cmd line args trigger the right bit of code logic when called"""
+    # Arrange
+    mock_setup_oracle_client_function = Mock()
+    monkeypatch.setattr(soc, 'setup_oracle_client', mock_setup_oracle_client_function)
+    monkeypatch.setattr(sys, 'argv', ['setup_oracle_client', '-z', 'http://python.glpages.ad.nerc.ac.uk/bgs_etl/instantclient-basic-linux.x64-12.2.0.1.0.zip', '--reinstall', '-v'])
+
+    # Act (call main from the soc module)
+    soc.main()
+
+    # Assert
+    mock_setup_oracle_client_function.assert_called_with('http://python.glpages.ad.nerc.ac.uk/bgs_etl/instantclient-basic-linux.x64-12.2.0.1.0.zip', reinstall=True)
