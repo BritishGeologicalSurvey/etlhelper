@@ -53,6 +53,23 @@ def test_check_install_status_installed(mock_installation):
     assert already_installed
 
 
+def test_check_install_status_empty_install_dir(mock_installation):
+    # Arrange
+    install_dir = mock_installation / 'install'
+    ld_library_prepend_script = install_dir / 'ld_library_prepend.sh'
+
+    # Remove every item in the install_dir to simulate empty install_dir
+    for item in install_dir.iterdir():
+        item.unlink()
+
+    # Act
+    already_installed = _check_install_status(install_dir,
+                                              ld_library_prepend_script)
+
+    # Assert
+    assert already_installed is False
+
+
 def test_check_install_status_no_links(mock_installation):
     # Arrange
     install_dir = mock_installation / 'install'

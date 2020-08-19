@@ -293,10 +293,10 @@ WINDOWS_INSTALL_MESSAGE = dedent("""
     https://www.oracle.com/technetwork/database/database-technologies/instant-client/downloads/index.html
     """).strip() + '\n'
 
-CLNTSH_MESSAGE = dedent("""
-    Oracle Instant Client library (libclntsh.so) is not on LD_LIBRARY_PATH or
-    libclntsh.so is a placeholder and a symlink must be created first.
-    """).strip()
+CLNTSH_MESSAGE = (
+    "Oracle Instant Client library (libclntsh.so) is not on LD_LIBRARY_PATH or "
+    "libclntsh.so is a placeholder and a symlink must be created first."
+    )
 
 NSL_MESSAGE = dedent("""
     The Network Services Library, libnsl.so.1, could not be found.
