@@ -9,7 +9,11 @@ import pyodbc
 import pytest
 
 from etlhelper import connect, get_rows, copy_rows, execute, DbParams
-from etlhelper.exceptions import ETLHelperConnectionError, ETLHelperQueryError
+from etlhelper.exceptions import (
+    ETLHelperConnectionError,
+    ETLHelperInsertError,
+    ETLHelperQueryError
+)
 
 # Skip these tests if database is unreachable
 MSSQLDB = DbParams.from_environment(prefix='TEST_MSSQL_')
@@ -76,6 +80,14 @@ def test_get_rows_with_parameters(test_tables, testdb_conn,
     assert result[0].id == 1
 
 
+def test_copy_rows_bad_param_style(test_tables, testdb_conn, test_table_data):
+    # Arrange and act
+    select_sql = "SELECT * FROM src"
+    insert_sql = BAD_PARAM_STYLE_SQL.format(tablename='dest')
+    with pytest.raises(ETLHelperInsertError):
+        copy_rows(select_sql, testdb_conn, insert_sql, testdb_conn)
+
+
 # -- Fixtures here --
 
 INSERT_SQL = dedent("""
@@ -84,6 +96,13 @@ INSERT_SQL = dedent("""
     VALUES
       (?, ?, ?, ?, ?, ?)
       ;""").strip()
+
+BAD_PARAM_STYLE_SQL = dedent("""
+    INSERT INTO {tablename} (id, value, simple_text, utf8_text,
+      day, date_time)
+    VALUES
+      (%s, %s, %s, %s, %s, %s)
+      """).strip()
 
 
 @pytest.fixture(scope='function')

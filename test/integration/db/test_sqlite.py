@@ -11,7 +11,16 @@ from textwrap import dedent
 import pytest
 
 from etlhelper import connect, get_rows, copy_rows, execute, DbParams
-from etlhelper.exceptions import ETLHelperConnectionError, ETLHelperQueryError
+from etlhelper.exceptions import (
+    ETLHelperConnectionError,
+    ETLHelperInsertError,
+    ETLHelperQueryError
+)
+
+# Skip these tests if database is unreachable
+ORADB = DbParams.from_environment(prefix='TEST_ORACLE_')
+if not ORADB.is_reachable():
+    pytest.skip('Oracle test database is unreachable', allow_module_level=True)
 
 
 # -- Tests here --
@@ -101,6 +110,13 @@ INSERT_SQL = dedent("""
       day, date_time)
     VALUES
       (?, ?, ?, ?, ?, ?)
+      """).strip()
+
+BAD_PARAM_STYLE_SQL = dedent("""
+    INSERT INTO {tablename} (id, value, simple_text, utf8_text,
+      day, date_time)
+    VALUES
+      (%s, %s, %s, %s, %s, %s)
       """).strip()
 
 
