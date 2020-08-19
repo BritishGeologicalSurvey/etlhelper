@@ -12,9 +12,12 @@ class PostgresDbHelper(DbHelper):
         super().__init__()
         try:
             import psycopg2
-            self.sql_exceptions = (psycopg2.ProgrammingError)
-            self._connect_func = psycopg2.connect
+            self.sql_exceptions = (psycopg2.ProgrammingError,
+                                   psycopg2.InterfaceError,
+                                   psycopg2.InternalError)
             self.connect_exceptions = (psycopg2.OperationalError)
+            self.paramstyle = psycopg2.paramstyle
+            self._connect_func = psycopg2.connect
             self.required_params = {'host', 'port', 'dbname', 'user'}
         except ImportError:
             print("The PostgreSQL python libraries could not be found.\n"
