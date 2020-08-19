@@ -11,11 +11,7 @@ from textwrap import dedent
 import pytest
 
 from etlhelper import connect, get_rows, copy_rows, execute, DbParams
-from etlhelper.exceptions import (
-    ETLHelperConnectionError,
-    ETLHelperQueryError,
-    ETLHelperInsertError
-)
+from etlhelper.exceptions import ETLHelperConnectionError, ETLHelperQueryError
 
 
 # -- Tests here --
@@ -68,15 +64,26 @@ def test_copy_rows_happy_path(test_tables, testdb_conn, test_table_data):
     result = get_rows(sql, testdb_conn)
 
     # Fix result date and datetime strings to native classes
-    fixed = []
+    fixed_dates = []
     for row in result:
-        fixed.append((
+        fixed_dates.append((
             *row[:4],
             dt.datetime.strptime(row.day, '%Y-%m-%d').date(),
             dt.datetime.strptime(row.date_time, '%Y-%m-%d %H:%M:%S')
         ))
 
-    assert fixed == test_table_data
+    assert fixed_dates == test_table_data
+
+
+def test_get_rows_with_parameters(test_tables, testdb_conn,
+                                  test_table_data):
+    # parameters=None is tested by default in other tests
+
+    # Bind by index
+    sql = "SELECT * FROM src where ID = ?"
+    result = get_rows(sql, testdb_conn, parameters=(1,))
+    assert len(result) == 1
+    assert result[0].id == 1
 
 
 def test_copy_rows_bad_param_style(test_tables, testdb_conn, test_table_data):
@@ -87,16 +94,6 @@ def test_copy_rows_bad_param_style(test_tables, testdb_conn, test_table_data):
         copy_rows(select_sql, testdb_conn, insert_sql, testdb_conn)
 
 
-def test_get_rows_with_parameters(pgtestdb_test_tables, pgtestdb_conn,
-                                  test_table_data):
-    # parameters=None is tested by default in other tests
-
-    # Bind by index
-    sql = "SELECT * FROM src where ID = %s"
-    result = get_rows(sql, pgtestdb_conn, parameters=(1,))
-    assert result == [test_table_data[0]]
-
-
 # -- Fixtures here --
 
 INSERT_SQL = dedent("""
@@ -104,14 +101,6 @@ INSERT_SQL = dedent("""
       day, date_time)
     VALUES
       (?, ?, ?, ?, ?, ?)
-      """).strip()
-
-
-BAD_PARAM_STYLE_SQL = dedent("""
-    INSERT INTO {tablename} (id, value, simple_text, utf8_text,
-      day, date_time)
-    VALUES
-      (%1, %2, %3, %4, %5, %6)
       """).strip()
 
 
@@ -152,6 +141,7 @@ def test_tables(test_table_data, testdb_conn):
     create_dest_sql = create_src_sql.replace('src', 'dest')
 
     # Create table and populate with test data
+    # Unlike other databases, SQLite cursors cannot be used as context managers
     cursor = testdb_conn.cursor()
     # src table
     try:
