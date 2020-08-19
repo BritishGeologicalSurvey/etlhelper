@@ -2,7 +2,6 @@
 These currently run against internal BGS instance.
 """
 # pylint: disable=unused-argument, missing-docstring
-import datetime as dt
 import os
 from textwrap import dedent
 

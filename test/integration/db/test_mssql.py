@@ -48,19 +48,32 @@ def test_bad_constraint(test_tables, testdb_conn):
     with pytest.raises(ETLHelperQueryError):
         execute(insert_sql, testdb_conn)
 
+
 def test_copy_rows_happy_path(test_tables, testdb_conn, testdb_conn2,
                               test_table_data):
     # Note: ODBC driver requires separate connections for source and destination,
     # even if they are the same database.
     # Arrange and act
-    select_sql = "SELECT * FROM testschema.src"
-    insert_sql = INSERT_SQL.format(tablename='testschema.dest')
+    select_sql = "SELECT * FROM src"
+    insert_sql = INSERT_SQL.format(tablename='dest')
     copy_rows(select_sql, testdb_conn, insert_sql, testdb_conn2)
 
     # Assert
-    sql = "SELECT * FROM testschema.dest"
-    result = iter_rows(sql, testdb_conn)
-    assert list(result) == test_table_data
+    sql = "SELECT * FROM dest"
+    result = get_rows(sql, testdb_conn)
+
+    assert result == test_table_data
+
+
+def test_get_rows_with_parameters(test_tables, testdb_conn,
+                                  test_table_data):
+    # parameters=None is tested by default in other tests
+
+    # Bind by index
+    sql = "SELECT * FROM src where ID = ?"
+    result = get_rows(sql, testdb_conn, parameters=(1,))
+    assert len(result) == 1
+    assert result[0].id == 1
 
 
 # -- Fixtures here --
@@ -87,21 +100,18 @@ def testdb_conn2():
         return conn
 
 
-@pytest.fixture('function')
+@pytest.fixture(scope='function')
 def test_tables(test_table_data, testdb_conn):
     """
     Create a table and fill with test data.  Teardown after the yield drops it
     again.
     """
     # Define SQL queries
-    drop_src_sql = dedent("""
-        IF OBJECT_ID('testschema.src') IS NOT NULL
-          DROP TABLE testschema.src
-          ;""").strip()
+    drop_src_sql = "DROP TABLE src"
     create_src_sql = dedent("""
-        CREATE TABLE testschema.src
+        CREATE TABLE src
           (
-            id integer,
+            id integer unique,
             value double precision,
             simple_text text,
             utf8_text text,
@@ -109,18 +119,25 @@ def test_tables(test_table_data, testdb_conn):
             date_time datetime2(6)
           )
           ;""").strip()
-    drop_dest_sql = drop_src_sql.replace('testschema.src', 'testschema.dest')
-    create_dest_sql = create_src_sql.replace('testschema.src', 'testschema.dest')
+    drop_dest_sql = drop_src_sql.replace('src', 'dest')
+    create_dest_sql = create_src_sql.replace('src', 'dest')
 
     # Create table and populate with test data
     with testdb_conn.cursor() as cursor:
         # src table
-        cursor.execute(drop_src_sql)
+        try:
+            cursor.execute(drop_src_sql)
+        except pyodbc.DatabaseError:
+            pass
         cursor.execute(create_src_sql)
-        cursor.executemany(INSERT_SQL.format(tablename='testschema.src'),
+        cursor.executemany(INSERT_SQL.format(tablename='src'),
                            test_table_data)
         # dest table
-        cursor.execute(drop_dest_sql)
+        try:
+            cursor.execute(drop_dest_sql)
+        except pyodbc.DatabaseError:
+            # Error if table doesn't exist
+            pass
         cursor.execute(create_dest_sql)
     testdb_conn.commit()
 
