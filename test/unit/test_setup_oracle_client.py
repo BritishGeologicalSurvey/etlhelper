@@ -97,10 +97,16 @@ def test_cmd_line_arguments(monkeypatch):
     # Arrange
     mock_setup_oracle_client_function = Mock()
     monkeypatch.setattr(soc, 'setup_oracle_client', mock_setup_oracle_client_function)
-    monkeypatch.setattr(sys, 'argv', ['setup_oracle_client', '-z', 'http://python.glpages.ad.nerc.ac.uk/bgs_etl/instantclient-basic-linux.x64-12.2.0.1.0.zip', '--reinstall', '-v'])
+    monkeypatch.setattr(
+        sys, 'argv',
+        ['setup_oracle_client', '-z',
+         'http://python.glpages.ad.nerc.ac.uk/bgs_etl/instantclient-basic-linux.x64-12.2.0.1.0.zip',
+         '--reinstall', '-v'])
 
     # Act (call main from the soc module)
     soc.main()
 
     # Assert
-    mock_setup_oracle_client_function.assert_called_with('http://python.glpages.ad.nerc.ac.uk/bgs_etl/instantclient-basic-linux.x64-12.2.0.1.0.zip', reinstall=True)
+    mock_setup_oracle_client_function.assert_called_with(
+        'http://python.glpages.ad.nerc.ac.uk/bgs_etl/instantclient-basic-linux.x64-12.2.0.1.0.zip',
+        reinstall=True)
