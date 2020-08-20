@@ -1,12 +1,15 @@
 """Unit tests for setup_oracle_client."""
 import logging
-import cx_Oracle
+import sys
+from unittest.mock import MagicMock, Mock
 
+import cx_Oracle
 from cx_Oracle import DatabaseError, _Error
 import pytest
 
-from unittest.mock import MagicMock
+import etlhelper.setup_oracle_client as soc
 from etlhelper.setup_oracle_client import (
+    setup_oracle_client,
     _oracle_client_is_configured,
     NSL_MESSAGE,
     CLNTSH_MESSAGE,
@@ -66,3 +69,62 @@ def test_oracle_client_is_configured_sys_exits(monkeypatch, caplog, emsg, expect
     # Assert
     if caplog.record_tuples:
         assert caplog.record_tuples[-1][2] == expected_text
+
+
+@pytest.mark.parametrize("client_config_status, install_status",
+                         [(False, True), (True, True), (False, False)])
+def test_reinstall_installed_not_configured(monkeypatch, client_config_status, install_status):
+    """Test that reinstall option calls the instant client set up
+       once if doing a reinstall, whatever the current setup status."""
+    # Arrange
+
+    # Setting return values of the check functions.
+    monkeypatch.setattr(soc, "_oracle_client_is_configured", lambda: client_config_status)
+    monkeypatch.setattr(soc, "_check_install_status", lambda x, y: install_status)
+
+    mock_install_instant_client = MagicMock()
+    monkeypatch.setattr(soc, "_install_instantclient", mock_install_instant_client)
+
+    # Act
+    setup_oracle_client("mock_url_string", reinstall=True)
+
+    # Assert
+    mock_install_instant_client.assert_called_once()
+
+
+def test_cmd_line_arguments(monkeypatch):
+    """Test that cmd line args trigger the right bit of code logic when called"""
+    # Arrange
+    mock_setup_oracle_client_function = Mock()
+    monkeypatch.setattr(soc, 'setup_oracle_client', mock_setup_oracle_client_function)
+    monkeypatch.setattr(
+        sys, 'argv',
+        ['setup_oracle_client', '-z',
+         'http://dummypath',
+         '--reinstall', '-v'])
+
+    # Act (call main from the soc module)
+    soc.main()
+
+    # Assert
+    mock_setup_oracle_client_function.assert_called_with(
+        'http://dummypath',
+        reinstall=True)
+
+
+def test_cmd_line_arguments_defaults(monkeypatch):
+    """Test that cmd line args use defaults if not specified."""
+    # Arrange
+    mock_setup_oracle_client_function = Mock()
+    monkeypatch.setattr(soc, 'setup_oracle_client', mock_setup_oracle_client_function)
+    monkeypatch.setattr(
+        sys, 'argv',
+        ['setup_oracle_client'])
+
+    # Act (call main from the soc module)
+    soc.main()
+
+    # Assert
+    mock_setup_oracle_client_function.assert_called_with(
+        soc.ORACLE_DEFAULT_ZIP_URL,
+        reinstall=False)
