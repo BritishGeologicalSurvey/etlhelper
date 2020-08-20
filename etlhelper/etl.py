@@ -56,7 +56,8 @@ def iter_chunks(select_query, conn, parameters=(),
             # Even though we haven't modified data, we have to rollback to
             # clear the failed transaction before any others can be started.
             conn.rollback()
-            msg = f"SQL query raised an error.\n\n{select_query}\n\n{exc}\n"
+            msg = (f"SQL query raised an error.\n\n{select_query}\n\n"
+                   f"Required paramstyle: {helper.paramstyle}\n\n{exc}\n")
             raise ETLHelperExtractError(msg)
 
         # Set row factory
@@ -253,7 +254,8 @@ def executemany(query, conn, rows, commit_chunks=True):
                 # Rollback to clear the failed transaction before any others can
                 # be # started.
                 conn.rollback()
-                msg = f"SQL query raised an error.\n\n{query}\n\n{exc}\n"
+                msg = (f"SQL query raised an error.\n\n{query}\n\n"
+                       f"Required paramstyle: {helper.paramstyle}\n\n{exc}\n")
                 raise ETLHelperInsertError(msg)
 
             logger.info(
@@ -324,7 +326,8 @@ def execute(query, conn, parameters=()):
             # Even though we haven't modified data, we have to rollback to
             # clear the failed transaction before any others can be started.
             conn.rollback()
-            msg = f"SQL query raised an error.\n\n{query}\n\n{exc}\n"
+            msg = (f"SQL query raised an error.\n\n{query}\n\n"
+                   f"Required paramstyle: {helper.paramstyle}\n\n{exc}\n")
             raise ETLHelperQueryError(msg)
 
 

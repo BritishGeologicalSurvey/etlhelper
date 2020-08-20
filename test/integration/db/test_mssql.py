@@ -1,13 +1,11 @@
-"""Integration tests for SQLite database.
+"""Integration tests for MS SQL Server database.
 These currently run against internal BGS instance.
 """
 # pylint: disable=unused-argument, missing-docstring
-import datetime as dt
 import os
-import sqlite3
-import sys
 from textwrap import dedent
 
+import pyodbc
 import pytest
 
 from etlhelper import connect, get_rows, copy_rows, execute, DbParams
@@ -18,29 +16,22 @@ from etlhelper.exceptions import (
 )
 
 # Skip these tests if database is unreachable
-ORADB = DbParams.from_environment(prefix='TEST_ORACLE_')
-if not ORADB.is_reachable():
-    pytest.skip('Oracle test database is unreachable', allow_module_level=True)
+MSSQLDB = DbParams.from_environment(prefix='TEST_MSSQL_')
+if not MSSQLDB.is_reachable():
+    pytest.skip('MSSQL test database is unreachable', allow_module_level=True)
 
 
 # -- Tests here --
 
-def test_connect(sqlitedb):
-    conn = connect(sqlitedb)
-    assert isinstance(conn, sqlite3.Connection)
-    assert os.path.isfile(sqlitedb.filename)
+def test_connect():
+    conn = connect(MSSQLDB, 'TEST_MSSQL_PASSWORD')
+    assert isinstance(conn, pyodbc.Connection)
 
 
-@pytest.mark.skipif(sys.platform != 'linux', reason='Requires Linux OS')
-def test_bad_connect(tmpdir):
-    # Attemping to create file in non-existent directory should fail
-    try:
-        db_params = DbParams(dbtype='SQLITE', filename='/does/not/exist')
-        with pytest.raises(ETLHelperConnectionError):
-            connect(db_params)
-    finally:
-        # Restore permissions prior to cleanup
-        os.chmod(tmpdir, 0o666)
+def test_connect_wrong_password(monkeypatch):
+    monkeypatch.setitem(os.environ, 'TEST_MSSQL_PASSWORD', 'bad_password')
+    with pytest.raises(ETLHelperConnectionError):
+        connect(MSSQLDB, 'TEST_MSSQL_PASSWORD')
 
 
 def test_bad_select(testdb_conn):
@@ -62,26 +53,20 @@ def test_bad_constraint(test_tables, testdb_conn):
         execute(insert_sql, testdb_conn)
 
 
-def test_copy_rows_happy_path(test_tables, testdb_conn, test_table_data):
+def test_copy_rows_happy_path(test_tables, testdb_conn, testdb_conn2,
+                              test_table_data):
+    # Note: ODBC driver requires separate connections for source and destination,
+    # even if they are the same database.
     # Arrange and act
     select_sql = "SELECT * FROM src"
     insert_sql = INSERT_SQL.format(tablename='dest')
-    copy_rows(select_sql, testdb_conn, insert_sql, testdb_conn)
+    copy_rows(select_sql, testdb_conn, insert_sql, testdb_conn2)
 
     # Assert
     sql = "SELECT * FROM dest"
     result = get_rows(sql, testdb_conn)
 
-    # Fix result date and datetime strings to native classes
-    fixed_dates = []
-    for row in result:
-        fixed_dates.append((
-            *row[:4],
-            dt.datetime.strptime(row.day, '%Y-%m-%d').date(),
-            dt.datetime.strptime(row.date_time, '%Y-%m-%d %H:%M:%S')
-        ))
-
-    assert fixed_dates == test_table_data
+    assert result == test_table_data
 
 
 def test_get_rows_with_parameters(test_tables, testdb_conn,
@@ -110,7 +95,7 @@ INSERT_SQL = dedent("""
       day, date_time)
     VALUES
       (?, ?, ?, ?, ?, ?)
-      """).strip()
+      ;""").strip()
 
 BAD_PARAM_STYLE_SQL = dedent("""
     INSERT INTO {tablename} (id, value, simple_text, utf8_text,
@@ -121,17 +106,17 @@ BAD_PARAM_STYLE_SQL = dedent("""
 
 
 @pytest.fixture(scope='function')
-def sqlitedb(tmp_path):
-    """Get DbParams for temporary SQLite database."""
-    filename = f'{tmp_path.absolute()}.db'
-    yield DbParams(dbtype='SQLITE', filename=filename)
+def testdb_conn():
+    """Get connection to test MS SQL database."""
+    with connect(MSSQLDB, 'TEST_MSSQL_PASSWORD') as conn:
+        return conn
 
 
 @pytest.fixture(scope='function')
-def testdb_conn(sqlitedb):
-    """Get connection to test SQLite database."""
-    with connect(sqlitedb) as conn:
-        yield conn
+def testdb_conn2():
+    """Get connection to test MS SQL database."""
+    with connect(MSSQLDB, 'TEST_MSSQL_PASSWORD') as conn:
+        return conn
 
 
 @pytest.fixture(scope='function')
@@ -145,42 +130,41 @@ def test_tables(test_table_data, testdb_conn):
     create_src_sql = dedent("""
         CREATE TABLE src
           (
-            id INTEGER PRIMARY KEY,
-            value float,
+            id integer unique,
+            value double precision,
             simple_text text,
             utf8_text text,
             day date,
-            date_time datetime
+            date_time datetime2(6)
           )
-          """).strip()
+          ;""").strip()
     drop_dest_sql = drop_src_sql.replace('src', 'dest')
     create_dest_sql = create_src_sql.replace('src', 'dest')
 
     # Create table and populate with test data
-    # Unlike other databases, SQLite cursors cannot be used as context managers
-    cursor = testdb_conn.cursor()
-    # src table
-    try:
-        cursor.execute(drop_src_sql)
-    except sqlite3.OperationalError:
-        pass
-    cursor.execute(create_src_sql)
-    cursor.executemany(INSERT_SQL.format(tablename='src'),
-                       test_table_data)
-    # dest table
-    try:
-        cursor.execute(drop_dest_sql)
-    except sqlite3.OperationalError:
-        # Error if table doesn't exist
-        pass
-    cursor.execute(create_dest_sql)
-
+    with testdb_conn.cursor() as cursor:
+        # src table
+        try:
+            cursor.execute(drop_src_sql)
+        except pyodbc.DatabaseError:
+            pass
+        cursor.execute(create_src_sql)
+        cursor.executemany(INSERT_SQL.format(tablename='src'),
+                           test_table_data)
+        # dest table
+        try:
+            cursor.execute(drop_dest_sql)
+        except pyodbc.DatabaseError:
+            # Error if table doesn't exist
+            pass
+        cursor.execute(create_dest_sql)
     testdb_conn.commit()
 
     # Return control to calling function until end of test
     yield
 
     # Tear down the table after test completes
-    cursor.execute(drop_src_sql)
-    cursor.execute(drop_dest_sql)
+    with testdb_conn.cursor() as cursor:
+        cursor.execute(drop_src_sql)
+        cursor.execute(drop_dest_sql)
     testdb_conn.commit()

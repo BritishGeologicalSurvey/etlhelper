@@ -13,8 +13,9 @@ class OracleDbHelper(DbHelper):
         try:
             import cx_Oracle
             self.sql_exceptions = (cx_Oracle.DatabaseError)
-            self._connect_func = cx_Oracle.connect
             self.connect_exceptions = (cx_Oracle.DatabaseError)
+            self.paramstyle = cx_Oracle.paramstyle
+            self._connect_func = cx_Oracle.connect
             self.required_params = {'host', 'port', 'dbname', 'user'}
         except ImportError:
             print("The cxOracle drivers were not found. See setup guide for more information.")
