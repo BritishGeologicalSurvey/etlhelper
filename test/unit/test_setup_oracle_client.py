@@ -1,12 +1,12 @@
 """Unit tests for setup_oracle_client."""
 import logging
 import sys
-import cx_Oracle
+from unittest.mock import MagicMock, Mock
 
+import cx_Oracle
 from cx_Oracle import DatabaseError, _Error
 import pytest
 
-from unittest.mock import MagicMock, Mock
 import etlhelper.setup_oracle_client as soc
 from etlhelper.setup_oracle_client import (
     setup_oracle_client,
