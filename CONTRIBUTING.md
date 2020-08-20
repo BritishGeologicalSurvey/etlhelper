@@ -109,7 +109,7 @@ To run these:
 
 ## Creating a new release
 
-Releases are created manually from the master branch via tags.
+Releases are created manually from the main branch via tags.
 This should be done via the GitHub web interface.
 The GitLab CI system will automatically perform the release following the next
 repository mirror synchronisation.
