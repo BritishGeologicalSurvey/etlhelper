@@ -65,7 +65,9 @@ test:
         -e TEST_MSSQL_HOST="${TEST_MSSQL_HOST}" \
         -e TEST_MSSQL_PORT="${TEST_MSSQL_PORT}" \
         -e TEST_MSSQL_DBNAME="${TEST_MSSQL_DBNAME}" \
+        -e TEST_MSSQL_USER="${TEST_MSSQL_USER}" \
         -e TEST_MSSQL_PASSWORD="${TEST_MSSQL_PASSWORD}" \
+        -e TEST_MSSQL_ODBC_DRIVER="${TEST_MSSQL_ODBC_DRIVER}" \
         "$CI_REGISTRY_IMAGE:test-runner" pytest -rsx --cov=etlhelper -vvs test/
 
 package:
