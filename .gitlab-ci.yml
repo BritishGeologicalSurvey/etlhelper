@@ -19,6 +19,7 @@ services:
 test:
   tags:
     - docker-builder
+    - hwlgitlabrunner
   image: docker
   stage: test
   script:
@@ -72,7 +73,7 @@ test:
 
 package:
   tags:
-    - docker
+    - hwlgitlabrunner
   image: "$CI_REGISTRY_IMAGE:test-runner"
   stage: package
   before_script:
@@ -86,6 +87,8 @@ package:
       - dist/
 
 pypi:
+  tags:
+    - hwlgitlabrunner
   image: "$CI_REGISTRY_IMAGE:test-runner"
   stage: release
   script:
