@@ -1,10 +1,12 @@
 """
 Test db params
 """
+from unittest.mock import Mock
 import pytest
 
 from etlhelper.db_params import DbParams
 from etlhelper.exceptions import ETLHelperDbParamsError
+import etlhelper.db_params as etl_db_params
 
 
 @pytest.fixture(scope='function')
@@ -94,3 +96,54 @@ def test_db_params_copy(test_params):
     assert test_params2 == test_params
     assert test_params2 is not test_params
     assert isinstance(test_params2, DbParams)
+
+
+def test_db_params_connect(test_params, monkeypatch):
+    """
+    Assert that the connect function is called with the params object
+    and the password variable.
+    """
+    # Arrange
+    mock_connect = Mock()
+    monkeypatch.setattr(etl_db_params, "connect", mock_connect)
+
+    # Act
+    test_params.connect("PASSWORD_VARIABLE", foobarkey="blah")
+
+    # Assert
+    mock_connect.assert_called_once_with(test_params, "PASSWORD_VARIABLE", foobarkey="blah")
+
+
+def test_db_params_get_connection_string(test_params, monkeypatch):
+    """
+    Test that the correct connection string is given when using the
+    DbParams method for connect.
+    """
+    # Arrange
+    monkeypatch.setenv("PASSWORD_VARIABLE", "blahblahblah")
+
+    # Act
+    conn_str = test_params.get_connection_string("PASSWORD_VARIABLE")
+
+    # Assert
+    assert conn_str == 'host=localhost port=5432 dbname=etlhelper user=etlhelper_user password=blahblahblah'  # noqa
+
+
+def test_db_params_get_sqlalchemy_connection_string(test_params, monkeypatch):
+    """
+    Test that the correct connection string is given when using the
+    DbParams method for connect, for a SQL Alchemy.
+    """
+    # Arrange
+    monkeypatch.setenv("PASSWORD_VARIABLE", "blahblahblah")
+
+    # Act
+    conn_str = test_params.get_sqlalchemy_connection_string("PASSWORD_VARIABLE")
+
+    # Assert
+    assert conn_str == 'postgresql://etlhelper_user:blahblahblah@localhost:5432/etlhelper'
+
+
+def test_db_params_paramstyle(test_params):
+    """Test that the correct paramstyle string is returned."""
+    assert test_params.paramstyle == 'pyformat'
