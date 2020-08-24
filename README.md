@@ -75,18 +75,6 @@ specifying an alternative URL or filesystem path for the zipfile location.
 Run `setup_oracle_client` again to confirm setup has worked.
 
 
-#### pyodbc for Microsoft SQL Server
-
-The `setup_mssql_driver` tool checks that appropriate drivers are installed.
-
-```bash
-setup_mssql_driver
-```
-
-It provides links to installation instructions for drivers.
-The [Dockerfile](Dockerfile) contains an example for Debian systems.
-
-
 ## Quick Start
 
 #### Password Definition
