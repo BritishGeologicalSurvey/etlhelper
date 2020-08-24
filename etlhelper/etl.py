@@ -150,8 +150,13 @@ def fetchone(select_query, conn, parameters=(),
     :param transform: function that accepts an iterable (e.g. list) of rows and
                       returns an iterable of rows (possibly of different shape)
     """
-    return next(iter_rows(select_query, conn, row_factory=row_factory,
-                          parameters=parameters, transform=transform))
+    try:
+        result = next(iter_rows(select_query, conn, row_factory=row_factory,
+                                parameters=parameters, transform=transform))
+    except StopIteration:
+        result = None
+
+    return result
 
 
 def fetchmany(select_query, conn, size=1, parameters=(),
