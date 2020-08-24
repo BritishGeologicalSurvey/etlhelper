@@ -6,8 +6,11 @@
 All main features are complete, however contributions and suggestions are
 welcome, particularly in the following areas:
 
-+ support for more database types
++ support for more database types (MySQL, Informix)
 + additional recipes / case studies
++ addition of connection pools and `connect_to_pool` method
++ add type hints
++ run more integration tests in Travis CI
 + performance optimisation
 + improved documentation
 
@@ -17,18 +20,18 @@ See the [issues list](https://github.com/BritishGeologicalSurvey/etlhelper/issue
 
 The `DbHelper` class provides a uniform interface to different database types.
 
-Implementing a new one requires the following:
+Implementing a new `DbHelper` requires the following:
 
 + New DbHelper class for database
   - `__init__` method imports the driver and defines error types
   - `get_connection_string` and `get_sqlalchemy_connection_string` are defined
   - `required_parameters` defines set of names of parameters required by DbParams
-  - other specific function overrides are in place (e.g. executemany for
-    PostgreSQL)
+  - `paramstyle` attribute
+  - other specific function overrides are in place (e.g. `executemany` for
+    PostgreSQL, `connect` for SQLite.)
 + DbHelper class is registered with DB_HELPER_FACTORY
 + Tests at `test/integration/db/test_xxx.py` that cover at least the `connect()` and
   `copy_rows()` functions
-+ _Optional:_ `setup_xxx_driver.py` script to check driver installation
 
 See [etlhelper/db_helpers/oracle.py](etlhelper/db_helpers/oracle.py) and
 [test/integration/db/test_oracle.py](test/integration/db/test_oracle.py) for examples.
@@ -36,8 +39,11 @@ See [etlhelper/db_helpers/oracle.py](etlhelper/db_helpers/oracle.py) and
 
 ## Developer setup
 
-Note: [https://www.github.com/BritishGeologicalSurvey/etlhelper](https://www.github.com/BritishGeologicalSurvey/etlhelper) is a mirror of an internal repository.
-Pull requests are applied to BGS GitLab and then mirrored to GitHub.
+[https://www.github.com/BritishGeologicalSurvey/etlhelper](https://www.github.com/BritishGeologicalSurvey/etlhelper) is a the source-of-truth copy of ETL Helper.
+There is a mirror on the internal BGS GitLab server.
+It is used to run integration tests against internal Oracle and MS SQL
+databases.
+Pull requests and issues should be targeted at the GitHub repository.
 
 
 ### Prerequisites
@@ -58,16 +64,14 @@ pip install -e .
 ```
 
 Development files will be linked to the virtual environment/system folder
-hierarchy allowing changes to take affect directly.
+hierarchy allowing changes to take effect directly.
 
 Proprietary Oracle Instant Client drivers are required.
 These can be installed with:
 
 ```bash
-setup_oracle_client /path/or/url/to/instantclient-xxxx.zip
-export "$(oracle_lib_path_export)"
+source $(setup_oracle_client)
 ```
-
 
 ### Running tests
 
@@ -107,42 +111,9 @@ To run these:
 + Paste into the terminal to set environment variables
 + Run tests as before
 
-## Creating a new release
+### Creating a new release
 
 Releases are created manually from the main branch via tags.
 This should be done via the GitHub web interface.
 The GitLab CI system will automatically perform the release following the next
 repository mirror synchronisation.
-
-The instructions below explain how to do a manual release.
-
-#### Tagging
-
-`etlhelper` uses the [semantic versioning](https://semver.org/) notation.
-We use the versioneer package to automatically manage version numbers. The
-version numbers are set using the latest `git tag`. To set a new git tag,
-and hence a new version number, run (for example):
-
-```
-git tag -a v0.3.2 -m "Version 0.3.2"
-```
-
-replacing the numbers with an appropriate version number. Then run:
-
-```
-git push --tags
-```
-
-to ensure the tag is pushed to the remote repository. Release notes
-can then be created in the GitHub web interface (easiest), or via the API.
-
-
-#### Upload to PyPI
-
-A source distribution is created via `setup.py`.
-Twine is used to upload to PyPI.  A PyPI account is required.
-
-```bash
-python setup.py sdist --formats=zip
-twine upload dist/etlhelper-0.x.x.zip
-```
