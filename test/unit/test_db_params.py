@@ -6,7 +6,7 @@ import pytest
 
 from etlhelper.db_params import DbParams
 from etlhelper.exceptions import ETLHelperDbParamsError
-import etlhelper.connect as etl_connect
+import etlhelper.db_params as etl_db_params
 
 
 @pytest.fixture(scope='function')
@@ -105,7 +105,7 @@ def test_db_params_connect(test_params, monkeypatch):
     """
     # Arrange
     mock_connect = Mock()
-    monkeypatch.setattr(etl_connect, "connect", mock_connect)
+    monkeypatch.setattr(etl_db_params, "connect", mock_connect)
 
     # Act
     test_params.connect("PASSWORD_VARIABLE", foobarkey="blah")
