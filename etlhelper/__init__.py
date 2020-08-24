@@ -18,11 +18,13 @@ from etlhelper.etl import (
     iter_chunks,
     iter_rows,
 )
+"""
 from etlhelper.connect import (
     connect,
     get_connection_string,
     get_sqlalchemy_connection_string,
 )
+"""
 
 from ._version import get_versions
 __version__ = get_versions()['version']

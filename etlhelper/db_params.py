@@ -5,13 +5,15 @@ parameters.
 import os
 import socket
 
+from etlhelper.connect import connect, get_connection_string, get_sqlalchemy_connection_string
 from etlhelper.db_helper_factory import DB_HELPER_FACTORY
 from etlhelper.exceptions import ETLHelperDbParamsError, ETLHelperHelperError
 
 
 class DbParams(dict):
-    """Generic data holder class for database connection parameters.
+    """Generic data holder class for database connection parameters."""
 
+    """
     As we do not know which parameters will be provided in advance, DbParams
     subclasses dict, to give dynamic attributes, following the pattern described
     here: https://amir.rachum.com/blog/2016/10/05/python-dynamic-attributes/
@@ -107,6 +109,34 @@ class DbParams(dict):
         finally:
             s.close()
 
+    def connect(self, password_variable, **kwargs):
+        """
+        Return database connection.
+
+        :param password_variable: str, name of environment variable with password
+        :param kwargs: connection specific keyword arguments e.g. row_factory
+        :return: Connection object
+        """
+        return connect(self, password_variable, **kwargs)
+
+    def get_connection_string(self, password_variable):
+        """
+        Return the connection string.
+
+        :param password_variable: str, name of environment variable with password
+        :return: str, Connection string
+        """
+        return get_connection_string(self, password_variable)
+
+    def get_sqlalchemy_connection_string(self, password_variable):
+        """
+        Get a SQLAlchemy connection string.
+
+        :param password_variable: str, name of environment variable with password
+        :return: str, Connection string
+        """
+        return get_sqlalchemy_connection_string(self, password_variable)
+
     def copy(self):
         """
         Return a shallow copy of DbParams object.
@@ -114,6 +144,11 @@ class DbParams(dict):
         :return DbParams: DbParams object with same attributes as original.
         """
         return self.__class__(**self)
+
+    @property
+    def paramstyle(self):
+        """The DBAPI2 paramstyle attribute for database type"""
+        return DB_HELPER_FACTORY.from_dbtype(self.dbtype).paramstyle
 
     def __repr__(self):
         key_val_str = ", ".join([f"{key}='{self[key]}'" for key in self.keys()])
