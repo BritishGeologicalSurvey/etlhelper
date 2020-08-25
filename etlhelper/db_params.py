@@ -109,7 +109,7 @@ class DbParams(dict):
         finally:
             s.close()
 
-    def connect(self, password_variable, **kwargs):
+    def connect(self, password_variable=None, **kwargs):
         """
         Return database connection.
 
@@ -119,7 +119,7 @@ class DbParams(dict):
         """
         return connect(self, password_variable, **kwargs)
 
-    def get_connection_string(self, password_variable):
+    def get_connection_string(self, password_variable=None):
         """
         Return the connection string.
 
@@ -128,7 +128,7 @@ class DbParams(dict):
         """
         return get_connection_string(self, password_variable)
 
-    def get_sqlalchemy_connection_string(self, password_variable):
+    def get_sqlalchemy_connection_string(self, password_variable=None):
         """
         Get a SQLAlchemy connection string.
 
