@@ -2,96 +2,170 @@
 
 > etlhelper is a Python library to simplify data transfer between databases.
 
-`etlhelper` provides a unified way to connect to different database types (currently Oracle, PostgreSQL, SQLite and MS SQL Server).
-It is a thin wrapper around Python's [DBAPI2](https://www.python.org/dev/peps/pep-0249/) specification.
-The `get_rows` function returns the result of a SQL query and can be used to create simple HTTP APIs.
-The `copy_rows` function transfers data from one database to another.
-It is possible to apply a transform function to manipulate data in flight.
-These tools make it simple to create easy-to-understand, lightweight, versionable and testable Extract-Transform-Load (ETL) workflows.
+## Overview
 
+`etlhelper` makes it easy to run a SQL query via Python and return the results.
+It is built upon the [DBAPI2
+specification](https://www.python.org/dev/peps/pep-0249/) and takes care of
+importing drivers, formatting connection strings and cursor management.
+This avoids repeating such "boilerplate" code (with subtle variations) across
+each Python program that interacts with a relational database.
+
+### Features
+
++ `setup_oracle_client` script installs Oracle Instant Client on Linux systems
++ `DbParams` objects provide consistent way to connect to different database types (currently Oracle, PostgreSQL, SQLite and MS SQL Server)
++ `get_rows`, `iter_rows`, `fetchone` and other functions for querying database
++ `execute` and `executemany` functions to insert data
++ `copy_rows` to transfer data from one database to another
++ Support for parameterised queries and in-flight transformation of data
++ Output results as namedtuple or dictionary
++ Timestamped log messages for tracking long-running data transfers
++ Helpful error messages display the failed query SQL
+
+These tools can create easy-to-understand, lightweight, versionable and testable Extract-Transform-Load (ETL) workflows.
 `etlhelper` is not a tool for coordinating ETL jobs (use [Apache Airflow](https://airflow.apache.org)), for
-converting GIS data formats (use [ogr2ogr](https://gdal.org/programs/ogr2ogr.html) or [fiona](https://pypi.org/project/Fiona/)) or an Object Relation Mapper (use [SQLAlchemy](https://www.sqlalchemy.org/)).
+converting GIS data formats (use [ogr2ogr](https://gdal.org/programs/ogr2ogr.html) or [fiona](https://pypi.org/project/Fiona/)), for translating between SQL dialects or providing Object Relation Mapping (use [SQLAlchemy](https://www.sqlalchemy.org/)).
 However, it can be used in conjunction with each of these.
 
-For an introduction to `etlhelper`, see the FOSS4GUK 2019 presentation _Open Source Spatial ETL with Python and Apache Airflow_: [video](https://www.youtube.com/watch?v=12rzUW4ps74&feature=youtu.be&t=6238) (20 mins),
+![screencast](https://github.com/BritishGeologicalSurvey/etlhelper/blob/main/docs/screencast.gif?raw=true)
+
+The documentation below explains how the main features are used.
+See the individual function docstrings for full details of parameters and
+options.
+
+For a high level introduction to `etlhelper`, see the FOSS4GUK 2019 presentation _Open Source Spatial ETL with Python and Apache Airflow_: [video](https://www.youtube.com/watch?v=12rzUW4ps74&feature=youtu.be&t=6238) (20 mins),
 [slides](https://volcan01010.github.io/FOSS4G2019-talk).
 
+
+### Documentation
+
  + [Installation](#installation)
- + [Quick Start](#quick-start)
+ + [Connect to databases](#connect-to-databases)
+ + [Transfer data](#transfer-data)
  + [Recipes](#recipes)
  + [Development](#development)
- + [Reference](#reference)
+ + [References](#references)
+
 
 ## Installation
 
+### Python packages
+
 ```bash
-pip install etlhelper[oracle]
+pip install etlhelper
 ```
 
-Required database drivers are specified in the square brackets.  Options are:
+Database driver packages are not included by default and should be specified in
+square brackets.
+Options are `oracle` (installs cx_Oracle), `mssql` (installs pyodbc) and `postgres` (installs psycopg2).
+Multiple values can be separated by commas.
 
 ```
-[oracle]
-[mssql]
-[postgres]
+pip install etlhelper[oracle,postgres]
 ```
 
-Multiple values can be separated by commas, e.g.: `[oracle,mssql]` would install both sets of drivers.
 The `sqlite3` driver is included within Python's Standard Library.
 
 
-### Dependencies
+### Database driver dependencies
 
-Linux systems require additional packages to be installed on the system.
+Some database drivers have additional dependencies.
+On Linux, these can be installed via the system package manager.
 
-Debian / Ubuntu:
+cx_Oracle (for Oracle):
 
-  + `sudo apt install libaio1` for cxOracle.
-  + `sudo apt install build-essential unixodbc-dev` for pyodbc.
++ `sudo apt install libaio1` (Debian/Ubuntu) or `sudo dnf install libaio`
+  (CentOS, RHEL, Fedora)
 
-Centos / Fedora:
+pyodbc (for MS SQL Server):
 
-  + `sudo yum install libaio` for Oracle
-  + `sudo yum install gcc gcc-c++ make python36-devel pyodbc unixODBC-devel` for pyodbc
++ Follow instructions on [Microsoft SQL Docs website](https://docs.microsoft.com/en-us/sql/connect/odbc/linux-mac/installing-the-microsoft-odbc-driver-for-sql-server?view=sql-server-2017)
 
 
-#### Oracle Instant Client
+### Oracle Instant Client
 
 Oracle Instant Client libraries are required to connect to Oracle databases.
-`etlhelper` provides a script to download and unzip them from the [Oracle
+On Linux, `etlhelper` provides a script to download and unzip them from the [Oracle
 website](https://www.oracle.com/database/technologies/instant-client/linux-x86-64-downloads.html).
 Once the drivers are installed, their location must be added to LD_LIBRARY_PATH
 environment variable before they can be used.  `setup_oracle_client` writes
-a file that can be "sourced" to do this for the current shell.  These two steps
+a file that can then be "sourced" to do this for the current shell.  These two steps
 can be executed in a single command as:
 
 ```bash
 source $(setup_oracle_client)
 ```
 
+This command must be run in each new shell session.
 See `setup_oracle_client --help` for further command line flags, including
 specifying an alternative URL or filesystem path for the zipfile location.
 
-Run `setup_oracle_client` again to confirm setup has worked.
 
+## Connect to databases
 
-#### pyodbc for Microsoft SQL Server
+### DbParams
 
-The `setup_mssql_driver` tool checks that appropriate drivers are installed.
+Database connection details are defined by `DbParams` objects.
+Connections are made via their `connect` functions (see below).
+`DbParams` objects are created as follows or from environment variables using the
+`from_environment()` function.
+The class initialisation function checks that the correct attributes have been provided for
+a given `dbtype`.
 
-```bash
-setup_mssql_driver
+```python
+from etlhelper import DbParams
+
+ORACLEDB = DbParams(dbtype='ORACLE', host="localhost", port=1521,
+                    dbname="mydata", user="oracle_user")
+
+POSTGRESDB = DbParams(dbtype='PG', host="localhost", port=5432,
+                      dbname="mydata", user="postgres_user")
+
+SQLITEDB = DbParams(dbtype='SQLITE', filename='/path/to/file.db')
+
+MSSQLDB = DbParams(dbtype='MSSQL', host="localhost", port=1433,
+                   dbname="mydata", user="mssql_user",
+                   odbc_driver="ODBC Driver 17 for SQL Server")
 ```
 
-It provides links to installation instructions for drivers.
-The [Dockerfile](Dockerfile) contains an example for Debian systems.
+DbParams objects have a function to check if a given database can be reached
+over the network.  This does not require a username or password.
 
+```python
+if not ORACLEDB.is_reachable():
+    raise ETLHelperError("Network problems")
+```
 
-## Quick Start
+Other methods/properties are `get_connection_string`,
+`get_sqlalchemy_connection_string`, `paramstyle` and `copy`.
+See function docstrings for details.
 
-#### Password Definition
+###  `connect` function
 
-Passwords (e.g. Oracle password) must be specified via an environment variable.
+The `DbParams.connect()` function returns a DBAPI2 connection as provided by the
+underlying driver.
+Using context-manager syntax as below ensures that the connection is closed
+after use.
+
+```python
+with SQLITEDB.connect() as conn1:
+    with POSTGRESDB.connect('PGPASSWORD') as conn2:
+        do_something()
+```
+
+A standalone `connect` function provides backwards-compatibility with
+previous releases of `etlhelper`:
+
+```python
+from etlhelper import connect
+conn3 = connect(ORACLEDB, 'ORACLE_PASSWORD')
+```
+
+### Passwords
+
+Database passwords must be specified via an environment variable.
+This reduces the temptation to store them within scripts.
 This can be done on the command line via:
 
 + `export ORACLE_PASSWORD=some-secret-password` on Linux
@@ -107,50 +181,21 @@ os.environ['ORACLE_PASSWORD'] = 'some-secret-password'
 No password is required for SQLite databases.
 
 
-#### DbParams
+## Transfer data
 
-Database connection information is defined by `DbParams` objects.
+### Get rows
 
-```
-from etlhelper import DbParams
-
-ORACLEDB = DbParams(dbtype='ORACLE', host="localhost", port=1521,
-                    dbname="mydata", user="oracle_user")
-
-POSTGRESDB = DbParams(dbtype='PG', host="localhost", port=5432,
-                      dbname="mydata", user="postgres_user")
-
-SQLITEDB = DbParams(dbtype='SQLITE', filename='/path/to/file.db')
-
-MSSQLDB = DbParams(dbtype='MSSQL', host="localhost", port=5432,
-                   dbname="mydata", user="mssql_user",
-                   odbc_driver="ODBC Driver 17 for SQL Server")
-```
-
-DbParams objects can also be created from environment variables using the
-`from_environment()` function.
-
-DbParams objects have a function to check if it can connect to a database given its attributes. 
-```
-if not ORACLEDB.is_reachable():
-    raise ETLHelperError("network problems")
-```
-
-
-#### Get rows
-
-Connections are created by `connect` function.
 The `get_rows` function returns a list of named tuples containing data as
 native Python objects.
 
 ```python
 from my_databases import ORACLEDB
-from etlhelper import connect, get_rows
+from etlhelper import get_rows
 
 sql = "SELECT * FROM src"
 
-with connect(ORACLEDB, "ORA_PASSWORD") as conn:
-    result = get_rows(sql, conn)
+with ORACLEDB.connect("ORA_PASSWORD") as conn:
+    get_rows(sql, conn)
 ```
 
 returns
@@ -171,10 +216,75 @@ Data are accessible via index (`row[4]`) or name (`row.day`).
 
 Other functions are provided to select data.  `fetchone`, `fetchmany` and
 `fetchall` are equivalent to the cursor methods specified in the DBAPI v2.0.
-`dump_rows` passes each row to a function (default is `print`), while `iter_rows`
-returns a generator for looping over results.
+`dump_rows` passes each row to a function (default is `print`).  `iter_rows`
+returns a generator for looping over results.  This is recommended for large
+result sets as it ensures that they are not all loaded into memory at once.
 
-#### Copy rows
+
+#### Parameters
+
+Variables can be inserted into queries by passing them as parameters.
+These are sanitised by the underlying DBAPI2 compliant packages to prevent [SQL
+injection attacks](https://xkcd.com/327/).
+The required [paramstyle](https://www.python.org/dev/peps/pep-0249/#paramstyle)
+can be checked with `MY_DB.paramstyle`.
+A tuple is used for positional placeholders, or a dictionary for named
+placeholders.
+
+```python
+select_sql = "SELECT * FROM src WHERE id = :id"
+
+with ORACLEDB.connect("ORA_PASSWORD") as conn:
+    get_rows(sql, conn, parameters={'id': 1})
+```
+
+#### Row factories
+
+Row factories control the output format of returned rows.
+To return each row as a dictionary, use the following:
+
+```python
+from etlhelper import get_rows
+from etlhelper.row_factories import dict_row_factory
+
+sql = "SELECT * FROM my_table"
+
+with ORACLEDB.connect('ORACLE_PASSWORD') as conn:
+    for row in get_rows(sql, conn, row_factory=dict_row_factory):
+        print(row['id'])
+```
+
+The `dict_row_factory` is required with `copy_rows` when using named placeholders for the INSERT query.
+It is also useful when data are to be serialised to JSON.
+
+
+### Insert rows
+
+`execute` can be used to insert a single row or to execute other single
+statements e.g. "CREATE TABLE ...".
+The `executemany` function is used to insert multiple rows of data.
+Large datasets are broken into chunks and inserted in batches to reduce the
+number of queries.
+
+```python
+from etlhelper import executemany
+
+rows = [(1, 'value'), (2, 'another value')]
+insert_sql = "INSERT INTO some_table (col1, col2) VALUES (%s, %s)"
+
+with SOME_DB.connect('SOME_DB_PASSWORD') as conn:
+    executemany(insert_sql, conn, rows)
+```
+
+The `commit_chunks` flag defaults to `True`.
+This ensures that an error during a large data transfer doesn't require all the
+records to be sent again.
+Some work may be required to determine which records remain to be sent.
+Setting `commit_chunks` to `False` will roll back the entire transfer in case
+of an error.
+
+
+### Copy rows
 
 Copy rows takes the results from a SELECT query and applies them as parameters
 to an INSERT query.
@@ -182,23 +292,29 @@ The source and destination tables must already exist.
 
 ```python
 from my_databases import POSTGRESDB, ORACLEDB
-from etlhelper import connect, copy_rows
+from etlhelper import copy_rows
 
 select_sql = "SELECT id, name FROM src"
 insert_sql = "INSERT INTO dest (id, name)
               VALUES (%s, %s)"
 
-src_conn = connect(ORACLEDB, "ORA_PASSWORD")
-dest_conn = connect(POSTGRESDB, "PG_PASSWORD")
+src_conn = ORACLEDB.connect("ORA_PASSWORD")
+dest_conn = POSTGRESDB.connect("PG_PASSWORD")
 
 copy_rows(select_sql, src_conn, insert_sql, dest_conn)
 ```
 
-#### Transform
+`parameters` can be passed to the SELECT query as before and the
+`commit_chunks` flag can be set.
+
+
+### Transform
 
 Data can be transformed in-flight by applying a transform function.  This is
-any Python callable (function) that takes an iterator (e.g. list) and returns
+any Python callable (e.g. function) that takes an iterator (e.g. list) and returns
 another iterator.
+Transform functions are applied to data as they are read from the database and
+can be used with `get_rows`-type methods and with `copy_rows`.
 
 ```python
 import random
@@ -208,9 +324,9 @@ def my_transform(chunk):
 
     new_chunk = []
     for row in chunk:
-        external_value = random.randrange(10)
-        if external_value >= 6:
-            new_chunk.append((*row, external_value))
+        extra_value = random.randrange(10)
+        if extra_value >= 5:
+            new_chunk.append((*row, extra_value))
 
     return new_chunk
 
@@ -219,17 +335,100 @@ copy_rows(select_sql, src_conn, insert_sql, dest_conn
 ```
 
 The above code demonstrates that the returned chunk can have a different number
-of rows of different length.
-The external data can result from a call to a webservice or other database.
+of rows, and of different length, to the input.
+When used with `copy_rows`, the INSERT query must contain the correct placeholders for the
+transform result.
+Extra data can result from a calculation, a call to a webservice or another database.
 
-The `iter_chunks` and `iter_rows` functions return generators.
+The `iter_chunks` and `iter_rows` functions used internally return generators.
 Each chunk or row of data is only accessed when it is required.
-Using `yield` instead of `return` in the transform function makes it
-a generator, too.
+The transform function can also be written to return a generator instead of
+a list.
 Data transformation can then be performed via [memory-efficient iterator-chains](https://dbader.org/blog/python-iterator-chains).
 
+## Recipes
 
-#### Spatial ETL
+
+The following recipes demonstrate how `etlhelper` can be used.
+
+
+### Debug SQL and monitor progress with logging
+
+ETL Helper provides a custom logging handler.
+Time-stamped messages indicating the number of rows processed can be enabled by
+setting the log level to INFO.
+Setting the level to DEBUG provides information on the query that was run,
+example data and the database connection.
+
+```python
+import logging
+from etlhelper import logger
+
+logger.setLevel(logging.INFO)
+```
+
+Output from a call to `copy_rows` will look like:
+
+```
+2019-10-07 15:06:22,411 iter_chunks: Fetching rows
+2019-10-07 15:06:22,413 executemany: 1 rows processed
+2019-10-07 15:06:22,416 executemany: 2 rows processed
+2019-10-07 15:06:22,419 executemany: 3 rows processed
+2019-10-07 15:06:22,420 iter_chunks: 3 rows returned
+2019-10-07 15:06:22,420 executemany: 3 rows processed in total
+```
+
+Note: errors on database connections output messages that include login
+credentials in clear text.
+
+
+### ETL script template
+
+The following is a template for an ETL script to copy all the data from the
+previous day.
+
+```python
+from datetime import date, timedelta
+from etl_helper import copy_rows
+from my_databases import ORACLEDB, POSTGRESDB
+
+# SQL queries include named placeholders for dates.
+DELETE_SQL = "..."
+SELECT_SQL = "..."
+INSERT_SQL = "..."
+
+
+def copy_src_to_dest(startdate, enddate):
+    params = {'startdate': startdate, 'enddate': enddate}
+
+    with ORACLEDB.connect("ORA_PASSWORD") as src_conn:
+        with POSTGRESDB.connect("PG_PASSWORD") as dest_conn:
+            execute(DELETE_SQL, dest_conn, parameters=params)
+            copy_rows(SELECT_SQL, src_conn,
+                      INSERT_SQL, dest_conn,
+                      parameters=params)
+
+
+if __name__ == "__main__":
+    # Copy data from yesterday
+    yesterday = date.today - timedelta(1)
+    before_yesterday = yesterday - timedelta(1)
+
+    copy_src_to_dest(before_yesterday, yesterday)
+```
+
+It is helpful to create [idempotent](https://stackoverflow.com/questions/1077412/what-is-an-idempotent-operation) scripts to ensure that they can be rerun without problems.
+In this example, the DELETE_SQL command clears existing data prior to insertion.
+SQL syntax such as "CREATE TABLE IF NOT EXISTS", "INSERT OR UPDATE", or "INSERT
+... ON CONFLICT" is useful, too, although the the exact commands depend on the
+target database type.
+
+See [FOSS4G talk slides](https://volcan01010.github.io/FOSS4G2019-talk/) for an
+example of using the Python operator with the `copy_src_to_dest` function and
+passing in dates.
+
+
+### Spatial ETL
 
 No specific drivers are required for spatial data if they are transferred as
 Well Known Text.
@@ -255,121 +454,25 @@ buffering can be carried out in the SQL.
 Transform functions can manipulate geometries using the [Shapely](https://pypi.org/project/Shapely/) library.
 
 
-#### ETL script example
+### Export data to CSV
 
-The following is an example ETL script.
-
-```python
-from my_databases import ORACLEDB, POSTGRESDB
-from etl_helper import connect, copy_rows
-
-DELETE_SQL = "..."
-SELECT_SQL = "..."
-INSERT_SQL = "..."
-
-def copy_src_to_dest():
-    with connect(ORACLEDB, "ORA_PASSWORD") as src_conn:
-        with connect(POSTGRESDB, "PG_PASSWORD") as dest_conn:
-            execute(DELETE_SQL, dest_conn)
-            copy_rows(SELECT_SQL, src_conn,
-                      INSERT_SQL, dest_conn)
-
-if __name__ == "__main__":
-    copy_src_to_dest()
-```
-
-The DELETE_SQL command clears existing data prior to insertion.  This makes the
-script idempotent.
-
-
-## Recipes
-
-`etlhelper` has other useful functions.
-
-
-#### Logging progress
-
-ETLHelper does not emit log messages by default.
-Time-stamped messages indicating the number of rows processed can be enabled by
-setting the log level to INFO.
-Setting the level to DEBUG provides information on the query that was run,
-example data and the database connection.
+The [Pandas](https://pandas.pydata.org/pandas-docs/stable/generated/pandas.read_sql.html) library can connect to databases via SQLAlchemy.
+It has powerful tools for manipulating tabular data.
+ETL Helper makes it easy to prepare the SQL Alchemy connection.
 
 ```python
-import logging
-from etlhelper import logger
-
-logger.setLevel(logging.INFO)
-```
-
-Output from a call to `copy_rows` will look like:
-
-```
-2019-10-07 15:06:22,411 iter_chunks: Fetching rows
-2019-10-07 15:06:22,413 executemany: 1 rows processed
-2019-10-07 15:06:22,416 executemany: 2 rows processed
-2019-10-07 15:06:22,419 executemany: 3 rows processed
-2019-10-07 15:06:22,420 iter_chunks: 3 rows returned
-2019-10-07 15:06:22,420 executemany: 3 rows processed in total
-```
-
-
-#### Getting a SQLAlchemy engine
-
-SQLAlchemy allows you to read/write data from [Pandas](https://pandas.pydata.org/pandas-docs/stable/generated/pandas.read_sql.html).
-It can be installed separately with `pip install sqlalchemy`.
-For example, to export a CSV file of data:
-
-```python
-from my_databases import ORACLEDB
-from etlhelper import get_sqlalchemy_connection_string
+import pandas as pd
 from sqlalchemy import create_engine
 
-sqla_conn_str = get_sqlalchemy_connection_string(ORACLEDB, "ORACLE_PASSWORD")
-engine = create_engine(sqla_conn_str)
+from my_databases import ORACLEDB
+
+engine = create_engine(ORACLEDB.get_sqlalchemy_connection_string("ORACLE_PASSWORD"))
 
 sql = "SELECT * FROM my_table"
 df = pd.read_sql(sql, engine)
 df.to_csv('my_data.csv', header=True, index=False, float_format='%.3f')
 ```
 
-
-#### Row factories
-
-A row factory can be specified to change the output style.
-For example, to return each row as a dictionary, use the following:
-
-```python
-from etlhelper import connect, iter_rows
-from etlhelper.row_factories import dict_row_factory
-
-conn = connect(ORACLEDB, 'ORACLE_PASSWORD')
-sql = "SELECT * FROM my_table"
-for row in iter_rows(sql, conn, row_factory=dict_row_factory):
-    print(row['id'])
-```
-
-The `dict_row_factory` is useful when getting data to be serialised
-into JSON.
-When combined with [Hug](http://pypi.org/project/hug), an HTTP API can be
-created in fewer than 20 lines of code.
-
-
-#### Insert rows
-
-The `executemany` function can be used to insert data to the database.
-Large datasets are broken into chunks and inserted in batches to reduce the
-number of queries to the database that are required.
-
-```python
-from etlhelper import connect, executemany
- 
-rows = [(1, 'value'), (2, 'another value')]
-insert_sql = "INSERT INTO some_table (col1, col2) VALUES (%s, %s)"
-
-with connect(some_db, 'SOME_DB_PASSWORD') as conn:
-    executemany(insert_sql, conn, rows)
-```
 
 ## Development
 
@@ -381,9 +484,15 @@ ETL Helper was created by and is maintained by British Geological Survey Informa
 + Jo Walsh ([metazool](https://github.com/metazool))
 + Declan Valters ([dvalters](https://github.com/dvalters))
 + Colin Blackburn ([ximenesuk](https://github.com/ximenesuk))
++ Daniel Sutton ([kerberpolis](https://github.com/kerberpolis))
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for details on how to contribute to the
-software.
+### Development status
+
+The code is still under active development and breaking changes are possible.
+Users should pin the version in their dependency lists and
+[watch](https://docs.github.com/en/github/managing-subscriptions-and-notifications-on-github/viewing-your-subscriptions#configuring-your-watch-settings-for-an-individual-repository)
+the repository for new releases.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for details on how to contribute.
 
 
 ### Licence
@@ -398,3 +507,4 @@ Copyright: © BGS / UKRI 2019
 + [psycopg2](http://initd.org/psycopg/docs/cursor.html)
 + [cx_Oracle](https://cx-oracle.readthedocs.io/en/latest/cursor.html)
 + [pyodbc](https://pypi.org/project/pyodbc/)
++ [sqlite3](https://docs.python.org/3/library/sqlite3.html)
