@@ -8,8 +8,8 @@
 It is built upon the [DBAPI2
 specification](https://www.python.org/dev/peps/pep-0249/) and takes care of
 importing drivers, formatting connection strings and cursor management.
-This avoids repeating such "boilerplate" code (with subtle variations) across
-each Python program that interacts with a relational database.
+This reduces the amount of boilerplate code required to query a relational
+database with Python.
 
 ### Features
 

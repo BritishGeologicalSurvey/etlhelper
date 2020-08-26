@@ -224,7 +224,7 @@ def executemany(query, conn, rows, commit_chunks=True):
 
     commit_chunks controls if chunks the transaction should be committed after
     each chunk has been inserted.  Committing chunks means that errors during
-    a long-running insert do not require all all data to be loaded again.  The
+    a long-running insert do not require all data to be loaded again.  The
     disadvantage is that investigation may be required to determine exactly
     which records have been successfully transferred.
 
