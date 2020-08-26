@@ -1,0 +1,8 @@
+.git
+.gitlab
+bin
+docs
+*.egg-info
+venv
+coverage
+.coverage
