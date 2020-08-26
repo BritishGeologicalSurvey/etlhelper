@@ -224,7 +224,7 @@ result sets as it ensures that they are not all loaded into memory at once.
 #### Parameters
 
 Variables can be inserted into queries by passing them as parameters.
-These are sanitised by the underlying DBAPI2 compliant packages to prevent [SQL
+These "bind variables" are sanitised by the underlying drivers to prevent [SQL
 injection attacks](https://xkcd.com/327/).
 The required [paramstyle](https://www.python.org/dev/peps/pep-0249/#paramstyle)
 can be checked with `MY_DB.paramstyle`.
@@ -272,7 +272,7 @@ from etlhelper import executemany
 rows = [(1, 'value'), (2, 'another value')]
 insert_sql = "INSERT INTO some_table (col1, col2) VALUES (%s, %s)"
 
-with SOME_DB.connect('SOME_DB_PASSWORD') as conn:
+with POSTGRESDB.connect('PGPASSWORD') as conn:
     executemany(insert_sql, conn, rows)
 ```
 
@@ -384,25 +384,54 @@ credentials in clear text.
 
 ### ETL script template
 
-The following is a template for an ETL script to copy all the data from the
-previous day.
+The following is a template for an ETL script.
+It copies copy all the sensor readings from the previous day from an Oracle
+source to PostgreSQL destination.
 
 ```python
-from datetime import date, timedelta
+# copy_readings.py
+
+import datetime as dt
 from etl_helper import copy_rows
 from my_databases import ORACLEDB, POSTGRESDB
 
-# SQL queries include named placeholders for dates.
-DELETE_SQL = "..."
-SELECT_SQL = "..."
-INSERT_SQL = "..."
+CREATE_SQL = dedent("""
+    CREATE TABLE IF NOT EXISTS sensordata.readings
+    (
+      sensor_data_id bigint PRIMARY KEY,
+      measure_id bigint,
+      time_stamp timestamp without time zone,
+      meas_value double precision
+    )
+    """).strip()
+
+DELETE_SQL = dedent("""
+    DELETE FROM sensordata.readings
+    WHERE time_stamp >= TO_DATE(%(start)s, 'YYYY-MM-DD HH24:MI:SS')
+      AND time_stamp < TO_DATE(%(end)s, 'YYYY-MM-DD HH24:MI:SS')
+    """).strip()
+
+SELECT_SQL = dedent("""
+    SELECT id, measure_id, time_stamp, reading
+    FROM sensor_data
+    WHERE time_stamp >= TO_DATE(:start, 'YYYY-MM-DD HH24:MI:SS')
+      AND time_stamp < TO_DATE(:end, 'YYYY-MM-DD HH24:MI:SS')
+    ORDER BY time_stamp
+    """).strip()
+
+INSERT_SQL = dedent("""
+    INSERT INTO sensordata.readings (sensor_data_id, measure_id, time_stamp,
+      meas_value)
+    VALUES (%s, %s, %s, %s)
+    """).strip()
 
 
-def copy_src_to_dest(startdate, enddate):
-    params = {'startdate': startdate, 'enddate': enddate}
+def copy_readings(startdate, enddate):
+    params = {'start': start, 'end': end}
 
     with ORACLEDB.connect("ORA_PASSWORD") as src_conn:
         with POSTGRESDB.connect("PG_PASSWORD") as dest_conn:
+            execute(CREATE_SQL dest_conn)
             execute(DELETE_SQL, dest_conn, parameters=params)
             copy_rows(SELECT_SQL, src_conn,
                       INSERT_SQL, dest_conn,
@@ -410,22 +439,53 @@ def copy_src_to_dest(startdate, enddate):
 
 
 if __name__ == "__main__":
-    # Copy data from yesterday
-    yesterday = date.today - timedelta(1)
-    before_yesterday = yesterday - timedelta(1)
+    # Copy data from 00:00:00 yesterday to 00:00:00 today
+    today = dt.combine(dt.date.today, dt.time.min)
+    yesterday = today - dt.timedelta(1)
 
-    copy_src_to_dest(before_yesterday, yesterday)
+    copy_readings(yesterday, today)
 ```
 
-It is helpful to create [idempotent](https://stackoverflow.com/questions/1077412/what-is-an-idempotent-operation) scripts to ensure that they can be rerun without problems.
-In this example, the DELETE_SQL command clears existing data prior to insertion.
-SQL syntax such as "CREATE TABLE IF NOT EXISTS", "INSERT OR UPDATE", or "INSERT
-... ON CONFLICT" is useful, too, although the the exact commands depend on the
-target database type.
+It is valuable to create [idempotent](https://stackoverflow.com/questions/1077412/what-is-an-idempotent-operation) scripts to ensure that they can be rerun without problems.
+In this example, the "CREATE TABLE IF NOT EXISTS" command can be called repeatedly.
+The DELETE_SQL command clears existing data prior to insertion to prevent duplicate key errors.
+SQL syntax such as "INSERT OR UPDATE", "UPSERT" or "INSERT ... ON CONFLICT" may be more efficient, but the the exact commands depend on the target database type.
 
-See [FOSS4G talk slides](https://volcan01010.github.io/FOSS4G2019-talk/) for an
-example of using the Python operator with the `copy_src_to_dest` function and
-passing in dates.
+
+### Calling ETL Helper scripts from Apache Airflow
+
+The following is an [Apache Airflow
+DAG](https://airflow.apache.org/docs/stable/concepts.html) that uses the `copy_readings` function
+defined in the script above.
+The Airflow scheduler will create tasks for each day since 1 August 2019 and
+call `copy_readings` with the appropriate start and end times.
+
+```python
+# readings_dag.py
+
+import datetime as dt
+from airflow import DAG
+from airflow.operators.python_operator import PythonOperator
+import copy_readings
+
+
+def copy_readings_with_args(**kwargs):
+    # Set arguments for copy_readings from context
+    start = kwargs.get('prev_execution_date')
+    end = kwargs.get('execution_date')
+    copy_readings.copy_readings(start, end)
+
+dag = DAG('readings',
+          schedule_interval=dt.timedelta(days=1),
+          start_date=dt.datetime(2019, 8, 1),
+          catchup=True)
+
+t1 = PythonOperator(
+    task_id='copy_readings',
+    python_callable=copy_readings_with_args,
+    provide_context=True,
+    dag=dag)
+```
 
 
 ### Spatial ETL
