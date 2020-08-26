@@ -6,3 +6,13 @@ docs
 venv
 coverage
 .coverage
+.gitlab-ci.yml
+.mypy_cache
+.pytest_cache
+**/__pycache__
+htmlcov
+.travis.yml
+
+# Instant Client files are installed to following directory
+# during local development
+etlhelper/oracle_instantclient/*
