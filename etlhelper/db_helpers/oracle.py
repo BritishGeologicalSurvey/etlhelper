@@ -24,7 +24,7 @@ class OracleDbHelper(DbHelper):
         """
         Return a connection string
         :param db_params: DbParams
-        :param password: str, password
+        :param password_variable: str, password
         :return: str
         """
         # Prepare connection string

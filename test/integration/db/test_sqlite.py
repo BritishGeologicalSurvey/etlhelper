@@ -33,7 +33,7 @@ def test_connect(sqlitedb):
 
 @pytest.mark.skipif(sys.platform != 'linux', reason='Requires Linux OS')
 def test_bad_connect(tmpdir):
-    # Attemping to create file in non-existent directory should fail
+    # Attempting to create file in non-existent directory should fail
     try:
         db_params = DbParams(dbtype='SQLITE', filename='/does/not/exist')
         with pytest.raises(ETLHelperConnectionError):

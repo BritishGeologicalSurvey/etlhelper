@@ -24,7 +24,7 @@ class DbHelper(metaclass=ABCMeta):
         self.paramstyle = ''
         # Dummy function to allowing calling in connect below
         # (To satisfy Pylint)
-        # Throws exception if not overidden
+        # Throws exception if not overridden
         self._connect_func = lambda conn_str: 1/0
 
     def connect(self, db_params, password_variable=None, **kwargs):
