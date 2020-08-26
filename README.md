@@ -407,8 +407,8 @@ CREATE_SQL = dedent("""
 
 DELETE_SQL = dedent("""
     DELETE FROM sensordata.readings
-    WHERE time_stamp >= TO_DATE(%(start)s, 'YYYY-MM-DD HH24:MI:SS')
-      AND time_stamp < TO_DATE(%(end)s, 'YYYY-MM-DD HH24:MI:SS')
+    WHERE time_stamp >= %(start)s
+      AND time_stamp < %(end)s
     """).strip()
 
 SELECT_SQL = dedent("""
