@@ -207,7 +207,7 @@ def _symlink_libraries(install_dir):
     clntsh_link = install_dir / 'libclntsh.so'
 
     # Some versions of InstantClient will have a placeholder file
-    # for where the symlink should be, rahter than a symlink.
+    # for where the symlink should be, rather than a symlink.
     # It must be removed before trying to create a real symlink.
 
     # unlink(missing_ok=True) would be possible in Python 3.8+
