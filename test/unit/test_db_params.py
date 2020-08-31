@@ -21,9 +21,23 @@ def test_params():
     return test_params_example
 
 
-def test_db_params_validate_params():
+def test_db_params_validate_params_invalid_dbtype():
     with pytest.raises(ETLHelperDbParamsError, match=r'.* not in valid types .*'):
         DbParams(dbtype='not valid')
+
+
+def test_db_params_validate_params_missing_params():
+    with pytest.raises(ETLHelperDbParamsError,
+                       match=r"{'user'} not set. Required parameters are .*"):
+        # missing user
+        DbParams(dbtype='ORACLE', host='localhost', port=1, dbname='test')
+
+
+def test_db_params_validate_params_extra_param():
+    with pytest.raises(ETLHelperDbParamsError,
+                       match=r"Invalid parameter\(s\): {'extra_param'}"):
+        DbParams(dbtype='ORACLE', host='localhost', port=1, dbname='test',
+                 user='user', extra_param=1)
 
 
 def test_db_params_repr(test_params):
@@ -45,9 +59,11 @@ def test_db_params_setattr(test_params):
 
 def test_db_params_setattr_bad_param(test_params):
     """Test that __setattr__ approach fails for bad parameter"""
-    with pytest.raises(AttributeError, match=r'.* is not a valid DbParams attribute: .*'):
-        # Set a param using dot notation
+    with pytest.raises(ETLHelperDbParamsError, match=r"Invalid parameter\(s\): {'some_bad_param'}"):
+        # Set a param using dot notation and confirm error
         test_params.some_bad_param = "Data McDatabase"
+    # Confirm param is not set
+    assert test_params.get('some_bad_param', 'not_found') == 'not_found'
 
 
 def test_db_params_from_environment(monkeypatch):
