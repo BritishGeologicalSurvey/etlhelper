@@ -2,6 +2,7 @@
 Database helper for SQLite
 """
 from contextlib import contextmanager
+import warnings
 from etlhelper.db_helpers.db_helper import DbHelper
 
 
@@ -11,6 +12,7 @@ class SQLiteDbHelper(DbHelper):
     """
     def __init__(self):
         super().__init__()
+        self.required_params = {'filename'}
         try:
             import sqlite3
             self.sql_exceptions = (sqlite3.OperationalError,
@@ -18,10 +20,10 @@ class SQLiteDbHelper(DbHelper):
             self.connect_exceptions = (sqlite3.OperationalError)
             self.paramstyle = sqlite3.paramstyle
             self._connect_func = sqlite3.connect
-            self.required_params = {'filename'}
         except ImportError:
-            print("The sqlite3 module was not found. Check configuration as "
-                  "it should be in Python's standard library.")
+            msg = ("Could not import sqlite3 module required for SQLite connections.  "
+                   "Check Python configuration - this should be part of Standard Library.")
+            warnings.warn(msg)
 
     def get_connection_string(self, db_params, password_variable=None):
         """

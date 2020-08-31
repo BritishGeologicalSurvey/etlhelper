@@ -1,6 +1,7 @@
 """
 Database helper for Oracle
 """
+import warnings
 from etlhelper.db_helpers.db_helper import DbHelper
 
 
@@ -10,15 +11,17 @@ class OracleDbHelper(DbHelper):
     """
     def __init__(self):
         super().__init__()
+        self.required_params = {'host', 'port', 'dbname', 'user'}
         try:
             import cx_Oracle
             self.sql_exceptions = (cx_Oracle.DatabaseError)
             self.connect_exceptions = (cx_Oracle.DatabaseError)
             self.paramstyle = cx_Oracle.paramstyle
             self._connect_func = cx_Oracle.connect
-            self.required_params = {'host', 'port', 'dbname', 'user'}
         except ImportError:
-            print("The cxOracle drivers were not found. See setup guide for more information.")
+            msg = ("Could not import cx_Oracle module required for Oracle connections.  "
+                   "See https://github.com/BritishGeologicalSurvey/etlhelper for installation instructions")
+            warnings.warn(msg)
 
     def get_connection_string(self, db_params, password_variable):
         """
@@ -34,9 +37,8 @@ class OracleDbHelper(DbHelper):
 
     def get_sqlalchemy_connection_string(self, db_params, password_variable):
         """
-        Returns connection string for sql alchemy type connections
+        Returns connection string for SQLAlchemy engine.
         """
         password = self.get_password(password_variable)
-
         return (f'oracle://{db_params.user}:{password}@'
                 f'{db_params.host}:{db_params.port}/{db_params.dbname}')
