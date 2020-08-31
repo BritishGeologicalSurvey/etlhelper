@@ -32,15 +32,14 @@ class DbParams(dict):
             raise AttributeError(f'No such attribute: {item}')
 
     def __setattr__(self, item, value):
-        # Prepare set of valid_params
-        # dbtype has to be added as it is used to determine required_params
-        valid_params = DB_HELPER_FACTORY.from_dbtype(self.dbtype).required_params
-        valid_params = valid_params.union({'dbtype'})
-        if item not in valid_params:
-            msg = f"'{item}' is not a valid DbParams attribute: {valid_params}"
-            raise AttributeError(msg)
-
         self[item] = value
+
+        # Validate the updated parameter set, and remove bad item if failed
+        try:
+            self.validate_params()
+        except ETLHelperDbParamsError:
+            self.pop(item)
+            raise
 
     def __dir__(self):
         return super().__dir__() + [str(k) for k in self.keys()]
@@ -66,6 +65,12 @@ class DbParams(dict):
         unset_params = (given ^ required_params) & required_params
         if unset_params:
             msg = f'{unset_params} not set. Required parameters are {required_params}'
+            raise ETLHelperDbParamsError(msg)
+
+        valid_params = required_params.union({'dbtype'})
+        bad_params = given ^ valid_params
+        if bad_params:
+            msg = f"Invalid parameter(s): {bad_params}"
             raise ETLHelperDbParamsError(msg)
 
     @classmethod
