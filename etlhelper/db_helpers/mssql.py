@@ -1,6 +1,7 @@
 """
 Database helper for mssql
 """
+import warnings
 from etlhelper.db_helpers.db_helper import DbHelper
 
 
@@ -10,16 +11,17 @@ class MSSQLDbHelper(DbHelper):
     """
     def __init__(self):
         super().__init__()
+        self.required_params = {'host', 'port', 'dbname', 'user', 'odbc_driver'}
         try:
             import pyodbc
             self.sql_exceptions = (pyodbc.DatabaseError)
             self.connect_exceptions = (pyodbc.DatabaseError, pyodbc.InterfaceError)
             self.paramstyle = pyodbc.paramstyle
             self._connect_func = pyodbc.connect
-            self.required_params = {'host', 'port', 'dbname', 'user', 'odbc_driver'}
         except ImportError:
-            print("The pyodc Python package could not be found.\n"
-                  "Run: python -m pip install pyodbc")
+            msg = ("Could not import pyodbc module required for MS SQL connections.  "
+                   "See https://github.com/BritishGeologicalSurvey/etlhelper for installation instructions")
+            warnings.warn(msg)
 
     def get_connection_string(self, db_params, password_variable):
         """
@@ -35,7 +37,7 @@ class MSSQLDbHelper(DbHelper):
 
     def get_sqlalchemy_connection_string(self, db_params, password_variable):
         """
-        Returns connection string for sql alchemy type
+        Returns connection string for SQLAlchemy engine.
         """
         password = self.get_password(password_variable)
         driver = db_params.odbc_driver.replace(" ", "+")
