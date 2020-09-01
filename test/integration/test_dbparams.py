@@ -21,9 +21,7 @@ def test_is_unreachable(pgtestdb_params):
 def test_sqlite_dbparam_not_supported():
     sqlitedb = DbParams(
         dbtype='SQLITE',
-        filename='sqlite.db',
-        dbname='etlhelper',
-        user='etlhelper_user')
+        filename='sqlite.db')
 
     with pytest.raises(ValueError):
         sqlitedb.is_reachable()

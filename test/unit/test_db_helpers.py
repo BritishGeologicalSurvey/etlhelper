@@ -22,7 +22,7 @@ MSSQLDB = DbParams(dbtype='MSSQL', host='server', port='1521', dbname='testdb',
                    user='testuser', odbc_driver='test driver')
 
 POSTGRESDB = DbParams(dbtype='PG', host='server', port='1521', dbname='testdb',
-                      user='testuser', odbc_driver='test driver')
+                      user='testuser')
 
 SQLITEDB = DbParams(dbtype='SQLITE', filename='/myfile.db')
 

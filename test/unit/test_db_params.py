@@ -76,6 +76,7 @@ def test_db_params_from_environment(monkeypatch):
     monkeypatch.setenv('TEST_DB_PARAMS_ENV_PORT', '1234')
     monkeypatch.setenv('TEST_DB_PARAMS_ENV_DBNAME', 'testdb')
     monkeypatch.setenv('TEST_DB_PARAMS_ENV_USER', 'testuser')
+    monkeypatch.setenv('TEST_DB_PARAMS_ENV_PASSWORD', 'dont want this')
 
     # Act
     db_params = DbParams.from_environment(prefix='TEST_DB_PARAMS_ENV_')
@@ -86,6 +87,10 @@ def test_db_params_from_environment(monkeypatch):
     assert db_params.port == '1234'
     assert db_params.dbname == 'testdb'
     assert db_params.user == 'testuser'
+
+    # Confirm that password variable wasn't included
+    assert 'PASSWORD' not in db_params
+    assert 'password' not in db_params
 
 
 def test_db_params_from_environment_not_set(monkeypatch):
