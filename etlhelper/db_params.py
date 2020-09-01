@@ -86,9 +86,15 @@ class DbParams(dict):
 
         # Ensure dbtype has been set
         dbtype_var = f'{prefix}dbtype'
-        if 'dbtype' not in dbparams_from_env:
+        dbtype = dbparams_from_env.get('dbtype', None)
+        if dbtype is None:
             msg = f"{dbtype_var} environment variable is not set"
             raise ETLHelperDbParamsError(msg)
+
+        # Only include the required params
+        # This prevents something like ETLHelper_password being added
+        required_params = DB_HELPER_FACTORY.from_dbtype(dbtype).required_params | {'dbtype'}
+        dbparams_from_env = {key: dbparams_from_env[key] for key in required_params}
 
         return cls(**dbparams_from_env)
 
