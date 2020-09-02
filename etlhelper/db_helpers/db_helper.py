@@ -2,10 +2,13 @@
 Database helper classes using Factory Pattern
 """
 from abc import ABCMeta, abstractmethod
+import logging
 import sys
 import os
 
 from etlhelper.exceptions import ETLHelperConnectionError
+
+logger = logging.getLogger('etlhelper')
 
 
 class DbHelper(metaclass=ABCMeta):
@@ -63,12 +66,12 @@ class DbHelper(metaclass=ABCMeta):
         :raises ETLHelperDbParamsError: Exception when parameter not defined
         """
         if not password_variable:
-            print("Name of password environment variable e.g. ORACLE_PASSWORD is required")
+            logger.error("Name of password environment variable e.g. ORACLE_PASSWORD is required")
             sys.exit(1)
         try:
             return os.environ[password_variable]
         except KeyError:
-            print(f"Password environment variable ({password_variable}) is not set")
+            logger.error(f"Password environment variable ({password_variable}) is not set")
             sys.exit(1)
 
     @staticmethod
