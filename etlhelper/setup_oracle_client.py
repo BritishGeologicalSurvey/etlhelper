@@ -38,14 +38,14 @@ def setup_oracle_client(zip_location, reinstall=False):
 
     # Return if configured already
     if _oracle_client_is_configured() and not reinstall:
-        logging.info('Oracle Client library is correctly configured')
+        logging.info('Oracle Client library is correctly configured.')
         print(ld_library_prepend_script.absolute())
         return
 
     # Quit with help message if not Linux
     if sys.platform != 'linux':
         # Message for Windows and Mac users
-        print(WINDOWS_INSTALL_MESSAGE)
+        logging.error(WINDOWS_INSTALL_MESSAGE)
         sys.exit(1)
 
     # Gather facts
@@ -136,7 +136,7 @@ def _create_install_dir(install_dir):
     try:
         install_dir.mkdir()
     except PermissionError:
-        print(dedent(f"""
+        logging.error(dedent(f"""
             Permission denied to required Python directory: {install_dir}
             Consider using a virtual environment.""".strip()))
         sys.exit(1)
