@@ -25,10 +25,10 @@ class DbHelper(metaclass=ABCMeta):
         self.connect_exceptions = tuple()
         self.required_params = set()
         self.paramstyle = ''
-        # Dummy function to allowing calling in connect below
-        # (To satisfy Pylint)
-        # Throws exception if not overridden
-        self._connect_func = lambda conn_str: 1/0
+        self.missing_driver_msg = ''
+        # This is overridden with real connect method when DbHelper class is
+        # successfully initialised if driver is installed
+        self._connect_func = self._raise_missing_driver_error_on_connect
 
     def connect(self, db_params, password_variable=None, **kwargs):
         """
@@ -101,3 +101,11 @@ class DbHelper(metaclass=ABCMeta):
         :param conn: Open database connection.
         """
         return conn.cursor()
+
+    def _raise_missing_driver_error_on_connect(self, *args, **kwargs):
+        """
+        Raise an exception with helpful message if user tries to connect without driver installed.
+        This function replaces a connect function, so *args and **kwargs are collected to allow
+        it to accept whatever would be passed to that function.
+        """
+        raise ETLHelperConnectionError(self.missing_driver_msg)
