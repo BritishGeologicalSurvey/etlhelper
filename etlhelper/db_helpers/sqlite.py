@@ -13,6 +13,9 @@ class SQLiteDbHelper(DbHelper):
     def __init__(self):
         super().__init__()
         self.required_params = {'filename'}
+        self.missing_driver_msg = (
+            "Could not import sqlite3 module required for SQLite connections.  "
+            "Check Python configuration - this should be part of Standard Library.")
         try:
             import sqlite3
             self.sql_exceptions = (sqlite3.OperationalError,
@@ -21,9 +24,7 @@ class SQLiteDbHelper(DbHelper):
             self.paramstyle = sqlite3.paramstyle
             self._connect_func = sqlite3.connect
         except ImportError:
-            msg = ("Could not import sqlite3 module required for SQLite connections.  "
-                   "Check Python configuration - this should be part of Standard Library.")
-            warnings.warn(msg)
+            warnings.warn(self.missing_driver_msg)
 
     def get_connection_string(self, db_params, password_variable=None):
         """

@@ -12,6 +12,9 @@ class PostgresDbHelper(DbHelper):
     def __init__(self):
         super().__init__()
         self.required_params = {'host', 'port', 'dbname', 'user'}
+        self.missing_driver_msg = (
+            "Could not import psycopg2 module required for PostgreSQL connections.  "
+            "See https://github.com/BritishGeologicalSurvey/etlhelper for installation instructions")
         try:
             import psycopg2
             self.sql_exceptions = (psycopg2.ProgrammingError,
@@ -21,9 +24,7 @@ class PostgresDbHelper(DbHelper):
             self.paramstyle = psycopg2.paramstyle
             self._connect_func = psycopg2.connect
         except ImportError:
-            msg = ("Could not import psycopg2 module required for PostgreSQL connections.  "
-                   "See https://github.com/BritishGeologicalSurvey/etlhelper for installation instructions")
-            warnings.warn(msg)
+            warnings.warn(self.missing_driver_msg)
 
     def get_connection_string(self, db_params, password_variable):
         """

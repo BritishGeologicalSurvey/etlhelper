@@ -1,4 +1,5 @@
 """Unit tests for db_helpers module."""
+import builtins
 from unittest.mock import Mock
 import pytest
 import sqlite3
@@ -12,6 +13,7 @@ from etlhelper.db_helper_factory import DB_HELPER_FACTORY
 from etlhelper.db_helpers import (
     OracleDbHelper, MSSQLDbHelper, PostgresDbHelper, SQLiteDbHelper
 )
+from etlhelper.exceptions import ETLHelperConnectionError
 
 # pylint: disable=missing-docstring
 
@@ -95,3 +97,34 @@ def test_sqlalchemy_conn_string(monkeypatch, db_params, expected):
     conn_str = helper.get_sqlalchemy_connection_string(db_params, 'DB_PASSWORD')
 
     assert conn_str == expected
+
+
+@pytest.mark.parametrize('db_params, driver', [
+    (ORACLEDB, 'cx_Oracle'), (MSSQLDB, 'pyodbc'), (POSTGRESDB, 'psycopg2'),
+    (SQLITEDB, 'sqlite3')
+])
+def test_connect_without_driver_raises_exception(db_params, driver, monkeypatch):
+    """
+    Test that exception and helpful message are raised when connecting
+    without driver installed
+    """
+    # Arrange - simulate missing driver module.
+    # See https://stackoverflow.com/a/2481588/3508733
+    real_import = builtins.__import__
+
+    def raise_import_error(name, globals, locals, fromlist, level):
+        if name == driver:
+            raise ImportError()
+        return real_import(name, globals, locals, fromlist, level)
+
+    monkeypatch.setattr(builtins, '__import__', raise_import_error)
+    monkeypatch.setenv("PASSWORD_VARIABLE", "blahblahblah")
+
+    # Act and assert
+    with pytest.raises(ETLHelperConnectionError) as excinfo:
+        db_params.connect('PASSWORD_VARIABLE')
+
+    # Confirm error message includes driver details
+    error_message = excinfo.value.args[0]
+    assert "Could not import" in error_message
+    assert driver in error_message
