@@ -17,13 +17,8 @@ from etlhelper.exceptions import (
     ETLHelperQueryError
 )
 
-# Skip these tests if database is unreachable
-ORADB = DbParams.from_environment(prefix='TEST_ORACLE_')
-if not ORADB.is_reachable():
-    pytest.skip('Oracle test database is unreachable', allow_module_level=True)
-
-
 # -- Tests here --
+
 
 def test_connect(sqlitedb):
     conn = connect(sqlitedb)
