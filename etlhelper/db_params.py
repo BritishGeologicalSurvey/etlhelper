@@ -2,10 +2,8 @@
 This module defines the DbParams class for storing database connection
 parameters.
 """
-from contextlib import contextmanager
 import os
 import socket
-import sys
 
 from etlhelper.connect import connect, get_connection_string, get_sqlalchemy_connection_string
 from etlhelper.db_helper_factory import DB_HELPER_FACTORY
@@ -62,8 +60,9 @@ class DbParams(dict):
             required_params = DB_HELPER_FACTORY.from_dbtype(self.dbtype).required_params
         except ETLHelperHelperError:
             msg = f'{self.dbtype} not in valid types ({DB_HELPER_FACTORY.helpers.keys()})'
-            with simplify_stack_trace():
-                raise ETLHelperDbParamsError(msg)
+            # from None suppresses lower errors in the stack trace
+            # Deeper error is recorded in ETLHelperDbParamsError.__context__
+            raise ETLHelperDbParamsError(msg) from None
 
         unset_params = (given ^ required_params) & required_params
         if unset_params:
@@ -170,19 +169,3 @@ class DbParams(dict):
 
     def __str__(self):
         return self.__repr__()
-
-
-@contextmanager
-def simplify_stack_trace():
-    """
-    Limit the stack trace so that it only includes the exception type and
-    value, without the code listings.  By default, Python will print the whole
-    trace, which can be confusing for some exceptions where the problem occurs
-    far from where the code written by the developer.
-    """
-    # See https://stackoverflow.com/questions/38598740/raising-errors-without-traceback
-    old_tracebacklimit = sys.__dict__.get('tracebacklimit', 1000)
-
-    sys.tracebacklimit = 0
-    yield
-    sys.tracebacklimit = old_tracebacklimit

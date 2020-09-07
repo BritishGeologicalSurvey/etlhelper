@@ -22,8 +22,12 @@ def test_params():
 
 
 def test_db_params_validate_params_invalid_dbtype():
-    with pytest.raises(ETLHelperDbParamsError, match=r'.* not in valid types .*'):
+    with pytest.raises(ETLHelperDbParamsError, match=r'.* not in valid types .*') as excinfo:
         DbParams(dbtype='not valid')
+
+    # Check that exception doesn't include lower exceptions from stack
+    exception_chain = excinfo.getrepr().chain
+    assert len(exception_chain) == 1
 
 
 def test_db_params_validate_params_missing_params():
