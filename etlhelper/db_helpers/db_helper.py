@@ -3,7 +3,6 @@ Database helper classes using Factory Pattern
 """
 from abc import ABCMeta, abstractmethod
 import logging
-import sys
 import os
 
 from etlhelper.exceptions import ETLHelperConnectionError
@@ -48,13 +47,10 @@ class DbHelper(metaclass=ABCMeta):
 
         # Create connection
         try:
-            # This method is not defined? (Only an attribute)
             conn = self._connect_func(conn_str, **kwargs)
         except self.connect_exceptions as exc:
             msg = f"Error connecting to {conn_str} via dbapi: {exc}"
             raise ETLHelperConnectionError(msg)
-            # sys.exit(1)
-
         return conn
 
     @staticmethod
@@ -66,13 +62,15 @@ class DbHelper(metaclass=ABCMeta):
         :raises ETLHelperDbParamsError: Exception when parameter not defined
         """
         if not password_variable:
-            logger.error("Name of password environment variable e.g. ORACLE_PASSWORD is required")
-            sys.exit(1)
+            msg = "Name of password environment variable e.g. ORACLE_PASSWORD is required"
+            logger.error(msg)
+            raise ETLHelperConnectionError(msg)
         try:
             return os.environ[password_variable]
         except KeyError:
-            logger.error(f"Password environment variable ({password_variable}) is not set")
-            sys.exit(1)
+            msg = f"Password environment variable ({password_variable}) is not set"
+            logger.error(msg)
+            raise ETLHelperConnectionError(msg)
 
     @staticmethod
     @abstractmethod
