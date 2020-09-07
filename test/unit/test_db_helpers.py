@@ -128,3 +128,17 @@ def test_connect_without_driver_raises_exception(db_params, driver, monkeypatch)
     error_message = excinfo.value.args[0]
     assert "Could not import" in error_message
     assert driver in error_message
+
+
+@pytest.mark.parametrize('db_params', [ORACLEDB, MSSQLDB, POSTGRESDB])
+def test_connect_without_password_variable_raises_exception(db_params):
+    with pytest.raises(ETLHelperConnectionError,
+                       match=r"Name of password environment variable .* is required"):
+        db_params.connect(None)
+
+
+@pytest.mark.parametrize('db_params', [ORACLEDB, MSSQLDB, POSTGRESDB])
+def test_connect_with_unset_password_variable_raises_exception(db_params):
+    with pytest.raises(ETLHelperConnectionError,
+                       match=r"Password environment variable .* is not set"):
+        db_params.connect("This environment variable is not set")
