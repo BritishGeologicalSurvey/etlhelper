@@ -1,13 +1,14 @@
 """Commandline script to configure Oracle Instant Client"""
 import argparse
 import logging
-from pathlib import Path
 import os
 import shutil
 import sys
-from textwrap import dedent
-import urllib.request
 import tempfile
+import urllib.request
+from pathlib import Path
+from textwrap import dedent
+from urllib.error import URLError
 
 import cx_Oracle
 
@@ -30,6 +31,8 @@ def setup_oracle_client(zip_location, reinstall=False):
         + create script that prepends installation directory to LD_LIBRARY_PATH
           environment variable
         + print the name of the script to <stdout>
+        + fail gracefully if an error occurs during installation with useful
+          log message
 
     :param zip_location: str, URL or local file path of instantclient zip file
     :param reinstall: bool, reinstall option
@@ -54,8 +57,12 @@ def setup_oracle_client(zip_location, reinstall=False):
 
     # Install if required
     if not already_installed or reinstall:
-        _install_instantclient(zip_location, install_dir,
-                               ld_library_prepend_script)
+        try:
+            _install_instantclient(zip_location, install_dir,
+                                   ld_library_prepend_script)
+        except (URLError, FileNotFoundError, OSError, Exception) as exc:
+            logging.error(str(exc))
+            sys.exit(1)
 
     # Print instructions for setting library path
     logging.info('Oracle Client files installed successfully.  Ensure '
@@ -155,9 +162,11 @@ def _check_or_get_zipfile(zip_location):
         zipfile_path = _download_zipfile(zip_location)
     else:
         zipfile_path = Path(zip_location)
+        if not zipfile_path.exists():
+            raise FileNotFoundError(f"zip_location {zipfile_path} does not exist")
 
     if not (zipfile_path.is_file() and zipfile_path.suffix == ".zip"):
-        raise OSError(f"Zip path {zipfile_path} is not a valid zip file")
+        raise OSError(f"zip_location {zipfile_path} is not a valid zip file")
 
     logging.debug("Using zip file at: %s", zipfile_path)
     return zipfile_path
@@ -170,13 +179,20 @@ def _download_zipfile(zip_download_source):
     returns:
         path to downloaded zipfile
 
-    Fails gracefully if download fails. Sys exit -1 with helpful msg
+    Fails gracefully if download fails.
     """
     logging.debug("Downloading drivers from: %s", zip_download_source)
     zipfile_name = zip_download_source.split("/")[-1]
     zipfile_download_target = Path(tempfile.gettempdir()) / zipfile_name
-    urllib.request.urlretrieve(zip_download_source,
-                               filename=zipfile_download_target.absolute())
+
+    try:
+        urllib.request.urlretrieve(zip_download_source,
+                                   filename=zipfile_download_target.absolute())
+    except URLError as e:
+        if not hasattr(e, 'code'):
+            raise Exception(f"Bad URL given, {zip_download_source}")
+        raise
+
     return zipfile_download_target.absolute()
 
 
