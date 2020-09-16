@@ -162,6 +162,16 @@ from etlhelper import connect
 conn3 = connect(ORACLEDB, 'ORACLE_PASSWORD')
 ```
 
+Both versions accept additional keyword arguments that are passed to the `connect`
+function of the underlying driver.  For example, the following sets the character
+encoding used by cx_Oracle to ensure that values are returned as UTF-8:
+
+```python
+conn4 = connect(ORACLEDB, 'ORACLE_PASSWORD', encoding="UTF-8", nencoding="UTF8")
+```
+
+The above is a solution when special characters are scrambled in the returned data.
+
 ### Passwords
 
 Database passwords must be specified via an environment variable.
