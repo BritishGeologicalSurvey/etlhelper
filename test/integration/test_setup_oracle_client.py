@@ -106,7 +106,7 @@ def test_create_ld_library_prepend_script(tmp_path):
     script_file = tmp_path / 'ld_library_prepend.sh'
     lib_dir = '/my/libs'
     expected = dedent("""\
-        if [[ "${LD_LIBRARY_PATH}" != "/my/libs"* ]]
+        if [ "${LD_LIBRARY_PATH}" != "/my/libs"* ]
         then
             export LD_LIBRARY_PATH="/my/libs:${LD_LIBRARY_PATH}"
         fi""").strip()
