@@ -264,8 +264,11 @@ with ORACLEDB.connect('ORACLE_PASSWORD') as conn:
         print(row['id'])
 ```
 
-The `dict_row_factory` is required with `copy_rows` when using named placeholders for the INSERT query.
-It is also useful when data are to be serialised to JSON.
+The `dict_row_factory` is useful when data are to be serialised to JSON/YAML,
+or when modifying individual fields with a `transform` function (see below).
+When using `dict_row_factory` with `copy_rows`, it is necessary to use named
+placeholders for the INSERT query (e.g. `%(id)s` instead of `%s` for
+PostgreSQL, `:id` instead of `:1` for Oracle).
 
 
 ### Insert rows
@@ -326,6 +329,12 @@ another iterator.
 Transform functions are applied to data as they are read from the database and
 can be used with `get_rows`-type methods and with `copy_rows`.
 
+The following code demonstrates that the returned chunk can have a different number
+of rows, and be of different length, to the input.
+When used with `copy_rows`, the INSERT query must contain the correct placeholders for the
+transform result.
+Extra data can result from a calculation, a call to a webservice or another database.
+
 ```python
 import random
 
@@ -333,28 +342,44 @@ def my_transform(chunk):
     # Append random integer (1-10), filter if <5.
 
     new_chunk = []
-    for row in chunk:
+    for row in chunk:  # each row is a namedtuple
         extra_value = random.randrange(10)
         if extra_value >= 5:
             new_chunk.append((*row, extra_value))
 
     return new_chunk
 
-copy_rows(select_sql, src_conn, insert_sql, dest_conn
+copy_rows(select_sql, src_conn, insert_sql, dest_conn,
           transform=my_transform)
 ```
 
-The above code demonstrates that the returned chunk can have a different number
-of rows, and of different length, to the input.
-When used with `copy_rows`, the INSERT query must contain the correct placeholders for the
-transform result.
-Extra data can result from a calculation, a call to a webservice or another database.
+It can be easier to modify individual columns when using the
+`dict_row_factory` (see above).
 
-The `iter_chunks` and `iter_rows` functions used internally return generators.
-Each chunk or row of data is only accessed when it is required.
+```python
+from etlhelper.row_factories import dict_row_factory
+
+def my_transform(chunk):
+    # Add prefix to id, remove newlines, set lower case email addresses
+
+    new_chunk = []
+    for row in chunk:  # each row is a dictionary
+        row['id'] += 1000
+        row['description'] = row['description'].replace('\n', ' ')
+        row['email'] = row['email'].lower()
+        new_chunk.append(row)
+
+    return new_chunk
+
+get_rows(select_sql, src_conn, row_factory=dict_row_factory,
+         transform=my_transform)
+```
+
+The `iter_chunks` and `iter_rows` functions that are used internally return
+generators.  Each chunk or row of data is only accessed when it is required.
 The transform function can also be written to return a generator instead of
-a list.
-Data transformation can then be performed via [memory-efficient iterator-chains](https://dbader.org/blog/python-iterator-chains).
+a list.  Data transformation can then be performed via [memory-efficient
+iterator-chains](https://dbader.org/blog/python-iterator-chains).
 
 ## Recipes
 
