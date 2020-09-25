@@ -81,7 +81,7 @@ package:
     - git status
     - git diff
     # Build zipped source distribution of module
-    - python setup.py sdist --formats=zip
+    - python setup.py sdist bdist_wheel
   artifacts:
     paths:
       - dist/
@@ -92,7 +92,7 @@ pypi:
   image: "$CI_REGISTRY_IMAGE:test-runner"
   stage: release
   script:
-    - LATEST_RELEASE=$(ls -t dist | head -n 1)
+    - LATEST_RELEASE=$(ls -t dist | head -n 2)
     - twine upload -u $TWINE_USERNAME -p $TWINE_PASSWORD --verbose "dist/${LATEST_RELEASE}"
   only:
     - tags
