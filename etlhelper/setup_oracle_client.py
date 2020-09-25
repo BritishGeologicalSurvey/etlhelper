@@ -241,7 +241,7 @@ def _create_ld_library_prepend_script(install_dir, ld_library_prepend_script):
     lib_path = install_dir.absolute()
     logging.debug("Path to add to LD_LIBRARY_PATH: %s", lib_path)
     contents = dedent(f"""\
-        if [[ "${{LD_LIBRARY_PATH}}" != "{lib_path}"* ]]
+        if [ "${{LD_LIBRARY_PATH}}" != "{lib_path}"* ]
         then
             export LD_LIBRARY_PATH="{lib_path}:${{LD_LIBRARY_PATH}}"
         fi""").strip()
