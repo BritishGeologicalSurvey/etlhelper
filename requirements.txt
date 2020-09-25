@@ -8,3 +8,4 @@ cx-oracle
 pyodbc
 psycopg2-binary
 twine
+wheel
