@@ -182,9 +182,10 @@ def _download_zipfile(zip_download_source):
 
     Fails gracefully if download fails.
     """
-    logging.debug("Downloading drivers from: %s", zip_download_source)
     zipfile_name = zip_download_source.split("/")[-1]
     zipfile_download_target = Path(tempfile.gettempdir()) / zipfile_name
+    logging.debug("Downloading drivers from: %s to %s", zip_download_source,
+                  zipfile_download_target)
 
     try:
         urllib.request.urlretrieve(zip_download_source,
