@@ -163,10 +163,10 @@ def _check_or_get_zipfile(zip_location):
     else:
         zipfile_path = Path(zip_location)
         if not zipfile_path.exists():
-            raise FileNotFoundError(f"zip_location {zipfile_path} does not exist")
+            raise FileNotFoundError(f"zip_location '{zipfile_path}' does not exist")
 
     if not (zipfile_path.is_file() and zipfile_path.suffix == ".zip"):
-        raise OSError(f"zip_location {zipfile_path} is not a valid zip file")
+        raise OSError(f"zip_location '{zipfile_path}' is not a valid zip file")
 
     logging.debug("Using zip file at: %s", zipfile_path)
     return zipfile_path
