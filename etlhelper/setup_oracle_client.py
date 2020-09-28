@@ -179,8 +179,6 @@ def _download_zipfile(zip_download_source):
         zip_download_source
     returns:
         path to downloaded zipfile
-
-    Fails gracefully if download fails.
     """
     zipfile_name = zip_download_source.split("/")[-1]
     zipfile_download_target = Path(tempfile.gettempdir()) / zipfile_name
