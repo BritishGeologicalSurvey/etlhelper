@@ -143,7 +143,7 @@ def test_zipfile_bad_url(tmp_path):
         _check_or_get_zipfile(file_location)
 
     # Assert
-    assert str(exc.value) == f"Bad URL given, {file_location}"
+    assert str(exc.value) == "Server unreachable (Name or service not known)"
     assert not _check_install_status(install_dir, ld_library_prepend_script)
 
 
@@ -175,7 +175,7 @@ def test_not_valid_zipfile_url(tmp_path):
         _check_or_get_zipfile(file_location)
 
     # Assert
-    assert str(exc.value) == f"zip_location /tmp/{file_location.split('/')[-1]} is not a valid zip file"
+    assert str(exc.value) == f"zip_location '/tmp/{file_location.split('/')[-1]}' is not a valid zip file"
     assert not _check_install_status(install_dir, ld_library_prepend_script)
 
 
@@ -191,7 +191,7 @@ def test_not_found_zipfile_local(tmp_path):
         _check_or_get_zipfile(file_location)
 
     # Assert
-    assert exc.value.args[0] == f"zip_location {file_location} does not exist"
+    assert exc.value.args[0] == f"zip_location '{file_location}' does not exist"
     assert not _check_install_status(install_dir, ld_library_prepend_script)
 
 
@@ -209,7 +209,7 @@ def test_not_a_valid_zipfile_local(tmp_path):
         _check_or_get_zipfile(str(tmp_text_file))
 
     # Assert
-    assert str(exc.value.args[0]) == f"zip_location {tmp_text_file} is not a valid zip file"
+    assert str(exc.value.args[0]) == f"zip_location '{tmp_text_file}' is not a valid zip file"
     assert not _check_install_status(install_dir, ld_library_prepend_script)
 
 
