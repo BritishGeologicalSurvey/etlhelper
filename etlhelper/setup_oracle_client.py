@@ -3,6 +3,7 @@ import argparse
 import logging
 import os
 import shutil
+import socket
 import sys
 import tempfile
 import urllib.request
@@ -188,10 +189,14 @@ def _download_zipfile(zip_download_source):
     try:
         urllib.request.urlretrieve(zip_download_source,
                                    filename=zipfile_download_target.absolute())
-    except URLError as e:
-        if not hasattr(e, 'code'):
-            raise Exception(f"Bad URL given, {zip_download_source}")
-        raise
+    except URLError as exc:
+        if isinstance(exc.reason, socket.gaierror):
+            # urllib throws socket.gaierror if server is unreachable
+            # we repackage this with a more friendly message
+            raise Exception(f"Server unreachable ({exc.reason.args[1]})")
+        else:
+            # Otherwise let the original URLError bubble up
+            raise
 
     return zipfile_download_target.absolute()
 
