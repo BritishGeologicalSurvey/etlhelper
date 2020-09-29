@@ -1,10 +1,12 @@
 """Tests for setup_oracle_client.py script."""
 from textwrap import dedent
+from urllib.error import URLError
 
 import pytest
+
 from etlhelper.setup_oracle_client import (
     _install_instantclient, _check_install_status, _cleanup,
-    _create_ld_library_prepend_script
+    _create_ld_library_prepend_script, _check_or_get_zipfile
 )
 
 
@@ -127,6 +129,88 @@ def test_cleanup(mock_installation):
 
     # Assert
     assert not install_dir.exists()
+
+
+def test_zipfile_bad_url(tmp_path):
+    # Arrange
+    file_location = "http://bad.url"
+    install_dir = tmp_path / 'oracle_instantclient'
+    install_dir.mkdir()
+    ld_library_prepend_script = install_dir / 'ld_library_prepend.sh'
+
+    # Act
+    with pytest.raises(Exception) as exc:
+        _check_or_get_zipfile(file_location)
+
+    # Assert
+    assert str(exc.value) == "Server unreachable (Name or service not known)"
+    assert not _check_install_status(install_dir, ld_library_prepend_script)
+
+
+def test_not_found_zipfile_url(tmp_path):
+    # Arrange
+    file_location = "http://www.bgs.ac.uk/bad-url"
+    install_dir = tmp_path / 'oracle_instantclient'
+    install_dir.mkdir()
+    ld_library_prepend_script = install_dir / 'ld_library_prepend.sh'
+
+    # Act
+    with pytest.raises(URLError) as exc:
+        _check_or_get_zipfile(file_location)
+
+    # Assert
+    assert str(exc.value) == "HTTP Error 404: Not Found"
+    assert not _check_install_status(install_dir, ld_library_prepend_script)
+
+
+def test_not_valid_zipfile_url(tmp_path):
+    # Arrange
+    file_location = "http://www.bgs.ac.uk/about-bgs"
+    install_dir = tmp_path / 'oracle_instantclient'
+    install_dir.mkdir()
+    ld_library_prepend_script = install_dir / 'ld_library_prepend.sh'
+
+    # Act
+    with pytest.raises(OSError) as exc:
+        _check_or_get_zipfile(file_location)
+
+    # Assert
+    assert str(exc.value) == f"zip_location '/tmp/{file_location.split('/')[-1]}' is not a valid zip file"
+    assert not _check_install_status(install_dir, ld_library_prepend_script)
+
+
+def test_not_found_zipfile_local(tmp_path):
+    # Arrange
+    file_location = "/path/to/zip/file"
+    install_dir = tmp_path / 'oracle_instantclient'
+    install_dir.mkdir()
+    ld_library_prepend_script = install_dir / 'ld_library_prepend.sh'
+
+    # Act
+    with pytest.raises(FileNotFoundError) as exc:
+        _check_or_get_zipfile(file_location)
+
+    # Assert
+    assert exc.value.args[0] == f"zip_location '{file_location}' does not exist"
+    assert not _check_install_status(install_dir, ld_library_prepend_script)
+
+
+def test_not_a_valid_zipfile_local(tmp_path):
+    # Arrange
+    tmp_text_file = tmp_path / 'not_a_zipfile.txt'
+    tmp_text_file.write_text("text")
+
+    install_dir = tmp_path / 'oracle_instantclient'
+    install_dir.mkdir()
+    ld_library_prepend_script = install_dir / 'ld_library_prepend.sh'
+
+    # Act
+    with pytest.raises(OSError) as exc:
+        _check_or_get_zipfile(str(tmp_text_file))
+
+    # Assert
+    assert str(exc.value.args[0]) == f"zip_location '{tmp_text_file}' is not a valid zip file"
+    assert not _check_install_status(install_dir, ld_library_prepend_script)
 
 
 @pytest.fixture(scope="function")
