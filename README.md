@@ -226,9 +226,20 @@ Data are accessible via index (`row[4]`) or name (`row.day`).
 
 Other functions are provided to select data.  `fetchone`, `fetchmany` and
 `fetchall` are equivalent to the cursor methods specified in the DBAPI v2.0.
-`dump_rows` passes each row to a function (default is `print`).  `iter_rows`
-returns a generator for looping over results.  This is recommended for large
-result sets as it ensures that they are not all loaded into memory at once.
+`dump_rows` passes each row to a function (default is `print`).
+
+
+#### iter_rows
+
+It is recommended to use `iter_rows` for looping over large result sets.  It
+is a generator function that only yields data as requested.  This ensures that
+the data are not all loaded into memory at once.
+
+```
+with ORACLEDB.connect("ORA_PASSWORD") as conn:
+    for row in iter_rows(sql, conn):
+        do_something(row)
+```
 
 
 #### Parameters
@@ -442,15 +453,13 @@ CREATE_SQL = dedent("""
 
 DELETE_SQL = dedent("""
     DELETE FROM sensordata.readings
-    WHERE time_stamp >= %(start)s
-      AND time_stamp < %(end)s
+    WHERE time_stamp BETWEEN %(startdate)s AND %(enddate)s
     """).strip()
 
 SELECT_SQL = dedent("""
     SELECT id, measure_id, time_stamp, reading
     FROM sensor_data
-    WHERE time_stamp >= TO_DATE(:start, 'YYYY-MM-DD HH24:MI:SS')
-      AND time_stamp < TO_DATE(:end, 'YYYY-MM-DD HH24:MI:SS')
+    WHERE time_stamp BETWEEN :startdate AND :enddate
     ORDER BY time_stamp
     """).strip()
 
@@ -462,7 +471,7 @@ INSERT_SQL = dedent("""
 
 
 def copy_readings(startdate, enddate):
-    params = {'start': start, 'end': end}
+    params = {'startdate': startdate, 'enddate': enddate}
 
     with ORACLEDB.connect("ORA_PASSWORD") as src_conn:
         with POSTGRESDB.connect("PG_PASSWORD") as dest_conn:
@@ -475,7 +484,7 @@ def copy_readings(startdate, enddate):
 
 if __name__ == "__main__":
     # Copy data from 00:00:00 yesterday to 00:00:00 today
-    today = dt.combine(dt.date.today, dt.time.min)
+    today = dt.combine(dt.date.today(), dt.time.min)
     yesterday = today - dt.timedelta(1)
 
     copy_readings(yesterday, today)
