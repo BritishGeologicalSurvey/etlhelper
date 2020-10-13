@@ -563,7 +563,7 @@ Transform functions can manipulate geometries using the [Shapely](https://pypi.o
 `etlhelper` can be combined with Python's
 [Requests](https://requests.readthedocs.io/en/master/) library to create an ETL
 for posting data from a database into an HTTP API.
-The API could be a NoSQL database (e.g. Cassandra, MongoDB) or some other
+The API could be a NoSQL document store (e.g. ElasticSearch, Cassandra) or some other
 web service.
 
 This example transfers data from Oracle to ElasticSearch.
