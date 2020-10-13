@@ -392,8 +392,8 @@ The transform function can also be written to return a generator instead of
 a list.  Data transformation can then be performed via [memory-efficient
 iterator-chains](https://dbader.org/blog/python-iterator-chains).
 
-## Recipes
 
+## Recipes
 
 The following recipes demonstrate how `etlhelper` can be used.
 
@@ -428,7 +428,7 @@ Note: errors on database connections output messages that include login
 credentials in clear text.
 
 
-### ETL script template
+### Database to database copy ETL script template
 
 The following is a template for an ETL script.
 It copies copy all the sensor readings from the previous day from an Oracle
@@ -556,6 +556,120 @@ insert_sql_postgis = """
 Other spatial operations e.g. coordinate transforms, intersections and
 buffering can be carried out in the SQL.
 Transform functions can manipulate geometries using the [Shapely](https://pypi.org/project/Shapely/) library.
+
+
+### Database to API / NoSQL copy ETL script template
+
+`etlhelper` can be combined with Python's
+[Requests](https://requests.readthedocs.io/en/master/) library to create an ETL
+for posting data from a database into an HTTP API.
+The API could be a NoSQL database (e.g. Cassandra, MongoDB) or some other
+web service.
+
+This example transfers data from Oracle to ElasticSearch.
+It uses `iter_rows` to fetch data from the database without loading it all into
+memory at once.
+A custom transform function creates a nested dictionary structure from each row
+of data.
+This is "dumped" into JSON and posted to the API via Requests.
+
+
+```python
+# copy_samples.py
+
+import datetime as dt
+import json
+import logging
+
+import requests
+
+from etlhelper import iter_rows
+from etlhelper import logger as etl_logger
+
+from db import ORACLE_DB
+
+logger = logging.getLogger("copy_samples")
+
+SELECT_SAMPLES = """
+    SELECT CODE, DESCRIPTION
+    FROM samples
+    WHERE date_updated BETWEEN :startdate AND :enddate
+    ORDER BY date_updated
+    """
+BASE_URL = "http://localhost:9200/"
+HEADERS = {'Content-Type': 'application/json'}
+
+
+def copy_samples(startdate, enddate):
+    """Read samples from Oracle and post to REST API."""
+    logger.info("Copying samples with timestamps from %s to %s",
+                startdate.isoformat(), enddate.isoformat())
+
+    row_count = 0
+    with ORACLE_DB.connect('ORACLE_PASSWORD') as conn:
+        # Iterate over rows in memory-safe way.  Transform function converts
+        # rows to nested dictionaries suitable for json.dumps().
+        for item in iter_rows(SELECT_SAMPLES, conn,
+                              parameters={"startdate": startdate,
+                                          "enddate": enddate},
+                              transform=transform_samples):
+
+            # Post data to API
+            logger.debug(item)
+            response = requests.post(BASE_URL + 'samples/_doc', headers=HEADERS,
+                                     data=json.dumps(item))
+
+            # Check for failed rows
+            try:
+                response.raise_for_status()
+                logger.debug("<%s>: %s\n", response.status_code, response.text)
+            except requests.HTTPError:
+                logger.error(response.json())
+
+            # Log message for each 5000 rows processed
+            row_count += 1
+            if row_count % 5000 == 0:
+                logger.info("%s items transferred", row_count)
+
+    logger.info("Transfer complete")
+
+
+def transform_samples(chunk):
+    """Transform rows to dictionaries suitable for posting to API"""
+    new_chunk = []
+    for row in chunk:
+        new_row = {
+            'sample_code': row.CODE,
+            'description': row.DESCRIPTION,
+            'metadata': {
+                'source': 'ORACLE_DB',  # fixed value
+                'transferred_at': dt.datetime.now().isoformat()  # dynamic value
+                }
+            }
+        logger.debug(new_row)
+        new_chunk.append(new_row)
+    return new_chunk
+
+
+if __name__ == "__main__":
+    # Configure logging
+    handler = logging.StreamHandler()
+    formatter = logging.Formatter('%(asctime)s %(levelname)-8s %(message)s')
+    handler.setFormatter(formatter)
+    logger.setLevel(logging.DEBUG)
+    logger.addHandler(handler)
+    logger.propagate = False
+    etl_logger.setLevel(logging.INFO)
+
+    # Copy data from 00:00:00 yesterday to 00:00:00 today
+    today = dt.combine(dt.date.today(), dt.time.min)
+    yesterday = today - dt.timedelta(1)
+
+    copy_samples(yesterday, today)
+```
+
+In this example, failed rows are logged and the process continues.  To fail the
+whole job, simply re-raise the HTTPError after logging it.
 
 
 ### Export data to CSV
