@@ -670,6 +670,8 @@ if __name__ == "__main__":
 
 In this example, failed rows are logged and the process continues.  To fail the
 whole job, simply re-raise the HTTPError after logging it.
+This example posts one record at a time.
+If the API supports bulk uploads, it may be faster to use `iter_chunks` and post records in batches.
 
 
 ### Export data to CSV
