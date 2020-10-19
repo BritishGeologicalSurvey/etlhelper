@@ -1,8 +1,10 @@
 """DB Helper factory
 
-Factory pattern that generates DbHelpers foreach DB type
+Factory pattern that generates a DbHelper for each DB type
 
 """
+from functools import lru_cache
+
 from etlhelper.db_helpers.oracle import OracleDbHelper
 from etlhelper.db_helpers.postgres import PostgresDbHelper
 from etlhelper.db_helpers.mssql import MSSQLDbHelper
@@ -51,6 +53,7 @@ class DbHelperFactory():
             raise ETLHelperHelperError(msg)
         return self.from_dbtype(dbtype)
 
+    @lru_cache(maxsize=16)
     def from_dbtype(self, dbtype):
         """
         Return initialised db helper based on type
