@@ -171,16 +171,14 @@ def testdb_conn2():
 @pytest.fixture(scope='function')
 def testdb_fast_false_conn():
     """Get connection to test MS SQL database."""
-    MSSQLDB.fast_executemany = 'false'
-    with connect(MSSQLDB, 'TEST_MSSQL_PASSWORD') as conn:
+    with connect(MSSQLDB, 'TEST_MSSQL_PASSWORD', fast_executemany=False) as conn:
         return conn
 
 
 @pytest.fixture(scope='function')
 def testdb_fast_false_conn2():
     """Get connection to test MS SQL database."""
-    MSSQLDB.fast_executemany = 'false'
-    with connect(MSSQLDB, 'TEST_MSSQL_PASSWORD') as conn:
+    with connect(MSSQLDB, 'TEST_MSSQL_PASSWORD', fast_executemany=False) as conn:
         return conn
 
 

@@ -11,7 +11,7 @@ class MSSQLDbHelper(DbHelper):
     """
     def __init__(self):
         super().__init__()
-        self.required_params = {'host', 'port', 'dbname', 'user', 'odbc_driver', 'fast_executemany'}
+        self.required_params = {'host', 'port', 'dbname', 'user', 'odbc_driver'}
         self.missing_driver_msg = (
             "Could not import pyodbc module required for MS SQL connections.  "
             "See https://github.com/BritishGeologicalSurvey/etlhelper for installation instructions")
@@ -25,8 +25,8 @@ class MSSQLDbHelper(DbHelper):
         except ImportError:
             warnings.warn(self.missing_driver_msg)
 
-    def connect(self, db_params, password_variable=None, **kwargs):
-        self.use_fast_executemany = (db_params.fast_executemany == 'true')
+    def connect(self, db_params, password_variable=None, fast_executemany=True, **kwargs):
+        self.use_fast_executemany = fast_executemany
         return super().connect(db_params, password_variable, **kwargs)
 
     def get_connection_string(self, db_params, password_variable):
