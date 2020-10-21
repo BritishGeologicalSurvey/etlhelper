@@ -172,6 +172,33 @@ conn4 = connect(ORACLEDB, 'ORACLE_PASSWORD', encoding="UTF-8", nencoding="UTF8")
 
 The above is a solution when special characters are scrambled in the returned data.
 
+#### Disabling fast_executemany for SQL Server and other pyODBC connections
+
+By default an `etlhelper` pyODBC connection uses a cursor with its
+`fast_executemany` attribute set to True. This setting improves the
+performance of the `executemany` when performing bulk inserts to a
+SQL Server database. However, this overides the default behaviour
+of pyODBC and there are some limitations in doing this. Importantly,
+it is only recommended for applications that use Microsoft's ODBC Driver for
+SQL Server. See [pyODBC fast_executemany](https://github.com/mkleehammer/pyodbc/wiki/Features-beyond-the-DB-API#fast_executemany).
+
+Within this limited use, `fast_executemany` may raise a `MemoryError` with the
+deprecated column types `TEXT` and `NTEXT`. `etlhelper` tries to handle this
+and, under these circumstances, falls back on `fast_executemany` being set to
+False with a warning output. See [Inserting into SQL server with
+fast_executemany results in MemoryError](https://github.com/mkleehammer/pyodbc/issues/547).
+
+Due to these limitations, if different driver is being used, or there are
+database errors, the `fast_executemany` attribute can be set to False via the
+`connect` function:
+
+```python
+conn5 = connect(MSSQLDB, 'MSSQL_PASSWORD', fast_executemany=False)
+```
+
+This keyword argument is used by `etlhelper`, any further keyword arguments are
+passed to the `connect` function of the underlying driver.
+
 ### Passwords
 
 Database passwords must be specified via an environment variable.
