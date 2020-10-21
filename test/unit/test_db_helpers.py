@@ -123,7 +123,7 @@ def test_connect_without_driver_raises_exception(db_params, driver, monkeypatch)
     DB_HELPER_FACTORY.from_dbtype.cache_clear()
 
     # Act and assert
-    with pytest.raises(ETLHelperConnectionError) as excinfo:
+    with pytest.warns(UserWarning), pytest.raises(ETLHelperConnectionError) as excinfo:
         db_params.connect('PASSWORD_VARIABLE')
 
     # Confirm error message includes driver details
