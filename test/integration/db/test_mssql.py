@@ -81,7 +81,7 @@ def test_copy_rows_happy_path_deprecated_tables_fast_true(
     # Assert
     assert len(record) == 1
     assert str(record[0].message).startswith(
-        "Failed to use fast_executemany for MS SQL connection.")
+        "fast_executemany execution failed")
 
     sql = "SELECT * FROM dest"
     result = get_rows(sql, testdb_conn)

@@ -64,7 +64,8 @@ class MSSQLDbHelper(DbHelper):
             cursor.executemany(query, chunk)
         except MemoryError:
             warnings.warn(
-                "Failed to use fast_executemany for MS SQL connection.  "
-                "See https://github.com/BritishGeologicalSurvey/etlhelper for more information")
+                "fast_executemany execution failed.  Retrying with default executemany.  "
+                "See https://github.com/BritishGeologicalSurvey/etlhelper/issues/86 for more information"
+            )
             cursor.fast_executemany = False
             cursor.executemany(query, chunk)
