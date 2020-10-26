@@ -143,7 +143,11 @@ def test_zipfile_bad_url(tmp_path):
         _check_or_get_zipfile(file_location)
 
     # Assert
+    # Note: some internet service providers hijack DNS requests and will return
+    # an HTML file here.  In this situation the error message is:
+    # zip_location '/tmp/bad.url' is not a valid zip file
     assert str(exc.value) == "Server unreachable (Name or service not known)"
+
     assert not _check_install_status(install_dir, ld_library_prepend_script)
 
 
