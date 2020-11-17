@@ -17,6 +17,7 @@ class DbHelper(metaclass=ABCMeta):
     sql_exceptions = None
     connect_exceptions = None
     paramstyle = None
+    _connection = None
 
     @abstractmethod
     def __init__(self):
@@ -47,11 +48,15 @@ class DbHelper(metaclass=ABCMeta):
 
         # Create connection
         try:
-            conn = self._connect_func(conn_str, **kwargs)
+            self._connection = self._connect_func(conn_str, **kwargs)
         except self.connect_exceptions as exc:
             msg = f"Error connecting to {conn_str} via dbapi: {exc}"
             raise ETLHelperConnectionError(msg)
-        return conn
+        return self._connection
+
+    @property
+    def connection(self):
+        return self._connection
 
     @staticmethod
     def get_password(password_variable):
