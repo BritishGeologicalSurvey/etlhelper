@@ -278,7 +278,8 @@ def executemany(query, conn, rows, commit_chunks=True):
 
 
 def copy_rows(select_query, source_conn, insert_query, dest_conn,
-              parameters=(), transform=None, commit_chunks=True,
+              parameters=(), row_factory=namedtuple_row_factory,
+              transform=None, commit_chunks=True,
               read_lob=False):
     """
     Copy rows from source_conn to dest_conn.  select_query and insert_query
@@ -297,14 +298,16 @@ def copy_rows(select_query, source_conn, insert_query, dest_conn,
     :param insert_query:
     :param dest_conn: open dbapi connection
     :param parameters: sequence or dict of bind variables for select query
+    :param row_factory: function that accepts a cursor and returns a function
+                        for parsing each row
     :param transform: function that accepts an iterable (e.g. list) of rows and
                       returns an iterable of rows (possibly of different shape)
     :param commit_chunks: bool, commit after each chunk (see executemany)
     :param read_lob: bool, convert Oracle LOB objects to strings
     """
     rows_generator = iter_rows(select_query, source_conn,
-                               parameters=parameters, transform=transform,
-                               read_lob=read_lob)
+                               parameters=parameters, row_factory=row_factory,
+                               transform=transform, read_lob=read_lob)
     executemany(insert_query, dest_conn, rows_generator,
                 commit_chunks=commit_chunks)
 
