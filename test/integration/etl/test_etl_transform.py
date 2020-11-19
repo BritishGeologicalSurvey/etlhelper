@@ -84,3 +84,28 @@ def test_get_rows_with_modify_dict(pgtestdb_conn, pgtestdb_test_tables):
 
     # Assert
     assert result == expected
+
+
+def test_copy_rows_with_dict_row_factory(pgtestdb_conn, pgtestdb_test_tables, pgtestdb_insert_sql, test_table_data):
+    # Arrange
+    select_sql = "SELECT * FROM src"
+    insert_sql = """
+        INSERT INTO dest (id, value, simple_text, utf8_text, day, date_time)
+        VALUES (
+            %(id)s, %(value)s, %(simple_text)s,
+            %(utf8_text)s, %(day)s, %(date_time)s
+        );
+    """
+
+    expected = [(1001, 1.234, 'TEXT', 'Öæ° z', date(2018, 12, 7), datetime(2018, 12, 7, 13, 1, 59)),
+                (1002, 2.234, 'TEXT', 'Öæ° z', date(2018, 12, 8), datetime(2018, 12, 8, 13, 1, 59)),
+                (1003, 2.234, 'TEXT', 'Öæ° z', date(2018, 12, 9), datetime(2018, 12, 9, 13, 1, 59))]
+
+    # Act
+    copy_rows(select_sql, pgtestdb_conn, insert_sql, pgtestdb_conn,
+              transform=transform_modify_dict, row_factory=dict_row_factory)
+
+    # Assert
+    sql = "SELECT * FROM dest"
+    result = get_rows(sql, pgtestdb_conn)
+    assert result == expected
