@@ -2,6 +2,7 @@
 Database helper for PostgreSQL
 """
 import warnings
+
 from etlhelper.db_helpers.db_helper import DbHelper
 
 
@@ -17,14 +18,28 @@ class PostgresDbHelper(DbHelper):
             "See https://github.com/BritishGeologicalSurvey/etlhelper for installation instructions")
         try:
             import psycopg2
-            self.sql_exceptions = (psycopg2.ProgrammingError,
-                                   psycopg2.InterfaceError,
-                                   psycopg2.InternalError)
+            import psycopg2.pool
+            self._pooling = psycopg2.pool
+            self._pool_connect = 'getconn'
+            self.sql_exceptions = (psycopg2.ProgrammingError, psycopg2.InterfaceError, psycopg2.InternalError)
             self.connect_exceptions = (psycopg2.OperationalError)
             self.paramstyle = psycopg2.paramstyle
             self._connect_func = psycopg2.connect
         except ImportError:
             warnings.warn(self.missing_driver_msg)
+
+    def get_connection(self, connection_hash, db_params, password_variable):
+        if connection_hash not in self._pools:
+            connection_string = self.get_connection_string(db_params, password_variable)
+            self._pools[connection_hash] = self._pooling.ThreadedConnectionPool(1, 10, connection_string)
+
+        return getattr(self._pools[connection_hash], self._pool_connect)()
+
+    def close(self, connection_hash, connection):
+        try:
+            self._pools[connection_hash].putconn(connection)
+        except Exception:
+            connection.close()
 
     def get_connection_string(self, db_params, password_variable):
         """
@@ -44,8 +59,7 @@ class PostgresDbHelper(DbHelper):
         Returns connection string for SQLAlchemy engine.
         """
         password = self.get_password(password_variable)
-        return (f'postgresql://{db_params.user}:{password}@'
-                f'{db_params.host}:{db_params.port}/{db_params.dbname}')
+        return (f'postgresql://{db_params.user}:{password}@' f'{db_params.host}:{db_params.port}/{db_params.dbname}')
 
     @staticmethod
     def executemany(cursor, query, chunk):

@@ -2,12 +2,13 @@
 Database helper for mssql
 """
 import warnings
+
 from etlhelper.db_helpers.db_helper import DbHelper
 
 
 class MSSQLDbHelper(DbHelper):
     """
-    MS Sql server helper class
+    MS SQL server helper class
     """
     def __init__(self):
         super().__init__()
@@ -23,6 +24,9 @@ class MSSQLDbHelper(DbHelper):
             self._connect_func = pyodbc.connect
         except ImportError:
             warnings.warn(self.missing_driver_msg)
+
+    def get_connection(self, connection_hash, db_params, password_variable):
+        return self.connect(db_params, password_variable)
 
     def get_connection_string(self, db_params, password_variable):
         """
