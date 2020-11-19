@@ -97,9 +97,9 @@ def test_copy_rows_with_dict_row_factory(pgtestdb_conn, pgtestdb_test_tables, pg
         );
     """
 
-    expected = [(1001, 1.234, 'TEXT', 'Öæ° z', datetime.date(2018, 12, 7), datetime.datetime(2018, 12, 7, 13, 1, 59)),
-                (1002, 2.234, 'TEXT', 'Öæ° z', datetime.date(2018, 12, 8), datetime.datetime(2018, 12, 8, 13, 1, 59)),
-                (1003, 2.234, 'TEXT', 'Öæ° z', datetime.date(2018, 12, 9), datetime.datetime(2018, 12, 9, 13, 1, 59))]
+    expected = [(1001, 1.234, 'TEXT', 'Öæ° z', date(2018, 12, 7), datetime(2018, 12, 7, 13, 1, 59)),
+                (1002, 2.234, 'TEXT', 'Öæ° z', date(2018, 12, 8), datetime(2018, 12, 8, 13, 1, 59)),
+                (1003, 2.234, 'TEXT', 'Öæ° z', date(2018, 12, 9), datetime(2018, 12, 9, 13, 1, 59))]
 
     # Act
     copy_rows(select_sql, pgtestdb_conn, insert_sql, pgtestdb_conn,
