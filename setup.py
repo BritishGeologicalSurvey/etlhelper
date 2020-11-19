@@ -56,7 +56,8 @@ setup(
                 ],
         'oracle': ['cx-oracle'],
         'mssql': ['pyodbc'],
-        'postgres': ['psycopg2-binary']},
+        'postgres': ['psycopg2-binary'],
+        'mysql': ['mysql-connector-python']},
     entry_points={
         "console_scripts": [
             "setup_oracle_client=etlhelper.setup_oracle_client:main",

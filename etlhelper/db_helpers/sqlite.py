@@ -1,8 +1,10 @@
 """
 Database helper for SQLite
 """
-from contextlib import contextmanager
+import os
 import warnings
+from contextlib import contextmanager
+
 from etlhelper.db_helpers.db_helper import DbHelper
 
 
@@ -13,18 +15,22 @@ class SQLiteDbHelper(DbHelper):
     def __init__(self):
         super().__init__()
         self.required_params = {'filename'}
-        self.missing_driver_msg = (
-            "Could not import sqlite3 module required for SQLite connections.  "
-            "Check Python configuration - this should be part of Standard Library.")
+        self.missing_driver_msg = ("Could not import sqlite3 module required for SQLite connections.  "
+                                   "Check Python configuration - this should be part of Standard Library.")
         try:
             import sqlite3
-            self.sql_exceptions = (sqlite3.OperationalError,
-                                   sqlite3.IntegrityError)
+            self.sql_exceptions = (sqlite3.OperationalError, sqlite3.IntegrityError)
             self.connect_exceptions = (sqlite3.OperationalError)
             self.paramstyle = sqlite3.paramstyle
             self._connect_func = sqlite3.connect
         except ImportError:
             warnings.warn(self.missing_driver_msg)
+
+    def get_connection(self, connection_hash, db_params, password_variable):
+        return self.connect(db_params)
+
+    def is_reachable(self, db_params):
+        return os.path.exists(db_params.filename)
 
     def get_connection_string(self, db_params, password_variable=None):
         """
@@ -36,8 +42,7 @@ class SQLiteDbHelper(DbHelper):
         # Accept unused password_variable for consistency with other databases
         return (f'{db_params.filename}')
 
-    def get_sqlalchemy_connection_string(self, db_params,
-                                         password_variable=None):
+    def get_sqlalchemy_connection_string(self, db_params, password_variable=None):
         """
         Returns connection string for SQLAlchemy type connections
         :param db_params: DbParams

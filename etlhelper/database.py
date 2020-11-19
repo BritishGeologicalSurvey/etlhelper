@@ -1,7 +1,5 @@
 import logging
 import os
-import socket
-from collections import namedtuple
 from itertools import islice, zip_longest
 
 from etlhelper import exceptions
@@ -14,17 +12,12 @@ logger = logging.getLogger('etlhelper')
 
 
 class Database:
-    _db_helper = None
-    _db_params = None
-    _db_type = None
-    _password_variable = None
-
-    def __init__(self, dbtype='dbtype not set', **kwargs):
+    def __init__(self, dbtype='', password_variable=None, **kwargs):
         self._db_type = dbtype.upper()
-        self._db_helper = DB_HELPER_FACTORY.from_dbtype(self._db_type)
-        self._validate_params(**kwargs)
-        DbParams = namedtuple('DbParams', self._db_helper.required_params)
-        self._db_params = DbParams(**kwargs)
+        self._password_variable = password_variable
+        self._db_helper = DB_HELPER_FACTORY.get_helper(self._db_type)
+        self._db_params, self._connection_hash = self._db_helper.validate(password_variable, **kwargs)
+        self._connection = None
 
     def __repr__(self):
         key_val_str = ", ".join([f"{key}='{getattr(self._db_params, key)}'" for key in self._db_params._fields])
@@ -33,32 +26,14 @@ class Database:
     def __str__(self):
         return self.__repr__()
 
-    def _validate_params(self, **kwargs):
-        """
-        Validate database parameters.
+    def __enter__(self):
+        self.connect()
 
-        Should validate that a dbtype is a valid one and that the appropriate
-        params have been passed for a particular db_type.
-
-        :raises ETLHelperParamsError: Error if params are invalid
-        """
-        # Get a set of the attributes to compare against required attributes.
-        given = set(kwargs.keys())
-
-        required_params = self._db_helper.required_params
-
-        unset_params = (given ^ required_params) & required_params
-        if unset_params:
-            msg = f'{unset_params} not set. Required parameters are {required_params}'
-            raise exceptions.ETLHelperDbParamsError(msg)
-
-        bad_params = given ^ required_params
-        if bad_params:
-            msg = f"Invalid parameter(s): {bad_params}"
-            raise exceptions.ETLHelperDbParamsError(msg)
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.close()
 
     @classmethod
-    def from_environment(cls, prefix='ETLHelper_'):
+    def from_environment(cls, password_variable, prefix='ETLHelper_'):
         """
         Create Database object from parameters specified by environment
         variables e.g. ETLHelper_dbtype, ETLHelper_host, ETLHelper_port, etc.
@@ -67,8 +42,9 @@ class Database:
         dbparams_keys = [key for key in os.environ if key.startswith(prefix)]
         dbparams_from_env = {key.replace(prefix, '').lower(): os.environ[key] for key in dbparams_keys}
 
-        return cls(**dbparams_from_env)
+        return cls(password_variable=password_variable, **dbparams_from_env)
 
+    @property
     def is_reachable(self):
         """
         Test whether network allows opening of tcp/ip connection to database. No
@@ -76,21 +52,12 @@ class Database:
 
         :return bool:
         """
-        if self._db_type == 'SQLITE':
-            raise ValueError("SQLITE DbParam does not require connection over network")
+        return self._db_helper.is_reachable(self._db_params)
 
-        s = socket.socket()
-        try:
-            # Connection succeeds
-            s.connect((self._db_params.host, int(self._db_params.port)))
-            return True
-        except OSError:
-            # Failed to connect
-            return False
-        finally:
-            s.close()
+    def connect_directly(self, **kwargs):
+        self._connection = self._db_helper.connect(self._db_params, self._password_variable, **kwargs)
 
-    def connect(self, password_variable=None, **kwargs):
+    def connect(self, **kwargs):
         """
         Return database connection.
 
@@ -98,10 +65,16 @@ class Database:
         :param kwargs: connection specific keyword arguments e.g. row_factory
         :return: Connection object
         """
-        self._password_variable = password_variable
-        return self._db_helper.connect(self._db_params, self._password_variable, **kwargs)
+        if not self._connection:
+            self._connection = self._db_helper.get_connection(self._connection_hash, self._db_params,
+                                                              self._password_variable)
+        return self._connection
 
-    def get_connection_string(self, password_variable=None):
+    def close(self):
+        self._db_helper.close(self._connection_hash, self._connection)
+        self._connection = None
+
+    def get_connection_string(self):
         """
         Return the connection string.
 
@@ -110,10 +83,10 @@ class Database:
         """
         return self._db_helper.get_connection_string(
             self._db_params,
-            password_variable if password_variable else self._password_variable,
+            self._password_variable,
         )
 
-    def get_sqlalchemy_connection_string(self, password_variable=None):
+    def get_sqlalchemy_connection_string(self):
         """
         Get a SQLAlchemy connection string.
 
@@ -121,8 +94,7 @@ class Database:
         :return: str, Connection string
         """
         if hasattr(self._db_helper, 'get_sqlalchemy_connection_string'):
-            return self._db_helper.get_sqlalchemy_connection_string(
-                self._db_params, password_variable if password_variable else self._password_variable)
+            return self._db_helper.get_sqlalchemy_connection_string(self._db_params, self._password_variable)
         else:
             return None
 
@@ -170,16 +142,16 @@ class Database:
 
         logger.info("Fetching rows")
         logger.debug(f"Fetching:\n\n{select_query}\n\nwith parameters:\n\n"
-                     f"{parameters}\n\nagainst\n\n{self._db_helper.connection}")
+                     f"{parameters}\n\nagainst\n\n{self._connection}")
 
-        with self._db_helper.connection.cursor() as cursor:
+        with self._connection.cursor() as cursor:
             # Run query
             try:
                 cursor.execute(select_query, parameters)
             except self._db_helper.sql_exceptions as exc:
                 # Even though we haven't modified data, we have to rollback to
                 # clear the failed transaction before any others can be started.
-                self._db_helper.connection.rollback()
+                self._connection.rollback()
                 msg = (f"SQL query raised an error.\n\n{select_query}\n\n"
                        f"Required paramstyle: {self._db_helper.paramstyle}\n\n{exc}\n")
                 raise exceptions.ETLHelperExtractError(msg)
@@ -285,12 +257,13 @@ class Database:
                         returns an iterable of rows (possibly of different shape)
         """
         try:
-            result = next(self.iter_rows(
-                select_query,
-                row_factory=row_factory,
-                parameters=parameters,
-                transform=transform,
-            ))
+            result = next(
+                self.iter_rows(
+                    select_query,
+                    row_factory=row_factory,
+                    parameters=parameters,
+                    transform=transform,
+                ))
         except StopIteration:
             result = None
 
@@ -369,11 +342,11 @@ class Database:
         :return row_count: int, number of rows inserted/updated
         """
         logger.info(f"Executing many (chunksize={chunksize})")
-        logger.debug(f"Executing:\n\n{query}\n\nagainst\n\n{self._db_helper.connection}")
+        logger.debug(f"Executing:\n\n{query}\n\nagainst\n\n{self._connection}")
 
         processed = 0
 
-        with self._db_helper.connection.cursor() as cursor:
+        with self._db_helper.cursor(self._connection) as cursor:
             for chunk in self._chunker(rows, chunksize):
                 # Run query
                 try:
@@ -391,7 +364,7 @@ class Database:
                 except self._db_helper.sql_exceptions as exc:
                     # Rollback to clear the failed transaction before any others can
                     # be # started.
-                    self._db_helper.connection.rollback()
+                    self._connection.rollback()
                     msg = (f"SQL query raised an error.\n\n{query}\n\n"
                            f"Required paramstyle: {self._db_helper.paramstyle}\n\n{exc}\n")
                     raise exceptions.ETLHelperInsertError(msg)
@@ -400,11 +373,11 @@ class Database:
 
                 # Commit changes so far
                 if commit_chunks:
-                    self._db_helper.connection.commit()
+                    self._connection.commit()
 
         # Commit changes where not already committed
         if not commit_chunks:
-            self._db_helper.connection.commit()
+            self._connection.commit()
 
         logger.info(f'{processed} rows processed in total')
 
@@ -417,18 +390,17 @@ class Database:
         :param parameters: sequence or dict of bind variables to insert in the query
         """
         logger.info("Executing query")
-        logger.debug(f"Executing:\n\n{query}\n\nwith parameters:\n\n"
-                     f"{parameters}\n\nagainst\n\n{self._db_helper.connection}")
+        logger.debug(f"Executing:\n\n{query}\n\nwith parameters:\n\n" f"{parameters}\n\nagainst\n\n{self._connection}")
 
-        with self._db_helper.connection.cursor() as cursor:
+        with self._connection.cursor() as cursor:
             # Run query
             try:
                 cursor.execute(query, parameters)
-                self._db_helper.connection.commit()
+                self._connection.commit()
             except self._db_helper.sql_exceptions as exc:
                 # Even though we haven't modified data, we have to rollback to
                 # clear the failed transaction before any others can be started.
-                self._db_helper.connection.rollback()
+                self._connection.rollback()
                 msg = (f"SQL query raised an error.\n\n{query}\n\n"
                        f"Required paramstyle: {self._db_helper.paramstyle}\n\n{exc}\n")
                 raise exceptions.ETLHelperQueryError(msg)

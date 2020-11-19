@@ -3,9 +3,10 @@
 Factory pattern that generates DbHelpers foreach DB type
 
 """
+from etlhelper.db_helpers.mssql import MSSQLDbHelper
+from etlhelper.db_helpers.mysql import MySQLDbHelper
 from etlhelper.db_helpers.oracle import OracleDbHelper
 from etlhelper.db_helpers.postgres import PostgresDbHelper
-from etlhelper.db_helpers.mssql import MSSQLDbHelper
 from etlhelper.db_helpers.sqlite import SQLiteDbHelper
 from etlhelper.exceptions import ETLHelperHelperError
 
@@ -17,6 +18,7 @@ class DbHelperFactory():
     def __init__(self):
         self.helpers = {}
         self._conn_types = {}
+        self._helper_instances = {}
 
     def register_helper(self, dbtype, conn_type, db_helper):
         """
@@ -62,13 +64,26 @@ class DbHelperFactory():
             raise ETLHelperHelperError(msg)
         return helper
 
+    def get_helper(self, dbtype, **kwargs):
+        """
+        Return db helper based on type
+        """
+        if dbtype not in self.helpers:
+            msg = f"Unsupported dbtype: {dbtype}"
+            raise ETLHelperHelperError(msg)
+
+        if dbtype in self._helper_instances:
+            helper = self._helper_instances[dbtype]
+        else:
+            helper = self.helpers[dbtype]()
+            self._helper_instances[dbtype] = helper
+
+        return helper
+
 
 DB_HELPER_FACTORY = DbHelperFactory()
-DB_HELPER_FACTORY.register_helper('ORACLE', "<class 'cx_Oracle.Connection'>",
-                                  OracleDbHelper)
-DB_HELPER_FACTORY.register_helper('PG', "<class 'psycopg2.extensions.connection'>",
-                                  PostgresDbHelper)
-DB_HELPER_FACTORY.register_helper('MSSQL', "<class 'pyodbc.Connection'>",
-                                  MSSQLDbHelper)
-DB_HELPER_FACTORY.register_helper('SQLITE', "<class 'sqlite3.Connection'>",
-                                  SQLiteDbHelper)
+DB_HELPER_FACTORY.register_helper('ORACLE', "<class 'cx_Oracle.Connection'>", OracleDbHelper)
+DB_HELPER_FACTORY.register_helper('PG', "<class 'psycopg2.extensions.connection'>", PostgresDbHelper)
+DB_HELPER_FACTORY.register_helper('MSSQL', "<class 'pyodbc.Connection'>", MSSQLDbHelper)
+DB_HELPER_FACTORY.register_helper('SQLITE', "<class 'sqlite3.Connection'>", SQLiteDbHelper)
+DB_HELPER_FACTORY.register_helper('MYSQL', "<class 'mysql.connector.connection_cext.CMySQLConnection'>", MySQLDbHelper)
