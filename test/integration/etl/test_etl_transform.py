@@ -96,10 +96,10 @@ def test_copy_rows_with_dict_row_factory(pgtestdb_conn, pgtestdb_test_tables, pg
             %(utf8_text)s, %(day)s, %(date_time)s
         );
     """
-    expected = []
-    for record in test_table_data:
-        expected.append((record[0] + 1000, record[1], record[2].upper(),
-            record[3].replace('\n', ' '), record[4], record[5]))
+
+    expected = [(1001, 1.234, 'TEXT', 'Öæ° z', datetime.date(2018, 12, 7), datetime.datetime(2018, 12, 7, 13, 1, 59)),
+                (1002, 2.234, 'TEXT', 'Öæ° z', datetime.date(2018, 12, 8), datetime.datetime(2018, 12, 8, 13, 1, 59)),
+                (1003, 2.234, 'TEXT', 'Öæ° z', datetime.date(2018, 12, 9), datetime.datetime(2018, 12, 9, 13, 1, 59))]
 
     # Act
     copy_rows(select_sql, pgtestdb_conn, insert_sql, pgtestdb_conn,
