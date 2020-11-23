@@ -73,6 +73,7 @@ def test_connect(monkeypatch, db_params, driver, expected):
     monkeypatch.setenv('DB_PASSWORD', 'mypassword')
     mock_connect = Mock()
     monkeypatch.setattr(driver, 'connect', mock_connect)
+    DB_HELPER_FACTORY.from_dbtype.cache_clear()
     helper = DB_HELPER_FACTORY.from_db_params(db_params)
 
     # Act
@@ -119,9 +120,10 @@ def test_connect_without_driver_raises_exception(db_params, driver, monkeypatch)
 
     monkeypatch.setattr(builtins, '__import__', raise_import_error)
     monkeypatch.setenv("PASSWORD_VARIABLE", "blahblahblah")
+    DB_HELPER_FACTORY.from_dbtype.cache_clear()
 
     # Act and assert
-    with pytest.raises(ETLHelperConnectionError) as excinfo:
+    with pytest.warns(UserWarning), pytest.raises(ETLHelperConnectionError) as excinfo:
         db_params.connect('PASSWORD_VARIABLE')
 
     # Confirm error message includes driver details

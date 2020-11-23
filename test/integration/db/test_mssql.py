@@ -53,8 +53,8 @@ def test_bad_constraint(test_tables, testdb_conn):
         execute(insert_sql, testdb_conn)
 
 
-def test_copy_rows_happy_path(test_tables, testdb_conn, testdb_conn2,
-                              test_table_data):
+def test_copy_rows_happy_path_fast_true(
+        test_tables, testdb_conn, testdb_conn2, test_table_data):
     # Note: ODBC driver requires separate connections for source and destination,
     # even if they are the same database.
     # Arrange and act
@@ -65,7 +65,56 @@ def test_copy_rows_happy_path(test_tables, testdb_conn, testdb_conn2,
     # Assert
     sql = "SELECT * FROM dest"
     result = get_rows(sql, testdb_conn)
+    assert result == test_table_data
 
+
+def test_copy_rows_happy_path_deprecated_tables_fast_true(
+        test_deprecated_tables, testdb_conn, testdb_conn2, test_table_data):
+    # Note: ODBC driver requires separate connections for source and destination,
+    # even if they are the same database.
+    # Arrange and act
+    select_sql = "SELECT * FROM src"
+    insert_sql = INSERT_SQL.format(tablename='dest')
+    with pytest.warns(UserWarning) as record:
+        copy_rows(select_sql, testdb_conn, insert_sql, testdb_conn2)
+
+    # Assert
+    assert len(record) == 1
+    assert str(record[0].message).startswith(
+        "fast_executemany execution failed")
+
+    sql = "SELECT * FROM dest"
+    result = get_rows(sql, testdb_conn)
+    assert result == test_table_data
+
+
+def test_copy_rows_happy_path_fast_false(
+        test_tables, testdb_fast_false_conn, testdb_fast_false_conn2, test_table_data):
+    # Note: ODBC driver requires separate connections for source and destination,
+    # even if they are the same database.
+    # Arrange and act
+    select_sql = "SELECT * FROM src"
+    insert_sql = INSERT_SQL.format(tablename='dest')
+    copy_rows(select_sql, testdb_fast_false_conn, insert_sql, testdb_fast_false_conn2)
+
+    # Assert
+    sql = "SELECT * FROM dest"
+    result = get_rows(sql, testdb_fast_false_conn)
+    assert result == test_table_data
+
+
+def test_copy_rows_happy_path_deprecated_tables_fast_false(
+        test_deprecated_tables, testdb_fast_false_conn, testdb_fast_false_conn2, test_table_data):
+    # Note: ODBC driver requires separate connections for source and destination,
+    # even if they are the same database.
+    # Arrange and act
+    select_sql = "SELECT * FROM src"
+    insert_sql = INSERT_SQL.format(tablename='dest')
+    copy_rows(select_sql, testdb_fast_false_conn, insert_sql, testdb_fast_false_conn2)
+
+    # Assert
+    sql = "SELECT * FROM dest"
+    result = get_rows(sql, testdb_fast_false_conn)
     assert result == test_table_data
 
 
@@ -120,7 +169,72 @@ def testdb_conn2():
 
 
 @pytest.fixture(scope='function')
+def testdb_fast_false_conn():
+    """Get connection to test MS SQL database."""
+    with connect(MSSQLDB, 'TEST_MSSQL_PASSWORD', fast_executemany=False) as conn:
+        return conn
+
+
+@pytest.fixture(scope='function')
+def testdb_fast_false_conn2():
+    """Get connection to test MS SQL database."""
+    with connect(MSSQLDB, 'TEST_MSSQL_PASSWORD', fast_executemany=False) as conn:
+        return conn
+
+
+@pytest.fixture(scope='function')
 def test_tables(test_table_data, testdb_conn):
+    """
+    Create a table and fill with test data.  Teardown after the yield drops it
+    again.
+    """
+    # Define SQL queries
+    drop_src_sql = "DROP TABLE src"
+    create_src_sql = dedent("""
+        CREATE TABLE src
+          (
+            id integer unique,
+            value double precision,
+            simple_text nvarchar(max),
+            utf8_text nvarchar(max),
+            day date,
+            date_time datetime2(6)
+          )
+          ;""").strip()
+    drop_dest_sql = drop_src_sql.replace('src', 'dest')
+    create_dest_sql = create_src_sql.replace('src', 'dest')
+
+    # Create table and populate with test data
+    with testdb_conn.cursor() as cursor:
+        # src table
+        try:
+            cursor.execute(drop_src_sql)
+        except pyodbc.DatabaseError:
+            pass
+        cursor.execute(create_src_sql)
+        cursor.executemany(INSERT_SQL.format(tablename='src'),
+                           test_table_data)
+        # dest table
+        try:
+            cursor.execute(drop_dest_sql)
+        except pyodbc.DatabaseError:
+            # Error if table doesn't exist
+            pass
+        cursor.execute(create_dest_sql)
+    testdb_conn.commit()
+
+    # Return control to calling function until end of test
+    yield
+
+    # Tear down the table after test completes
+    with testdb_conn.cursor() as cursor:
+        cursor.execute(drop_src_sql)
+        cursor.execute(drop_dest_sql)
+    testdb_conn.commit()
+
+
+@pytest.fixture(scope='function')
+def test_deprecated_tables(test_table_data, testdb_conn):
     """
     Create a table and fill with test data.  Teardown after the yield drops it
     again.
