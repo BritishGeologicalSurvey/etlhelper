@@ -607,7 +607,7 @@ records in series.
 
 
 ```python
-# copy_samples_async.py
+# copy_sensors_async.py
 import asyncio
 import datetime as dt
 import json
@@ -618,7 +618,7 @@ from etlhelper import iter_chunks
 
 from db import ORACLE_DB
 
-logger = logging.getLogger("copy_samples_async")
+logger = logging.getLogger("copy_sensors_async")
 
 SELECT_SENSORS = """
     SELECT CODE, DESCRIPTION
@@ -631,8 +631,8 @@ HEADERS = {'Content-Type': 'application/json'}
 
 
 def copy_sensors(startdate, enddate):
-    """Read samples from Oracle and post to REST API."""
-    logger.info("Copying samples with timestamps from %s to %s",
+    """Read sensors from Oracle and post to REST API."""
+    logger.info("Copying sensors with timestamps from %s to %s",
                 startdate.isoformat(), enddate.isoformat())
     row_count = 0
 
@@ -641,7 +641,7 @@ def copy_sensors(startdate, enddate):
         chunks = iter_chunks(SELECT_SENSORS, conn,
                              parameters={"startdate": startdate,
                                          "enddate": enddate},
-                             transform=transform_samples)
+                             transform=transform_sensors)
 
         for chunk in chunks:
             result = asyncio.run(post_chunk(chunk))
@@ -651,7 +651,7 @@ def copy_sensors(startdate, enddate):
     logger.info("Transfer complete")
 
 
-def transform_samples(chunk):
+def transform_sensors(chunk):
     """Transform rows to dictionaries suitable for converting to JSON."""
     new_chunk = []
 
@@ -687,7 +687,7 @@ async def post_chunk(chunk):
 async def post_one(item, session):
     """Post a single item to API using existing aiohttp Session."""
     # Post the item
-    response = await session.post(BASE_URL + 'samples/_doc', headers=HEADERS,
+    response = await session.post(BASE_URL + 'sensors/_doc', headers=HEADERS,
                                   data=json.dumps(item))
 
     # Log responses before throwing errors because error info is not included
