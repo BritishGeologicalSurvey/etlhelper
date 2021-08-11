@@ -6,13 +6,12 @@ import logging
 
 import aiohttp
 from etlhelper import iter_chunks
-from etlhelper import logger as etl_logger
 
 from db import ORACLE_DB
 
-logger = logging.getLogger("copy_samples")
+logger = logging.getLogger("copy_samples_async")
 
-SELECT_SAMPLES = """
+SELECT_SENSORS = """
     SELECT CODE, DESCRIPTION
     FROM BGS.DIC_SEN_SENSOR
     WHERE date_updated BETWEEN :startdate AND :enddate
@@ -22,7 +21,7 @@ BASE_URL = "http://localhost:9200/"
 HEADERS = {'Content-Type': 'application/json'}
 
 
-def copy_samples(startdate, enddate):
+def copy_sensors(startdate, enddate):
     """Read samples from Oracle and post to REST API."""
     logger.info("Copying samples with timestamps from %s to %s",
                 startdate.isoformat(), enddate.isoformat())
@@ -30,7 +29,7 @@ def copy_samples(startdate, enddate):
 
     with ORACLE_DB.connect('ORACLE_PASSWORD') as conn:
         # chunks is a generator that yields lists of dictionaries
-        chunks = iter_chunks(SELECT_SAMPLES, conn,
+        chunks = iter_chunks(SELECT_SENSORS, conn,
                              parameters={"startdate": startdate,
                                          "enddate": enddate},
                              transform=transform_samples)
@@ -103,4 +102,4 @@ if __name__ == "__main__":
 
     # Copy data from 1 January 2000 to 00:00:00 today
     today = dt.datetime.combine(dt.date.today(), dt.time.min)
-    copy_samples(dt.datetime(2000, 1, 1), today)
+    copy_sensors(dt.datetime(2000, 1, 1), today)
