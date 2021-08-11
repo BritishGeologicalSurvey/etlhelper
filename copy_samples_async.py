@@ -29,13 +29,13 @@ def copy_samples(startdate, enddate):
     row_count = 0
 
     with ORACLE_DB.connect('ORACLE_PASSWORD') as conn:
-        # Iterate over rows in memory-safe way.  Transform function converts
-        # rows to nested dictionaries suitable for json.dumps().
-        data = iter_chunks(SELECT_SAMPLES, conn,
-                           parameters={"startdate": startdate, "enddate": enddate},
-                           transform=transform_samples)
+        # chunks is a generator that yields lists of dictionaries
+        chunks = iter_chunks(SELECT_SAMPLES, conn,
+                             parameters={"startdate": startdate,
+                                         "enddate": enddate},
+                             transform=transform_samples)
 
-        for chunk in data:
+        for chunk in chunks:
             result = asyncio.run(post_chunk(chunk))
             row_count += len(result)
             logger.info("%s items transferred", row_count)
@@ -44,7 +44,7 @@ def copy_samples(startdate, enddate):
 
 
 def transform_samples(chunk):
-    """Transform rows to dictionaries suitable for posting to API"""
+    """Transform rows to dictionaries suitable for converting to JSON."""
     new_chunk = []
 
     for row in chunk:
@@ -64,13 +64,13 @@ def transform_samples(chunk):
 
 async def post_chunk(chunk):
     """Post multiple items to API asynchronously."""
-    tasks = []
-
     async with aiohttp.ClientSession() as session:
+        # Build list of tasks
+        tasks = []
         for item in chunk:
             tasks.append(post_one(item, session))
 
-        # Process all tasks in parallel.  An exception in any will be raised.
+        # Process tasks in parallel.  An exception in any will be raised.
         result = await asyncio.gather(*tasks)
 
     return result
@@ -78,11 +78,12 @@ async def post_chunk(chunk):
 
 async def post_one(item, session):
     """Post a single item to API using existing aiohttp Session."""
+    # Post the item
     response = await session.post(BASE_URL + 'samples/_doc', headers=HEADERS,
                                   data=json.dumps(item))
 
-    # Log responses before throwing errors because they aren't passed into the
-    # generated Exceptions otherwise and cannot then be seen for debugging.
+    # Log responses before throwing errors because error info is not included
+    # in generated Exceptions and so cannot otherwise be seen for debugging.
     if response.status >= 400:
         response_text = await response.text()
         logger.error('The following item failed: %s\nError message:\n(%s)',
@@ -92,12 +93,6 @@ async def post_one(item, session):
     return response.status
 
 
-def test_many(item_count=20):
-    items = [{'id': n} for n in range(item_count)]
-    result = asyncio.run(post_chunk(items))
-    print(result)
-
-
 if __name__ == "__main__":
     # Configure logging
     handler = logging.StreamHandler()
@@ -105,10 +100,7 @@ if __name__ == "__main__":
     handler.setFormatter(formatter)
     logger.setLevel(logging.INFO)
     logger.addHandler(handler)
-    logger.propagate = False
-    etl_logger.setLevel(logging.INFO)
-    # Copy data from 00:00:00 yesterday to 00:00:00 today
+
+    # Copy data from 1 January 2000 to 00:00:00 today
     today = dt.datetime.combine(dt.date.today(), dt.time.min)
-    yesterday = today - dt.timedelta(1)
     copy_samples(dt.datetime(2000, 1, 1), today)
-    #test_many()
