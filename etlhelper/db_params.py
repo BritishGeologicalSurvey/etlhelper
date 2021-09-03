@@ -112,6 +112,7 @@ class DbParams(dict):
             raise ValueError("SQLITE DbParam does not require connection over network")
 
         s = socket.socket()
+        s.settimeout(5)
         try:
             # Connection succeeds
             s.connect((items['host'], int(items['port'])))
