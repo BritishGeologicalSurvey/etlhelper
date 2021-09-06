@@ -79,6 +79,9 @@ def iter_chunks(select_query, conn, parameters=(),
                     else:
                         msg = f"{cursor.rowcount} rows returned"
                 logger.info(msg)
+
+                # Close the active transaction
+                conn.commit()
                 return
 
             # Convert Oracle LOBs to strings if required
@@ -155,6 +158,9 @@ def fetchone(select_query, conn, parameters=(),
                                 parameters=parameters, transform=transform))
     except StopIteration:
         result = None
+    finally:
+        # Commit to close the transaction before the iterator has been exhausted
+        conn.commit()
 
     return result
 
@@ -174,9 +180,15 @@ def fetchmany(select_query, conn, size=1, parameters=(),
     :param transform: function that accepts an iterable (e.g. list) of rows and
                       returns an iterable of rows (possibly of different shape)
     """
-    return list(islice(iter_rows(select_query, conn, row_factory=row_factory,
-                                 parameters=parameters, transform=transform),
-                       size))
+    try:
+        result = list(
+            islice(iter_rows(select_query, conn, row_factory=row_factory,
+                             parameters=parameters, transform=transform), size))
+    finally:
+        # Commit to close the transaction before the iterator has been exhausted
+        conn.commit()
+
+    return result
 
 
 def fetchall(select_query, conn, parameters=(),

@@ -3,6 +3,7 @@ function and those that call it.
 These are run against PostgreSQL."""
 # pylint: disable=unused-argument, missing-docstring
 import datetime
+import time
 from unittest.mock import Mock, call, sentinel
 
 import pytest
@@ -138,6 +139,37 @@ def test_fetchone_none(pgtestdb_test_tables, pgtestdb_conn,
     sql = "SELECT * FROM src WHERE id=999"
     result = fetchone(sql, pgtestdb_conn)
     assert result is None
+
+
+def test_fetchone_closes_transaction(pgtestdb_conn):
+    sql = "SELECT now() AS time"
+
+    # Call the time function
+    time1 = fetchone(sql, pgtestdb_conn)
+
+    # Call it again after a delay
+    time.sleep(0.001)
+    time2 = fetchone(sql, pgtestdb_conn)
+
+    # If the connection was not closed and the same transaction was used
+    # then the times would be the same
+    assert time2.time > time1.time
+
+
+@pytest.mark.parametrize('fetch_func', [fetchall, fetchmany, get_rows])
+def test_fetch_funcs_close_transaction(pgtestdb_conn, fetch_func):
+    sql = "SELECT now() AS time"
+
+    # Call the time function
+    time1 = fetch_func(sql, pgtestdb_conn)[0]
+
+    # Call it again after a delay
+    time.sleep(0.001)
+    time2 = fetch_func(sql, pgtestdb_conn)[0]
+
+    # If the connection was not closed and the same transaction was used
+    # then the times would be the same
+    assert time2.time > time1.time
 
 
 @pytest.mark.parametrize('size', [1, 3, 1000])
