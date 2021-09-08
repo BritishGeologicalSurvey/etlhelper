@@ -30,7 +30,7 @@ INFO_AND_DEBUG = [
     'against\n'
     '\n'
     "<connection object at ???; dsn: 'user=etlhelper_user password=xxx "
-    "dbname=etlhelper host=??? port=5432', closed: 0>",
+    "dbname=etlhelper host=??? port=???', closed: 0>",
     'Fetching rows',
     'Fetching:\n'
     '\n'
@@ -43,7 +43,7 @@ INFO_AND_DEBUG = [
     'against\n'
     '\n'
     "<connection object at ???; dsn: 'user=etlhelper_user password=xxx "
-    "dbname=etlhelper host=??? port=5432', closed: 0>",
+    "dbname=etlhelper host=??? port=???', closed: 0>",
     "First row: Row(id=1, value=1.234, simple_text='text', utf8_text='Öæ°\\nz', "
     'day=datetime.date(2018, 12, 7), date_time=datetime.datetime(2018, 12, 7, 13, '
     '1, 59))',
@@ -76,6 +76,8 @@ def test_logging_copy_rows(caplog, level, expected,
                 for m in caplog.messages]
     messages = [re.sub(r'host=.*? ', 'host=??? ', m)
                 for m in messages]
+    messages = [re.sub(r'port=[0-9]{1,5}\'', 'port=???\'', m)
+                for m in messages]
 
     # Assert
     for i, message in enumerate(messages):
@@ -96,7 +98,7 @@ INFO_AND_DEBUG_EXECUTE = [
     'against\n'
     '\n'
     "<connection object at ???; dsn: 'user=etlhelper_user password=xxx "
-    "dbname=etlhelper host=??? port=5432', closed: 0>"]
+    "dbname=etlhelper host=??? port=???', closed: 0>"]
 
 
 @pytest.mark.parametrize('level, expected', [
@@ -116,6 +118,8 @@ def test_logging_execute(caplog, level, expected, pgtestdb_conn):
     messages = [re.sub(r'object at .*;', 'object at ???;', m)
                 for m in caplog.messages]
     messages = [re.sub(r'host=.*? ', 'host=??? ', m)
+                for m in messages]
+    messages = [re.sub(r'port=[0-9]{1,5}\'', 'port=???\'', m)
                 for m in messages]
 
     # Assert
