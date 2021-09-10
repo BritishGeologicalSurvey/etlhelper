@@ -3,7 +3,7 @@ ipdb
 ipython
 pytest>=4.6
 pytest-cov
-versioneer
+versioneer==0.2.0
 cx-oracle
 pyodbc
 psycopg2-binary
