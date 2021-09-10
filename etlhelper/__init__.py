@@ -24,9 +24,8 @@ from etlhelper.connect import (
     get_sqlalchemy_connection_string,
 )
 
-from ._version import get_versions
-__version__ = get_versions()['version']
-del get_versions
+from . import _version
+__version__ = _version.get_versions()['version']
 
 # Prepare log handler.  See this StackOverflow answer for details:
 # https://stackoverflow.com/a/27835318/3508733
