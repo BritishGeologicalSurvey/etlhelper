@@ -1,7 +1,7 @@
 """
 Functions for transferring data in and out of databases.
 """
-from itertools import zip_longest, islice
+from itertools import zip_longest, islice, chain
 import logging
 
 from etlhelper.row_factories import namedtuple_row_factory
@@ -349,6 +349,68 @@ def execute(query, conn, parameters=()):
             msg = (f"SQL query raised an error.\n\n{query}\n\n"
                    f"Required paramstyle: {helper.paramstyle}\n\n{exc}\n")
             raise ETLHelperQueryError(msg)
+
+
+def load(table, conn, rows, commit_chunks=True):
+    """
+    Load data from iterable of named tuples or dictionaries into pre-existing
+    table in database on conn.
+
+    :param table: name of table
+    :param conn: open dbapi connection
+    :param rows: iterable of named tuples or dictionaries of data
+    :param commit_chunks: bool, commit after each chunk (see executemany)
+    """
+    # Get first row without losing it from row iteration
+    rows = iter(rows)
+    first_row = next(rows)
+    rows = chain([first_row], rows)
+
+    # Generate insert query
+    columns = get_column_names(first_row)
+    query = generate_insert_sql(table, columns, conn)
+    breakpoint()
+
+    # Insert data
+    executemany(query, conn, rows, commit_chunks=True)
+
+
+def get_column_names(row):
+    """Return the column names of a data structure."""
+    try:
+        # Convert a namedtuple to a dictionary
+        if not hasattr(row, 'keys'):
+            row = row._asdict()
+    except AttributeError:
+        msg = f"Row is not dictionary or namedtuple ({type(row)})"
+        raise ETLHelperInsertError(msg)
+
+    return list(row.keys())
+
+
+def generate_insert_sql(table, columns, conn):
+    """Detect placeholder from connection type and generate insert SQL."""
+    helper = DB_HELPER_FACTORY.from_conn(conn)
+    paramstyles = {
+        "qmark": "?",
+        "numeric": ":{number}",
+        "named": ":{name}",
+        "format": "%s",
+        "pyformat": "%({name})s"
+    }
+    paramstyle = paramstyles[helper.paramstyle]
+
+    # Create placeholders for parameters
+    if helper.paramstyle in ["named", "pyformat"]:
+        placeholders = [paramstyle.format(name=c) for c in columns]
+    elif helper.paramstyle == "number":
+        placeholders = [paramstyle.format(number=i + 1) for i in range(len(columns))]
+    else:
+        placeholders = [str(i) for i in range(len(columns))]
+
+    sql = f"INSERT INTO {table} ({', '.join(columns)}) VALUES ({', '.join(placeholders)})"
+
+    return sql
 
 
 def _chunker(iterable, n_chunks, fillvalue=None):
