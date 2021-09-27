@@ -15,6 +15,9 @@ class MSSQLDbHelper(DbHelper):
         self.missing_driver_msg = (
             "Could not import pyodbc module required for MS SQL connections.  "
             "See https://github.com/BritishGeologicalSurvey/etlhelper for installation instructions")
+        self.named_placeholder = None  # pyodbc doesn't support named parameters
+        self.positional_placeholder = 'qmark'
+
         try:
             import pyodbc
             self.sql_exceptions = (pyodbc.DatabaseError)

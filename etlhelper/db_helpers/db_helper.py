@@ -17,6 +17,8 @@ class DbHelper(metaclass=ABCMeta):
     sql_exceptions = None
     connect_exceptions = None
     paramstyle = None
+    named_placeholder = None
+    positional_placeholder = None
 
     @abstractmethod
     def __init__(self):
