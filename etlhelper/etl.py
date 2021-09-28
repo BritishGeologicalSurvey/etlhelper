@@ -367,29 +367,17 @@ def load(table, conn, rows, commit_chunks=True):
     rows = chain([first_row], rows)
 
     # Generate insert query
-    columns = get_column_names(first_row)
-    query = generate_insert_sql(table, columns, conn)
+    query = generate_insert_sql(table, first_row, conn)
     breakpoint()
 
     # Insert data
     executemany(query, conn, rows, commit_chunks=True)
 
 
-def get_column_names(row):
-    """Return the column names of a data structure."""
-    try:
-        # Convert a namedtuple to a dictionary
-        if not hasattr(row, 'keys'):
-            row = row._asdict()
-    except AttributeError:
-        msg = f"Row is not dictionary or namedtuple ({type(row)})"
-        raise ETLHelperInsertError(msg)
-
-    return list(row.keys())
-
-
-def generate_insert_sql(table, columns, conn):
-    """Detect placeholder from connection type and generate insert SQL."""
+def generate_insert_sql(table, row, conn):
+    """Generate insert SQL for table, getting column names from row and the
+    placeholder style from the connection.  `row` is either a namedtuple or
+    a dictionary."""
     helper = DB_HELPER_FACTORY.from_conn(conn)
     paramstyles = {
         "qmark": "?",
@@ -398,15 +386,39 @@ def generate_insert_sql(table, columns, conn):
         "format": "%s",
         "pyformat": "%({name})s"
     }
-    paramstyle = paramstyles[helper.paramstyle]
 
-    # Create placeholders for parameters
-    if helper.paramstyle in ["named", "pyformat"]:
-        placeholders = [paramstyle.format(name=c) for c in columns]
-    elif helper.paramstyle == "number":
-        placeholders = [paramstyle.format(number=i + 1) for i in range(len(columns))]
+    # Namedtuples generate a query with positional placeholders
+    if not hasattr(row, 'keys'):
+        paramstyle = helper.positional_paramstyle
+        if not paramstyle:
+            msg = ("Database driver doesn't support positional parameters.  "
+                   "Pass data as dictionaries instead.")
+            raise ETLHelperInsertError(msg)
+
+        # Convert namedtuple to dictionary to easily access keys
+        try:
+            row = row._asdict()
+        except AttributeError:
+            msg = f"Row is not dictionary or namedtuple ({type(row)})"
+            raise ETLHelperInsertError(msg)
+
+        columns = row.keys()
+        if paramstyle == "number":
+            placeholders = [paramstyles[paramstyle].format(number=i + 1)
+                            for i in range(len(columns))]
+        else:
+            placeholders = [paramstyles[paramstyle]] * len(columns)
+
+    # Dictionaries use named placeholders
     else:
-        placeholders = [str(i) for i in range(len(columns))]
+        paramstyle = helper.named_paramstyle
+        if not paramstyle:
+            msg = ("Database driver doesn't support named parameters.  "
+                   "Pass data as namedtuples instead.")
+            raise ETLHelperInsertError(msg)
+
+        columns = row.keys()
+        placeholders = [paramstyle.format(name=c) for c in columns]
 
     sql = f"INSERT INTO {table} ({', '.join(columns)}) VALUES ({', '.join(placeholders)})"
 

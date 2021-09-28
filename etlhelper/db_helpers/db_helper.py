@@ -16,9 +16,12 @@ class DbHelper(metaclass=ABCMeta):
     """
     sql_exceptions = None
     connect_exceptions = None
+    # The following are used to help create parameterized queries.  Although
+    # paramstyle is require by DBAPI2, most drivers support both a named and
+    # positional style.
     paramstyle = None
-    named_placeholder = None
-    positional_placeholder = None
+    named_paramstyle = None
+    positional_paramstyle = None
 
     @abstractmethod
     def __init__(self):

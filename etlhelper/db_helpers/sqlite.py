@@ -16,8 +16,8 @@ class SQLiteDbHelper(DbHelper):
         self.missing_driver_msg = (
             "Could not import sqlite3 module required for SQLite connections.  "
             "Check Python configuration - this should be part of Standard Library.")
-        self.named_placeholder = 'named'
-        self.positional_placeholder = 'qmark'
+        self.named_paramstyle = 'named'
+        self.positional_paramstyle = 'qmark'
 
         try:
             import sqlite3
