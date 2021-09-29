@@ -731,6 +731,66 @@ In this example, failed rows will fail the whole job.  Removing the
 `raise_for_status()` call will let them just be logged instead.
 
 
+### CSV load script template
+
+The following script is an example of using the `load` function to import data
+from a CSV file into a database.
+It shows how a `transform` function can perform common parsing tasks such as
+renaming columns and converting timestamps into datetime objects.
+
+```python
+"""Script to create database and load observations data from csv file
+
+Generate observations.csv with:
+curl 'https://sensors.bgs.ac.uk/FROST-Server/v1.1/Observations?$select=@iot.id,result,phenomenonTime&$top=50000&$resultFormat=csv' -o observations.csv
+"""
+import csv
+import datetime as dt
+import sqlite3
+from typing import List
+
+from etlhelper import execute, load, DbParams
+
+
+def load_observations(csv_file, conn):
+    """Load observations from csv_file to db_file."""
+    # Create table (if required)
+    create_table_sql = """
+        CREATE TABLE IF NOT EXISTS observations (
+          id INTEGER PRIMARY KEY,
+          time TIMESTAMP,
+          result FLOAT
+          )"""
+    execute(create_table_sql, conn)
+
+    # Load data
+    with open(csv_file, 'rt') as f:
+        reader = csv.DictReader(f)
+        load('observations', conn, transform(reader))
+
+
+# A transform function that takes an iterable and yields one row at a time
+# is a "generator".  With a generator, records are processed as they are read
+# so the whole file is never held in memory.
+def transform(rows: List[dict]) -> dict:
+    """Rename time column and convert to Python datetime."""
+    for row in rows:
+        row['time'] = row.pop('phenomenonTime')
+        row['time'] = dt.datetime.strptime(row['time'], "%Y-%m-%dT%H:%M:%S.%fZ")
+        yield row
+
+
+if __name__ == "__main__":
+    import logging
+    from etlhelper import logger
+    logger.setLevel(logging.INFO)
+
+    db = DbParams(dbtype="SQLITE", filename="observations.sqlite")
+    with db.connect() as conn:
+        load_observations('observations.csv', conn)
+```
+
+
 ### Export data to CSV
 
 The [Pandas](https://pandas.pydata.org/pandas-docs/stable/generated/pandas.read_sql.html) library can connect to databases via SQLAlchemy.
