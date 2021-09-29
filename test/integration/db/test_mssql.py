@@ -8,7 +8,7 @@ from textwrap import dedent
 import pyodbc
 import pytest
 
-from etlhelper import connect, get_rows, copy_rows, execute, DbParams
+from etlhelper import connect, get_rows, copy_rows, execute, DbParams, load
 from etlhelper.exceptions import (
     ETLHelperConnectionError,
     ETLHelperInsertError,
@@ -135,6 +135,30 @@ def test_copy_rows_bad_param_style(test_tables, testdb_conn, test_table_data):
     insert_sql = BAD_PARAM_STYLE_SQL.format(tablename='dest')
     with pytest.raises(ETLHelperInsertError):
         copy_rows(select_sql, testdb_conn, insert_sql, testdb_conn)
+
+
+def test_load_named_tuples(testdb_conn, test_tables, test_table_data):
+    # Act
+    load('dest', testdb_conn, test_table_data)
+
+    # Assert
+    sql = "SELECT * FROM dest"
+    result = get_rows(sql, testdb_conn)
+    assert result == test_table_data
+
+
+def test_load_dicts(testdb_conn, test_tables, test_table_data):
+    # Arrange
+    data_as_dicts = [row._asdict() for row in test_table_data]
+    expected_message = ("Database connection (<class 'pyodbc.Connection'>) doesn't support named parameters.  "
+                        "Pass data as namedtuples instead.")
+
+    # Act and assert
+    # pyodbc doesn't support named parameters.
+    with pytest.raises(ETLHelperInsertError) as exc_info:
+        load('dest', testdb_conn, data_as_dicts)
+
+    assert str(exc_info.value) == expected_message
 
 
 # -- Fixtures here --

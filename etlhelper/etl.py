@@ -368,7 +368,6 @@ def load(table, conn, rows, commit_chunks=True):
 
     # Generate insert query
     query = generate_insert_sql(table, first_row, conn)
-    breakpoint()
 
     # Insert data
     executemany(query, conn, rows, commit_chunks=True)
@@ -387,11 +386,11 @@ def generate_insert_sql(table, row, conn):
         "pyformat": "%({name})s"
     }
 
-    # Namedtuples generate a query with positional placeholders
+    # Namedtuples use a query with positional placeholders
     if not hasattr(row, 'keys'):
         paramstyle = helper.positional_paramstyle
         if not paramstyle:
-            msg = ("Database driver doesn't support positional parameters.  "
+            msg = (f"Database connection ({str(conn.__class__)}) doesn't support positional parameters.  "
                    "Pass data as dictionaries instead.")
             raise ETLHelperInsertError(msg)
 
@@ -403,22 +402,22 @@ def generate_insert_sql(table, row, conn):
             raise ETLHelperInsertError(msg)
 
         columns = row.keys()
-        if paramstyle == "number":
+        if paramstyle == "numeric":
             placeholders = [paramstyles[paramstyle].format(number=i + 1)
                             for i in range(len(columns))]
         else:
             placeholders = [paramstyles[paramstyle]] * len(columns)
 
-    # Dictionaries use named placeholders
+    # Dictionaries use a query with named placeholders
     else:
         paramstyle = helper.named_paramstyle
         if not paramstyle:
-            msg = ("Database driver doesn't support named parameters.  "
+            msg = (f"Database connection ({str(conn.__class__)}) doesn't support named parameters.  "
                    "Pass data as namedtuples instead.")
             raise ETLHelperInsertError(msg)
 
         columns = row.keys()
-        placeholders = [paramstyle.format(name=c) for c in columns]
+        placeholders = [paramstyles[paramstyle].format(name=c) for c in columns]
 
     sql = f"INSERT INTO {table} ({', '.join(columns)}) VALUES ({', '.join(placeholders)})"
 
