@@ -351,6 +351,36 @@ def execute(query, conn, parameters=()):
             raise ETLHelperQueryError(msg)
 
 
+def copy_table_rows(table, source_conn, dest_conn, target=None,
+                    row_factory=namedtuple_row_factory,
+                    transform=None, commit_chunks=True, read_lob=False):
+    """
+    Copy rows from 'table' in source_conn to same or target table in dest_conn.
+    This is a simple copy of all columns and rows using `load` to insert data.
+    For more control, use `copy_rows`.
+
+    Note: ODBC driver requires separate connections for source_conn and
+    dest_conn, even if they represent the same database.
+
+    :param source_conn: open dbapi connection
+    :param dest_conn: open dbapi connection
+    :param target: name of target table, if different from source
+    :param row_factory: function that accepts a cursor and returns a function
+                        for parsing each row
+    :param transform: function that accepts an iterable (e.g. list) of rows and
+                      returns an iterable of rows (possibly of different shape)
+    :param commit_chunks: bool, commit after each chunk (see executemany)
+    :param read_lob: bool, convert Oracle LOB objects to strings
+    """
+    select_query = f"SELECT * FROM {table}"
+    if not target:
+        target = table
+
+    rows_generator = iter_rows(select_query, source_conn, row_factory=row_factory,
+                               transform=transform, read_lob=read_lob)
+    load(target, dest_conn, rows_generator, commit_chunks=commit_chunks)
+
+
 def load(table, conn, rows, commit_chunks=True):
     """
     Load data from iterable of named tuples or dictionaries into pre-existing
