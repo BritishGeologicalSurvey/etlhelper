@@ -357,6 +357,7 @@ def copy_table_rows(table, source_conn, dest_conn, target=None,
     """
     Copy rows from 'table' in source_conn to same or target table in dest_conn.
     This is a simple copy of all columns and rows using `load` to insert data.
+    It is possible to apply a transform e.g. to change the case of table names.
     For more control, use `copy_rows`.
 
     Note: ODBC driver requires separate connections for source_conn and
