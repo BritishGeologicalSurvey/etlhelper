@@ -2,7 +2,6 @@
 These currently run against internal BGS instance.
 """
 # pylint: disable=unused-argument, missing-docstring
-import datetime as dt
 import os
 import sqlite3
 import sys
@@ -67,16 +66,7 @@ def test_copy_rows_happy_path(test_tables, testdb_conn, test_table_data):
     sql = "SELECT * FROM dest"
     result = get_rows(sql, testdb_conn)
 
-    # Fix result date and datetime strings to native classes
-    fixed_dates = []
-    for row in result:
-        fixed_dates.append((
-            *row[:4],
-            dt.datetime.strptime(row.day, '%Y-%m-%d').date(),
-            dt.datetime.strptime(row.date_time, '%Y-%m-%d %H:%M:%S')
-        ))
-
-    assert fixed_dates == test_table_data
+    assert result == test_table_data
 
 
 def test_get_rows_with_parameters(test_tables, testdb_conn,
@@ -106,16 +96,7 @@ def test_load_named_tuples(testdb_conn, test_tables, test_table_data):
     sql = "SELECT * FROM dest"
     result = get_rows(sql, testdb_conn)
 
-    # Fix result date and datetime strings to native classes
-    fixed_dates = []
-    for row in result:
-        fixed_dates.append((
-            *row[:4],
-            dt.datetime.strptime(row.day, '%Y-%m-%d').date(),
-            dt.datetime.strptime(row.date_time, '%Y-%m-%d %H:%M:%S')
-        ))
-
-    assert fixed_dates == test_table_data
+    assert result == test_table_data
 
 
 def test_load_dicts(testdb_conn, test_tables, test_table_data):
@@ -129,16 +110,7 @@ def test_load_dicts(testdb_conn, test_tables, test_table_data):
     sql = "SELECT * FROM dest"
     result = get_rows(sql, testdb_conn)
 
-    # Fix result date and datetime strings to native classes
-    fixed_dates = []
-    for row in result:
-        fixed_dates.append((
-            *row[:4],
-            dt.datetime.strptime(row.day, '%Y-%m-%d').date(),
-            dt.datetime.strptime(row.date_time, '%Y-%m-%d %H:%M:%S')
-        ))
-
-    assert fixed_dates == test_table_data
+    assert result == test_table_data
 
 
 # -- Fixtures here --
@@ -168,7 +140,8 @@ def sqlitedb(tmp_path):
 @pytest.fixture(scope='function')
 def testdb_conn(sqlitedb):
     """Get connection to test SQLite database."""
-    with connect(sqlitedb) as conn:
+    with connect(sqlitedb, detect_types=sqlite3.PARSE_DECLTYPES) as conn:
+        # PARSE_DECLTYPES makes SQLite return TIMESTAMP columns as Python datetimes
         yield conn
 
 
@@ -188,7 +161,7 @@ def test_tables(test_table_data, testdb_conn):
             simple_text text,
             utf8_text text,
             day date,
-            date_time datetime
+            date_time timestamp
           )
           """).strip()
     drop_dest_sql = drop_src_sql.replace('src', 'dest')
