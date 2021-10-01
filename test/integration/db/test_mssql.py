@@ -8,7 +8,15 @@ from textwrap import dedent
 import pyodbc
 import pytest
 
-from etlhelper import connect, get_rows, copy_rows, execute, DbParams, load
+from etlhelper import (
+    DbParams,
+    connect,
+    copy_rows,
+    copy_table_rows,
+    execute,
+    get_rows,
+    load,
+)
 from etlhelper.exceptions import (
     ETLHelperConnectionError,
     ETLHelperInsertError,
@@ -115,6 +123,19 @@ def test_copy_rows_happy_path_deprecated_tables_fast_false(
     # Assert
     sql = "SELECT * FROM dest"
     result = get_rows(sql, testdb_fast_false_conn)
+    assert result == test_table_data
+
+
+def test_copy_table_rows_happy_path_fast_true(
+        test_tables, testdb_conn, testdb_conn2, test_table_data):
+    # Note: ODBC driver requires separate connections for source and destination,
+    # even if they are the same database.
+    # Arrange and act
+    copy_table_rows('src', testdb_conn, testdb_conn2, target='dest')
+
+    # Assert
+    sql = "SELECT * FROM dest"
+    result = get_rows(sql, testdb_conn)
     assert result == test_table_data
 
 
