@@ -587,7 +587,7 @@ select_sql_oracle = """
 insert_sql_postgis = """
     INSERT INTO dest (id, geom) VALUES (
       %s,
-      ST_Transform(ST_GeomFromWKT(%s), 27700)
+      ST_Transform(ST_GeomFromText(%s, 4326), 27700)
     )
     """
 ```
