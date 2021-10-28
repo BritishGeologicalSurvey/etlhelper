@@ -15,6 +15,9 @@ class OracleDbHelper(DbHelper):
         self.missing_driver_msg = (
             "Could not import cx_Oracle module required for Oracle connections.  "
             "See https://github.com/BritishGeologicalSurvey/etlhelper for installation instructions")
+        self.named_paramstyle = 'named'
+        self.positional_paramstyle = 'numeric'
+
         try:
             import cx_Oracle
             self.sql_exceptions = (cx_Oracle.DatabaseError)

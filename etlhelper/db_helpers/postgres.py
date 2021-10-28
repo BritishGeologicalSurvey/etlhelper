@@ -15,6 +15,9 @@ class PostgresDbHelper(DbHelper):
         self.missing_driver_msg = (
             "Could not import psycopg2 module required for PostgreSQL connections.  "
             "See https://github.com/BritishGeologicalSurvey/etlhelper for installation instructions")
+        self.named_paramstyle = 'pyformat'
+        self.positional_paramstyle = 'format'
+
         try:
             import psycopg2
             self.sql_exceptions = (psycopg2.ProgrammingError,

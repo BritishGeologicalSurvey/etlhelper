@@ -2,7 +2,6 @@
 These currently run against internal BGS instance.
 """
 # pylint: disable=unused-argument, missing-docstring
-import datetime as dt
 import os
 import sqlite3
 import sys
@@ -10,7 +9,15 @@ from textwrap import dedent
 
 import pytest
 
-from etlhelper import connect, get_rows, copy_rows, execute, DbParams
+from etlhelper import (
+    DbParams,
+    connect,
+    copy_rows,
+    copy_table_rows,
+    execute,
+    get_rows,
+    load,
+)
 from etlhelper.exceptions import (
     ETLHelperConnectionError,
     ETLHelperInsertError,
@@ -67,16 +74,18 @@ def test_copy_rows_happy_path(test_tables, testdb_conn, test_table_data):
     sql = "SELECT * FROM dest"
     result = get_rows(sql, testdb_conn)
 
-    # Fix result date and datetime strings to native classes
-    fixed_dates = []
-    for row in result:
-        fixed_dates.append((
-            *row[:4],
-            dt.datetime.strptime(row.day, '%Y-%m-%d').date(),
-            dt.datetime.strptime(row.date_time, '%Y-%m-%d %H:%M:%S')
-        ))
+    assert result == test_table_data
 
-    assert fixed_dates == test_table_data
+
+def test_copy_table_rows_happy_path(test_tables, testdb_conn, test_table_data):
+    # Arrange and act
+    copy_table_rows('src', testdb_conn, testdb_conn, target='dest')
+
+    # Assert
+    sql = "SELECT * FROM dest"
+    result = get_rows(sql, testdb_conn)
+
+    assert result == test_table_data
 
 
 def test_get_rows_with_parameters(test_tables, testdb_conn,
@@ -96,6 +105,31 @@ def test_copy_rows_bad_param_style(test_tables, testdb_conn, test_table_data):
     insert_sql = BAD_PARAM_STYLE_SQL.format(tablename='dest')
     with pytest.raises(ETLHelperInsertError):
         copy_rows(select_sql, testdb_conn, insert_sql, testdb_conn)
+
+
+def test_load_named_tuples(testdb_conn, test_tables, test_table_data):
+    # Act
+    load('dest', testdb_conn, test_table_data)
+
+    # Assert
+    sql = "SELECT * FROM dest"
+    result = get_rows(sql, testdb_conn)
+
+    assert result == test_table_data
+
+
+def test_load_dicts(testdb_conn, test_tables, test_table_data):
+    # Arrange
+    data_as_dicts = [row._asdict() for row in test_table_data]
+
+    # Act
+    load('dest', testdb_conn, data_as_dicts)
+
+    # Assert
+    sql = "SELECT * FROM dest"
+    result = get_rows(sql, testdb_conn)
+
+    assert result == test_table_data
 
 
 # -- Fixtures here --
@@ -125,7 +159,8 @@ def sqlitedb(tmp_path):
 @pytest.fixture(scope='function')
 def testdb_conn(sqlitedb):
     """Get connection to test SQLite database."""
-    with connect(sqlitedb) as conn:
+    with connect(sqlitedb, detect_types=sqlite3.PARSE_DECLTYPES) as conn:
+        # PARSE_DECLTYPES makes SQLite return TIMESTAMP columns as Python datetimes
         yield conn
 
 
@@ -145,7 +180,7 @@ def test_tables(test_table_data, testdb_conn):
             simple_text text,
             utf8_text text,
             day date,
-            date_time datetime
+            date_time timestamp
           )
           """).strip()
     drop_dest_sql = drop_src_sql.replace('src', 'dest')

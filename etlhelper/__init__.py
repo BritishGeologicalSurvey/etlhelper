@@ -17,6 +17,8 @@ from etlhelper.etl import (
     get_rows,
     iter_chunks,
     iter_rows,
+    load,
+    copy_table_rows,
 )
 from etlhelper.connect import (
     connect,

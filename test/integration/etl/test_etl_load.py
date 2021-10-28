@@ -3,7 +3,7 @@ the executemany call.  These are run against PostgreSQL."""
 # pylint: disable=unused-argument, missing-docstring
 import pytest
 
-from etlhelper import iter_rows, get_rows, executemany
+from etlhelper import iter_rows, get_rows, executemany, load
 from etlhelper.etl import ETLHelperInsertError
 
 
@@ -63,3 +63,26 @@ def test_insert_rows_bad_query(pgtestdb_conn, test_table_data):
     # Act and assert
     with pytest.raises(ETLHelperInsertError):
         executemany(insert_sql, pgtestdb_conn, test_table_data)
+
+
+def test_load_named_tuples(pgtestdb_conn, pgtestdb_test_tables, test_table_data):
+    # Act
+    load('dest', pgtestdb_conn, test_table_data)
+
+    # Assert
+    sql = "SELECT * FROM dest"
+    result = get_rows(sql, pgtestdb_conn)
+    assert result == test_table_data
+
+
+def test_load_dicts(pgtestdb_conn, pgtestdb_test_tables, test_table_data):
+    # Arrange
+    data_as_dicts = [row._asdict() for row in test_table_data]
+
+    # Act
+    load('dest', pgtestdb_conn, data_as_dicts)
+
+    # Assert
+    sql = "SELECT * FROM dest"
+    result = get_rows(sql, pgtestdb_conn)
+    assert result == test_table_data

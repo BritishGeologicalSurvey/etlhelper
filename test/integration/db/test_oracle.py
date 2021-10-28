@@ -8,7 +8,15 @@ from textwrap import dedent
 import cx_Oracle
 import pytest
 
-from etlhelper import connect, get_rows, copy_rows, execute, DbParams
+from etlhelper import (
+    DbParams,
+    connect,
+    copy_rows,
+    copy_table_rows,
+    execute,
+    get_rows,
+    load,
+)
 from etlhelper.exceptions import (
     ETLHelperConnectionError,
     ETLHelperInsertError,
@@ -75,6 +83,26 @@ def test_copy_rows_happy_path(test_tables, testdb_conn, test_table_data):
     assert fixed_dates == test_table_data
 
 
+def test_copy_table_rows_happy_path(test_tables, testdb_conn, test_table_data):
+    # Arrange and act
+    copy_table_rows('src', testdb_conn, testdb_conn, target='dest')
+
+    # Assert
+    sql = "SELECT * FROM dest"
+    result = get_rows(sql, testdb_conn)
+
+    # Fix result date and datetime strings to native classes
+    fixed_dates = []
+    for row in result:
+        fixed_dates.append((
+            *row[:4],
+            row.DAY.date(),
+            row.DATE_TIME
+        ))
+
+    assert fixed_dates == test_table_data
+
+
 def test_get_rows_with_parameters(test_tables, testdb_conn,
                                   test_table_data):
     # parameters=None is tested by default in other tests
@@ -92,6 +120,57 @@ def test_copy_rows_bad_param_style(test_tables, testdb_conn, test_table_data):
     insert_sql = BAD_PARAM_STYLE_SQL.format(tablename='dest')
     with pytest.raises(ETLHelperInsertError):
         copy_rows(select_sql, testdb_conn, insert_sql, testdb_conn)
+
+
+def test_load_named_tuples(testdb_conn, test_tables, test_table_data):
+    # Arrange
+    # Convert to plain tuples as ORACLE makes column names upper case
+    expected = [tuple(row) for row in test_table_data]
+
+    # Act
+    load('dest', testdb_conn, test_table_data)
+
+    # Assert
+    sql = "SELECT * FROM dest"
+    result = get_rows(sql, testdb_conn)
+
+    # Fix result date and datetime strings to native classes
+    fixed_dates = []
+    for row in result:
+        fixed_dates.append((
+            *row[:4],
+            row.DAY.date(),
+            row.DATE_TIME
+        ))
+
+    assert fixed_dates == expected
+
+
+def test_load_dicts(testdb_conn, test_tables, test_table_data):
+    # Arrange
+    # Convert to plain tuples as ORACLE makes column names upper case
+    expected = [tuple(row) for row in test_table_data]
+
+    # Arrange
+    data_as_dicts = [row._asdict() for row in test_table_data]
+
+    # Act
+    load('dest', testdb_conn, data_as_dicts)
+
+    # Assert
+    sql = "SELECT * FROM dest"
+    result = get_rows(sql, testdb_conn)
+
+    # Fix result date and datetime strings to native classes
+    fixed_dates = []
+    for row in result:
+        fixed_dates.append((
+            *row[:4],
+            row.DAY.date(),
+            row.DATE_TIME
+        ))
+
+    assert fixed_dates == expected
 
 
 # -- Fixtures here --

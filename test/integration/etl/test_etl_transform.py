@@ -5,7 +5,7 @@ from datetime import datetime, date
 
 import pytest
 
-from etlhelper import iter_rows, copy_rows, get_rows
+from etlhelper import iter_rows, copy_rows, get_rows, copy_table_rows
 from etlhelper.row_factories import dict_row_factory
 
 
@@ -20,6 +20,17 @@ def test_copy_rows_happy_path(pgtestdb_conn, pgtestdb_test_tables,
     sql = "SELECT * FROM dest"
     result = iter_rows(sql, pgtestdb_conn)
     assert list(result) == test_table_data
+
+
+def test_copy_table_rows_happy_path(pgtestdb_conn, pgtestdb_test_tables,
+                                    pgtestdb_insert_sql, test_table_data):
+    # Arrange and act
+    copy_table_rows('src', pgtestdb_conn, pgtestdb_conn, target='dest')
+
+    # Assert
+    sql = "SELECT * FROM dest"
+    result = get_rows(sql, pgtestdb_conn)
+    assert result == test_table_data
 
 
 def transform_return_list(rows):

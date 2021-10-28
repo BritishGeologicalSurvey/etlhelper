@@ -1,7 +1,7 @@
 """
 Functions for transferring data in and out of databases.
 """
-from itertools import zip_longest, islice
+from itertools import zip_longest, islice, chain
 import logging
 
 from etlhelper.row_factories import namedtuple_row_factory
@@ -349,6 +349,110 @@ def execute(query, conn, parameters=()):
             msg = (f"SQL query raised an error.\n\n{query}\n\n"
                    f"Required paramstyle: {helper.paramstyle}\n\n{exc}\n")
             raise ETLHelperQueryError(msg)
+
+
+def copy_table_rows(table, source_conn, dest_conn, target=None,
+                    row_factory=namedtuple_row_factory,
+                    transform=None, commit_chunks=True, read_lob=False):
+    """
+    Copy rows from 'table' in source_conn to same or target table in dest_conn.
+    This is a simple copy of all columns and rows using `load` to insert data.
+    It is possible to apply a transform e.g. to change the case of table names.
+    For more control, use `copy_rows`.
+
+    Note: ODBC driver requires separate connections for source_conn and
+    dest_conn, even if they represent the same database.
+
+    :param source_conn: open dbapi connection
+    :param dest_conn: open dbapi connection
+    :param target: name of target table, if different from source
+    :param row_factory: function that accepts a cursor and returns a function
+                        for parsing each row
+    :param transform: function that accepts an iterable (e.g. list) of rows and
+                      returns an iterable of rows (possibly of different shape)
+    :param commit_chunks: bool, commit after each chunk (see executemany)
+    :param read_lob: bool, convert Oracle LOB objects to strings
+    """
+    select_query = f"SELECT * FROM {table}"
+    if not target:
+        target = table
+
+    rows_generator = iter_rows(select_query, source_conn, row_factory=row_factory,
+                               transform=transform, read_lob=read_lob)
+    load(target, dest_conn, rows_generator, commit_chunks=commit_chunks)
+
+
+def load(table, conn, rows, commit_chunks=True):
+    """
+    Load data from iterable of named tuples or dictionaries into pre-existing
+    table in database on conn.
+
+    :param table: name of table
+    :param conn: open dbapi connection
+    :param rows: iterable of named tuples or dictionaries of data
+    :param commit_chunks: bool, commit after each chunk (see executemany)
+    """
+    # Get first row without losing it from row iteration
+    rows = iter(rows)
+    first_row = next(rows)
+    rows = chain([first_row], rows)
+
+    # Generate insert query
+    query = generate_insert_sql(table, first_row, conn)
+
+    # Insert data
+    executemany(query, conn, rows, commit_chunks=True)
+
+
+def generate_insert_sql(table, row, conn):
+    """Generate insert SQL for table, getting column names from row and the
+    placeholder style from the connection.  `row` is either a namedtuple or
+    a dictionary."""
+    helper = DB_HELPER_FACTORY.from_conn(conn)
+    paramstyles = {
+        "qmark": "?",
+        "numeric": ":{number}",
+        "named": ":{name}",
+        "format": "%s",
+        "pyformat": "%({name})s"
+    }
+
+    # Namedtuples use a query with positional placeholders
+    if not hasattr(row, 'keys'):
+        paramstyle = helper.positional_paramstyle
+        if not paramstyle:
+            msg = (f"Database connection ({str(conn.__class__)}) doesn't support positional parameters.  "
+                   "Pass data as dictionaries instead.")
+            raise ETLHelperInsertError(msg)
+
+        # Convert namedtuple to dictionary to easily access keys
+        try:
+            row = row._asdict()
+        except AttributeError:
+            msg = f"Row is not dictionary or namedtuple ({type(row)})"
+            raise ETLHelperInsertError(msg)
+
+        columns = row.keys()
+        if paramstyle == "numeric":
+            placeholders = [paramstyles[paramstyle].format(number=i + 1)
+                            for i in range(len(columns))]
+        else:
+            placeholders = [paramstyles[paramstyle]] * len(columns)
+
+    # Dictionaries use a query with named placeholders
+    else:
+        paramstyle = helper.named_paramstyle
+        if not paramstyle:
+            msg = (f"Database connection ({str(conn.__class__)}) doesn't support named parameters.  "
+                   "Pass data as namedtuples instead.")
+            raise ETLHelperInsertError(msg)
+
+        columns = row.keys()
+        placeholders = [paramstyles[paramstyle].format(name=c) for c in columns]
+
+    sql = f"INSERT INTO {table} ({', '.join(columns)}) VALUES ({', '.join(placeholders)})"
+
+    return sql
 
 
 def _chunker(iterable, n_chunks, fillvalue=None):
