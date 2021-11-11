@@ -29,3 +29,19 @@ class ETLHelperInsertError(ETLHelperError):
 
 class ETLHelperHelperError(ETLHelperError):
     """Exception raised when helper selection fails."""
+
+
+def log_and_raise(chunk, query, helper, exc, logger, conn):
+    conn.rollback()
+    msg = (f"Failed to insert chunk: [{chunk[0]}, ..., {chunk[-1]}]\n"
+           f"SQL query raised an error.\n\n{query}\n\n"
+           f"Required paramstyle: {helper.paramstyle}\n\n{exc}\n")
+    logger.debug(msg)
+    raise ETLHelperInsertError(msg)
+
+
+def log_and_continue(chunk, query, helper, exc, logger, conn):
+    msg = (f"Failed to insert chunk: [{chunk[0]}, ..., {chunk[-1]}]\n"
+           f"SQL query raised an error.\n\n{query}\n\n"
+           f"Required paramstyle: {helper.paramstyle}\n\n{exc}\n")
+    logger.error(msg)

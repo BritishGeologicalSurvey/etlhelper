@@ -10,6 +10,8 @@ from etlhelper.exceptions import (
     ETLHelperExtractError,
     ETLHelperInsertError,
     ETLHelperQueryError,
+    log_and_raise,
+    log_and_continue,
 )
 
 logger = logging.getLogger('etlhelper')
@@ -227,7 +229,7 @@ def dump_rows(select_query, conn, output_func=print, parameters=(),
         output_func(row)
 
 
-def executemany(query, conn, rows, commit_chunks=True):
+def executemany(query, conn, rows, commit_chunks=True, on_error=log_and_raise):
     """
     Use query to insert/update data from rows to database at conn.  This
     method uses the executemany or execute_batch (PostgreSQL) commands to
@@ -244,6 +246,7 @@ def executemany(query, conn, rows, commit_chunks=True):
     :param conn: dbapi connection
     :param rows: List of tuples containing data to be inserted/updated
     :param commit_chunks: bool, commit after each chunk has been inserted/updated
+    :param on_error: func, function to call if an exception is raised by helper
     :return row_count: int, number of rows inserted/updated
     """
     logger.info(f"Executing many (chunksize={CHUNKSIZE})")
@@ -268,12 +271,8 @@ def executemany(query, conn, rows, commit_chunks=True):
                 processed += len(chunk)
 
             except helper.sql_exceptions as exc:
-                # Rollback to clear the failed transaction before any others can
-                # be # started.
-                conn.rollback()
-                msg = (f"SQL query raised an error.\n\n{query}\n\n"
-                       f"Required paramstyle: {helper.paramstyle}\n\n{exc}\n")
-                raise ETLHelperInsertError(msg)
+                # Handle exceptions using onerror function
+                on_error(chunk, query, helper, exc, logger, conn)
 
             logger.info(
                 f'{processed} rows processed')
@@ -292,7 +291,7 @@ def executemany(query, conn, rows, commit_chunks=True):
 def copy_rows(select_query, source_conn, insert_query, dest_conn,
               parameters=(), row_factory=namedtuple_row_factory,
               transform=None, commit_chunks=True,
-              read_lob=False):
+              read_lob=False, on_error_raise=True):
     """
     Copy rows from source_conn to dest_conn.  select_query and insert_query
     specify the data to be transferred.
@@ -316,12 +315,17 @@ def copy_rows(select_query, source_conn, insert_query, dest_conn,
                       returns an iterable of rows (possibly of different shape)
     :param commit_chunks: bool, commit after each chunk (see executemany)
     :param read_lob: bool, convert Oracle LOB objects to strings
+    :param on_error_raise bool, raise exception on error
     """
     rows_generator = iter_rows(select_query, source_conn,
                                parameters=parameters, row_factory=row_factory,
                                transform=transform, read_lob=read_lob)
-    executemany(insert_query, dest_conn, rows_generator,
-                commit_chunks=commit_chunks)
+    if on_error_raise:
+        executemany(insert_query, dest_conn, rows_generator,
+                    commit_chunks=commit_chunks)
+    else:
+        executemany(insert_query, dest_conn, rows_generator,
+                    commit_chunks=commit_chunks, on_error=log_and_continue)
 
 
 def execute(query, conn, parameters=()):
