@@ -4,7 +4,7 @@ the executemany call.  These are run against PostgreSQL."""
 import pytest
 
 from etlhelper import iter_rows, get_rows, executemany, load
-from etlhelper.etl import ETLHelperInsertError
+from etlhelper.etl import ETLHelperInsertError, log_and_continue
 
 
 @pytest.mark.parametrize('commit_chunks', [True, False])
@@ -42,6 +42,47 @@ def test_insert_rows_chunked(pgtestdb_conn, pgtestdb_test_tables,
     assert result == test_table_data
 
 
+@pytest.mark.parametrize('chunk_size', [1, 2, 3, 4])
+def test_insert_rows_duplicate_raise(pgtestdb_conn, pgtestdb_test_tables,
+                                     pgtestdb_insert_sql, test_table_data,
+                                     test_table_additional_data, monkeypatch,
+                                     chunk_size):
+    # Arrange
+    monkeypatch.setattr('etlhelper.etl.CHUNKSIZE', chunk_size)
+    insert_sql = pgtestdb_insert_sql.replace('src', 'dest')
+
+    # Act
+    executemany(insert_sql, pgtestdb_conn, test_table_data)
+    with pytest.raises(ETLHelperInsertError):
+        executemany(insert_sql, pgtestdb_conn, test_table_additional_data)
+
+    # Assert
+    sql = "SELECT * FROM dest"
+    result = get_rows(sql, pgtestdb_conn)
+    assert result == test_table_data
+
+
+@pytest.mark.parametrize('chunk_size', [1, 2, 3, 4])
+def test_insert_rows_duplicate_continue(pgtestdb_conn, pgtestdb_test_tables,
+                                        pgtestdb_insert_sql, test_table_data,
+                                        test_table_additional_data, monkeypatch,
+                                        chunk_size):
+    # Arrange
+    monkeypatch.setattr('etlhelper.etl.CHUNKSIZE', chunk_size)
+    insert_sql = pgtestdb_insert_sql.replace('src', 'dest')
+
+    # Act
+    executemany(insert_sql, pgtestdb_conn, test_table_data, on_error=log_and_continue)
+    executemany(insert_sql, pgtestdb_conn, test_table_additional_data, on_error=log_and_continue)
+
+    # Assert
+    sql = "SELECT * FROM dest"
+    result = get_rows(sql, pgtestdb_conn)
+    ids = [row.id for row in result]
+    print(chunk_size, ids)
+    # assert result == test_table_data
+
+
 def test_insert_rows_no_rows(pgtestdb_conn, pgtestdb_test_tables,
                              pgtestdb_insert_sql, test_table_data):
     # Arrange
@@ -63,6 +104,14 @@ def test_insert_rows_bad_query(pgtestdb_conn, test_table_data):
     # Act and assert
     with pytest.raises(ETLHelperInsertError):
         executemany(insert_sql, pgtestdb_conn, test_table_data)
+
+
+def test_insert_rows_bad_query_continue(pgtestdb_conn, test_table_data):
+    # Arrange
+    insert_sql = "INSERT INTO bad_table VALUES (%s, %s, %s, %s, %s, %s)"
+
+    # Act and assert
+    executemany(insert_sql, pgtestdb_conn, test_table_data, on_error=log_and_continue)
 
 
 def test_load_named_tuples(pgtestdb_conn, pgtestdb_test_tables, test_table_data):

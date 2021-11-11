@@ -33,7 +33,7 @@ SQLITEDB = DbParams(dbtype='SQLITE', filename='/myfile.db')
     (OracleDbHelper, (cx_Oracle.DatabaseError)),
     (MSSQLDbHelper, (pyodbc.DatabaseError)),
     (PostgresDbHelper, (psycopg2.ProgrammingError, psycopg2.InterfaceError,
-                        psycopg2.InternalError)),
+                        psycopg2.InternalError, psycopg2.errors.UniqueViolation)),
     (SQLiteDbHelper, (sqlite3.OperationalError, sqlite3.IntegrityError))
 ])
 def test_sql_exceptions(helper, expected):
