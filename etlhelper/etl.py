@@ -3,6 +3,7 @@ Functions for transferring data in and out of databases.
 """
 from itertools import zip_longest, islice, chain
 import logging
+import re
 
 from etlhelper.row_factories import namedtuple_row_factory
 from etlhelper.db_helper_factory import DB_HELPER_FACTORY
@@ -10,8 +11,6 @@ from etlhelper.exceptions import (
     ETLHelperExtractError,
     ETLHelperInsertError,
     ETLHelperQueryError,
-    log_and_raise,
-    log_and_continue,
 )
 
 logger = logging.getLogger('etlhelper')
@@ -229,6 +228,61 @@ def dump_rows(select_query, conn, output_func=print, parameters=(),
         output_func(row)
 
 
+def log_and_raise(query, conn, helper, chunk, exc, logger):
+    conn.rollback()
+    msg = (f"Failed to insert chunk: [{chunk[0]}, ..., {chunk[-1]}]\n"
+           f"SQL query raised an error.\n\n{query}\n\n"
+           f"Required paramstyle: {helper.paramstyle}\n\n{exc}\n")
+    logger.debug(msg)
+    raise ETLHelperInsertError(msg)
+
+
+def log_and_continue(query, conn, helper, chunk, exc, logger):
+    conn.commit()
+    msg = (f"Failed to insert chunk: [{chunk[0]}, ..., {chunk[-1]}]\n"
+           f"SQL query raised an error.\n\n{query}\n\n"
+           f"Required paramstyle: {helper.paramstyle}\n\n{exc}\n")
+    logger.error(msg)
+
+
+def execute_chunk(query, conn, cursor, helper, chunk, processed, on_error):
+    try:
+        # Show first row as example of data
+        if processed == 0:
+            logger.debug(f"First row: {chunk[0]}")
+
+        # Execute query
+        helper.executemany(cursor, query, chunk)
+        processed += len(chunk)
+
+    except helper.sql_exceptions as exc:
+        # Handle exceptions using on_error function
+        on_error(query, conn, helper, chunk, exc, logger)
+
+        # If exception not raised by on_error
+        # try to parse exc and re-run recursively
+        matches = re.findall(r'\(([^)]+)\)', exc.pgerror)
+        if matches and len(matches) == 2:
+            key, value = tuple(matches)
+        else:
+            msg = (f"Failed to insert chunk: [{chunk[0]}, ..., {chunk[-1]}]\n"
+                   f"SQL query raised an error.\n\n{query}\n\n"
+                   f"Required paramstyle: {helper.paramstyle}\n\n{exc}\n"
+                   f"And failed to continue\n")
+            logger.error(msg)
+            raise ETLHelperInsertError(msg)
+
+        while chunk:
+            row = chunk.pop(0)
+            if getattr(row, key) == int(value):
+                break
+
+        if chunk:
+            processed += execute_chunk(query, conn, cursor, helper, chunk, processed, on_error)
+
+    return processed
+
+
 def executemany(query, conn, rows, commit_chunks=True, on_error=log_and_raise):
     """
     Use query to insert/update data from rows to database at conn.  This
@@ -257,25 +311,11 @@ def executemany(query, conn, rows, commit_chunks=True, on_error=log_and_raise):
 
     with helper.cursor(conn) as cursor:
         for chunk in _chunker(rows, CHUNKSIZE):
+            # Chunker pads to whole chunk with None; remove these
+            chunk = [row for row in chunk if row is not None]
             # Run query
-            try:
-                # Chunker pads to whole chunk with None; remove these
-                chunk = [row for row in chunk if row is not None]
-
-                # Show first row as example of data
-                if processed == 0:
-                    logger.debug(f"First row: {chunk[0]}")
-
-                # Execute query
-                helper.executemany(cursor, query, chunk)
-                processed += len(chunk)
-
-            except helper.sql_exceptions as exc:
-                # Handle exceptions using onerror function
-                on_error(chunk, query, helper, exc, logger, conn)
-
-            logger.info(
-                f'{processed} rows processed')
+            processed += execute_chunk(query, conn, cursor, helper, chunk, processed, on_error)
+            logger.info(f'{processed} rows processed')
 
             # Commit changes so far
             if commit_chunks:

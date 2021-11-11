@@ -43,10 +43,10 @@ def test_insert_rows_chunked(pgtestdb_conn, pgtestdb_test_tables,
 
 
 @pytest.mark.parametrize('chunk_size', [1, 2, 3, 4])
-def test_insert_rows_duplicate_raise(pgtestdb_conn, pgtestdb_test_tables,
-                                     pgtestdb_insert_sql, test_table_data,
-                                     test_table_additional_data, monkeypatch,
-                                     chunk_size):
+def test_insert_rows_overlap_raise(pgtestdb_conn, pgtestdb_test_tables,
+                                   pgtestdb_insert_sql, test_table_data,
+                                   test_table_additional_data, monkeypatch,
+                                   chunk_size):
     # Arrange
     monkeypatch.setattr('etlhelper.etl.CHUNKSIZE', chunk_size)
     insert_sql = pgtestdb_insert_sql.replace('src', 'dest')
@@ -62,11 +62,11 @@ def test_insert_rows_duplicate_raise(pgtestdb_conn, pgtestdb_test_tables,
     assert result == test_table_data
 
 
-@pytest.mark.parametrize('chunk_size', [1, 2, 3, 4])
-def test_insert_rows_duplicate_continue(pgtestdb_conn, pgtestdb_test_tables,
-                                        pgtestdb_insert_sql, test_table_data,
-                                        test_table_additional_data, monkeypatch,
-                                        chunk_size):
+@pytest.mark.parametrize('chunk_size', [1, 2, 3, 4, 5])
+def test_insert_rows_overlap_continue(pgtestdb_conn, pgtestdb_test_tables,
+                                      pgtestdb_insert_sql, test_table_data,
+                                      test_table_additional_data, monkeypatch,
+                                      chunk_size):
     # Arrange
     monkeypatch.setattr('etlhelper.etl.CHUNKSIZE', chunk_size)
     insert_sql = pgtestdb_insert_sql.replace('src', 'dest')
@@ -78,9 +78,25 @@ def test_insert_rows_duplicate_continue(pgtestdb_conn, pgtestdb_test_tables,
     # Assert
     sql = "SELECT * FROM dest"
     result = get_rows(sql, pgtestdb_conn)
-    ids = [row.id for row in result]
-    print(chunk_size, ids)
-    # assert result == test_table_data
+    assert result == test_table_additional_data
+
+
+@pytest.mark.parametrize('chunk_size', [1, 2, 3, 4])
+def test_insert_rows_duplicate_continue(pgtestdb_conn, pgtestdb_test_tables,
+                                        pgtestdb_insert_sql, test_table_data, monkeypatch,
+                                        chunk_size):
+    # Arrange
+    monkeypatch.setattr('etlhelper.etl.CHUNKSIZE', chunk_size)
+    insert_sql = pgtestdb_insert_sql.replace('src', 'dest')
+
+    # Act
+    executemany(insert_sql, pgtestdb_conn, test_table_data, on_error=log_and_continue)
+    executemany(insert_sql, pgtestdb_conn, test_table_data, on_error=log_and_continue)
+
+    # Assert
+    sql = "SELECT * FROM dest"
+    result = get_rows(sql, pgtestdb_conn)
+    assert result == test_table_data
 
 
 def test_insert_rows_no_rows(pgtestdb_conn, pgtestdb_test_tables,
@@ -111,7 +127,8 @@ def test_insert_rows_bad_query_continue(pgtestdb_conn, test_table_data):
     insert_sql = "INSERT INTO bad_table VALUES (%s, %s, %s, %s, %s, %s)"
 
     # Act and assert
-    executemany(insert_sql, pgtestdb_conn, test_table_data, on_error=log_and_continue)
+    with pytest.raises(ETLHelperInsertError):
+        executemany(insert_sql, pgtestdb_conn, test_table_data, on_error=log_and_continue)
 
 
 def test_load_named_tuples(pgtestdb_conn, pgtestdb_test_tables, test_table_data):

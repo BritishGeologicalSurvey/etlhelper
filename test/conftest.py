@@ -102,6 +102,8 @@ def test_table_additional_data():
     Row = namedtuple('Row',
                      'id, value, simple_text, utf8_text, day, date_time')
     data = [
+        Row(1, 1.234, 'text', 'Öæ°\nz', dt.date(2018, 12, 7),
+            dt.datetime(2018, 12, 7, 13, 1, 59)),
         Row(2, 2.234, 'text', 'Öæ°\nz', dt.date(2018, 12, 8),
             dt.datetime(2018, 12, 8, 13, 1, 59)),
         Row(3, 2.234, 'text', 'Öæ°\nz', dt.date(2018, 12, 9),
