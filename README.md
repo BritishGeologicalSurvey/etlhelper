@@ -795,7 +795,7 @@ curl 'https://sensors.bgs.ac.uk/FROST-Server/v1.1/Observations?$select=@iot.id,r
 import csv
 import datetime as dt
 import sqlite3
-from typing import List
+from typing import Iterable
 
 from etlhelper import execute, load, DbParams
 
@@ -818,9 +818,9 @@ def load_observations(csv_file, conn):
 
 
 # A transform function that takes an iterable and yields one row at a time
-# is a "generator".  With a generator, records are processed as they are read
-# so the whole file is never held in memory.
-def transform(rows: List[dict]) -> dict:
+# returns a "generator".  The generator is also iterable, and records are
+# processed as they are read so the whole file is never held in memory.
+def transform(rows: Iterable[dict]) -> Iterable[dict]:
     """Rename time column and convert to Python datetime."""
     for row in rows:
         row['time'] = row.pop('phenomenonTime')
