@@ -25,6 +25,31 @@ def test_insert_rows_happy_path(pgtestdb_conn, pgtestdb_test_tables,
     assert result == test_table_data
 
 
+@pytest.mark.parametrize('commit_chunks', [True, False])
+def test_insert_rows_on_error(pgtestdb_conn, pgtestdb_test_tables,
+                              pgtestdb_insert_sql, test_table_data,
+                              commit_chunks):
+    # Parameterized to ensure success with and without commit_chunks
+    # Arrange
+    insert_sql = pgtestdb_insert_sql.replace('src', 'dest')
+    # Add a duplicate rows to data that will fail primary key check
+    test_table_data = test_table_data * 2
+
+    # Act
+    errors = []
+    executemany(insert_sql, pgtestdb_conn, test_table_data, on_error=1)
+
+    # Assert
+    sql = "SELECT * FROM dest"
+    result = get_rows(sql, pgtestdb_conn)
+    assert result == test_table_data
+
+    # Assert error handling
+    failed_rows, exceptions = zip(*errors)
+    assert failed_rows == test_table_data  # Second set of rows all fail
+    assert False
+
+
 @pytest.mark.parametrize('chunk_size', [1, 2, 3, 4])
 def test_insert_rows_chunked(pgtestdb_conn, pgtestdb_test_tables,
                              pgtestdb_insert_sql, test_table_data, monkeypatch,
@@ -43,7 +68,7 @@ def test_insert_rows_chunked(pgtestdb_conn, pgtestdb_test_tables,
 
 
 def test_insert_rows_no_rows(pgtestdb_conn, pgtestdb_test_tables,
-                             pgtestdb_insert_sql, test_table_data):
+                             pgtestdb_insert_sql):
     # Arrange
     insert_sql = pgtestdb_insert_sql.replace('src', 'dest')
 

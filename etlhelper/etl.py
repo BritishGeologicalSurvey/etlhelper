@@ -1,6 +1,7 @@
 """
 Functions for transferring data in and out of databases.
 """
+from collections import namedtuple
 from itertools import zip_longest, islice, chain
 import logging
 
@@ -227,12 +228,19 @@ def dump_rows(select_query, conn, output_func=print, parameters=(),
         output_func(row)
 
 
-def executemany(query, conn, rows, commit_chunks=True):
+def executemany(query, conn, rows, on_error=None, commit_chunks=True):
     """
     Use query to insert/update data from rows to database at conn.  This
     method uses the executemany or execute_batch (PostgreSQL) commands to
     process the data in chunks and avoid creating a new database connection for
     each row.  Row data are passed as parameters into query.
+
+    Default behaviour is to raise an exception in the case of SQL errors such
+    as primary key violations.  If the on_error parameter is specified, the
+    exception will be caught then then rows of each chunk re-tried individually.
+    Further errors will be caught and appended to a list of (row, exception)
+    tuples.  on_error is a function that is called at the end of each chunk,
+    with the list as the only argument.
 
     commit_chunks controls if chunks the transaction should be committed after
     each chunk has been inserted.  Committing chunks means that errors during
@@ -243,6 +251,7 @@ def executemany(query, conn, rows, commit_chunks=True):
     :param query: str, SQL insert command with placeholders for data
     :param conn: dbapi connection
     :param rows: List of tuples containing data to be inserted/updated
+    :param on_error: Function to be applied to failed rows in each chunk
     :param commit_chunks: bool, commit after each chunk has been inserted/updated
     :return row_count: int, number of rows inserted/updated
     """
@@ -251,6 +260,7 @@ def executemany(query, conn, rows, commit_chunks=True):
 
     helper = DB_HELPER_FACTORY.from_conn(conn)
     processed = 0
+    failed = 0
 
     with helper.cursor(conn) as cursor:
         for chunk in _chunker(rows, CHUNKSIZE):
@@ -265,18 +275,27 @@ def executemany(query, conn, rows, commit_chunks=True):
 
                 # Execute query
                 helper.executemany(cursor, query, chunk)
-                processed += len(chunk)
 
             except helper.sql_exceptions as exc:
                 # Rollback to clear the failed transaction before any others can
-                # be # started.
+                # be started.
                 conn.rollback()
-                msg = (f"SQL query raised an error.\n\n{query}\n\n"
-                       f"Required paramstyle: {helper.paramstyle}\n\n{exc}\n")
-                raise ETLHelperInsertError(msg)
 
+                # Collect and process failed rows if on_error function provided
+                if on_error:
+                    failed_rows = _execute_by_row(cursor, query, chunk, helper)
+                    failed += len(failed_rows)
+                    logger.debug("Calling on_error function on %s failed rows",
+                                 failed)
+                    on_error(failed_rows)
+                else:
+                    msg = (f"SQL query raised an error.\n\n{query}\n\n"
+                           f"Required paramstyle: {helper.paramstyle}\n\n{exc}\n")
+                    raise ETLHelperInsertError(msg)
+
+            processed += len(chunk)
             logger.info(
-                f'{processed} rows processed')
+                '%s rows processed (%s failed)', processed, failed)
 
             # Commit changes so far
             if commit_chunks:
@@ -287,6 +306,33 @@ def executemany(query, conn, rows, commit_chunks=True):
         conn.commit()
 
     logger.info(f'{processed} rows processed in total')
+
+
+def _execute_by_row(cursor, query, chunk, conn, helper):
+    """
+    Retry execution of rows individually and return failed rows along with
+    their errors.  Successful inserts are committed.  This is because
+    (and other?)
+
+    :param cursor: dbapi cursor, used for queries
+    :param query: str, SQL command with placeholders for data
+    :param chunk: list, list of row parameters
+    :param conn: open dbapi connection, used for transactions
+    :param helper: DbHelper associated with cursor
+    :returns failed_rows: list of (row, exception) tuples
+    """
+    FailedRow = namedtuple('FailedRow', 'row, exception')
+    failed_rows = []
+
+    for row in chunk:
+        try:
+            cursor.execute(query, row)
+            conn.commit()
+        except helper.sql_exceptions as exc:
+            conn.rollback()
+            failed_rows.append(FailedRow(row, exc))
+
+    return failed_rows
 
 
 def copy_rows(select_query, source_conn, insert_query, dest_conn,
