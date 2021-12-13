@@ -1,11 +1,15 @@
 """Test for etl load functions.  Data loading is carried out using
 the executemany call.  These are run against PostgreSQL."""
 # pylint: disable=unused-argument, missing-docstring
+import re
+from unittest.mock import sentinel, Mock, ANY, call
+
 from psycopg2.errors import UniqueViolation
 import pytest
 
 from etlhelper import iter_rows, get_rows, executemany, load
 from etlhelper.etl import ETLHelperInsertError
+import etlhelper.etl as etlhelper_etl
 
 
 @pytest.mark.parametrize('commit_chunks', [True, False])
@@ -113,3 +117,43 @@ def test_load_dicts(pgtestdb_conn, pgtestdb_test_tables, test_table_data):
     sql = "SELECT * FROM dest"
     result = get_rows(sql, pgtestdb_conn)
     assert result == test_table_data
+
+
+@pytest.mark.parametrize('chunk_size', [1, 2, 3, 4])
+def test_load_named_tuples_chunk_size(pgtestdb_conn, pgtestdb_test_tables,
+                                      test_table_data, chunk_size):
+    # Act
+    load('dest', pgtestdb_conn, test_table_data, chunk_size=chunk_size)
+
+    # Assert
+    sql = "SELECT * FROM dest"
+    result = get_rows(sql, pgtestdb_conn)
+    assert result == test_table_data
+
+
+def test_load_parameters_pass_to_executemany(monkeypatch, pgtestdb_conn,
+                                             test_table_data):
+    # Arrange
+    # Patch 'iter_rows' function within etlhelper.etl module
+    mock_executemany = Mock()
+    monkeypatch.setattr(etlhelper_etl, 'executemany', mock_executemany)
+    # Sentinel items are unique so confirm object that was passed through
+    table = sentinel.table
+    commit_chunks = sentinel.commit_chunks
+    chunk_size = sentinel.chunk_size
+
+    # Act
+    load(table, pgtestdb_conn, test_table_data, commit_chunks, chunk_size)
+
+    # Assert
+    # load() function writes SQL query
+    sql = """
+      INSERT INTO sentinel.table (id, value, simple_text, utf8_text, day,
+          date_time)
+      VALUES (%s, %s, %s, %s, %s, %s)""".strip()
+    sql = re.sub(r"\s\s+", " ", sql)  # replace newlines and whitespace
+
+    mock_executemany.assert_called_once_with(
+        sql, pgtestdb_conn, ANY, commit_chunks=sentinel.commit_chunks,
+        chunk_size=sentinel.chunk_size)
+

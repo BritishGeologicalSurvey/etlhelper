@@ -21,10 +21,10 @@ CHUNKSIZE = 5000
 # All data extraction processes call this function.
 def iter_chunks(select_query, conn, parameters=(),
                 row_factory=namedtuple_row_factory,
-                transform=None, read_lob=False):
+                transform=None, read_lob=False, chunk_size=CHUNKSIZE):
     """
     Run SQL query against connection and return iterator object to loop over
-    results in batches of etlhelper.etl.CHUNKSIZE (default 5000).
+    results in batches of chunksize (default 5000).
 
     The row_factory changes the output format of the results.  Other row
     factories e.g. dict_row_factory are available.
@@ -43,8 +43,9 @@ def iter_chunks(select_query, conn, parameters=(),
     :param transform: function that accepts an iterable (e.g. list) of rows and
                       returns an iterable of rows (possibly of different shape)
     :param read_lob: bool, convert Oracle LOB objects to strings
+    :param chunk_size: int, size of chunks to group data by
     """
-    logger.info("Fetching rows")
+    logger.info("Fetching rows (chunk_size=%s)", chunk_size)
     logger.debug(f"Fetching:\n\n{select_query}\n\nwith parameters:\n\n"
                  f"{parameters}\n\nagainst\n\n{conn}")
 
@@ -67,7 +68,7 @@ def iter_chunks(select_query, conn, parameters=(),
         # Parse results
         first_pass = True
         while True:
-            rows = cursor.fetchmany(CHUNKSIZE)
+            rows = cursor.fetchmany(chunk_size)
 
             # No more rows to process
             if not rows:
@@ -103,7 +104,7 @@ def iter_chunks(select_query, conn, parameters=(),
 
 def iter_rows(select_query, conn, parameters=(),
               row_factory=namedtuple_row_factory,
-              transform=None, read_lob=False):
+              transform=None, read_lob=False, chunk_size=CHUNKSIZE):
     """
     Run SQL query against connection and return iterator object to loop over
     results, row-by-row.
@@ -116,16 +117,18 @@ def iter_rows(select_query, conn, parameters=(),
     :param transform: function that accepts an iterable (e.g. list) of rows and
                       returns an iterable of rows (possibly of different shape)
     :param read_lob: bool, convert Oracle LOB objects to strings
+    :param chunk_size: int, size of chunks to group data by
     """
     for chunk in iter_chunks(select_query, conn, row_factory=row_factory,
                              parameters=parameters, transform=transform,
-                             read_lob=read_lob):
+                             read_lob=read_lob, chunk_size=chunk_size):
         for row in chunk:
             yield row
 
 
 def get_rows(select_query, conn, parameters=(),
-             row_factory=namedtuple_row_factory, transform=None):
+             row_factory=namedtuple_row_factory, transform=None,
+             chunk_size=CHUNKSIZE):
     """
     Get results of query as a list.  See iter_rows for details.
     :param select_query: str, SQL query to execute
@@ -135,13 +138,16 @@ def get_rows(select_query, conn, parameters=(),
                         for parsing each row
     :param transform: function that accepts an iterable (e.g. list) of rows and
                       returns an iterable of rows (possibly of different shape)
+    :param chunk_size: int, size of chunks to group data by
     """
     return list(iter_rows(select_query, conn, row_factory=row_factory,
-                          parameters=parameters, transform=transform))
+                          parameters=parameters, transform=transform,
+                          chunk_size=chunk_size))
 
 
 def fetchone(select_query, conn, parameters=(),
-             row_factory=namedtuple_row_factory, transform=None):
+             row_factory=namedtuple_row_factory, transform=None,
+             chunk_size=1):
     """
     Get first result of query.  See iter_rows for details.  Note: iter_rows is
     recommended for looping over rows individually.
@@ -156,7 +162,8 @@ def fetchone(select_query, conn, parameters=(),
     """
     try:
         result = next(iter_rows(select_query, conn, row_factory=row_factory,
-                                parameters=parameters, transform=transform))
+                                parameters=parameters, transform=transform,
+                                chunk_size=chunk_size))
     except StopIteration:
         result = None
     finally:
@@ -167,7 +174,8 @@ def fetchone(select_query, conn, parameters=(),
 
 
 def fetchmany(select_query, conn, size=1, parameters=(),
-              row_factory=namedtuple_row_factory, transform=None):
+              row_factory=namedtuple_row_factory, transform=None,
+              chunk_size=CHUNKSIZE):
     """
     Get first 'size' results of query as a list.  See iter_rows for details.
     Note: iter_chunks is recommended for looping over rows in batches.
@@ -180,11 +188,13 @@ def fetchmany(select_query, conn, size=1, parameters=(),
                         for parsing each row
     :param transform: function that accepts an iterable (e.g. list) of rows and
                       returns an iterable of rows (possibly of different shape)
+    :param chunk_size: int, size of chunks to group data by
     """
     try:
         result = list(
             islice(iter_rows(select_query, conn, row_factory=row_factory,
-                             parameters=parameters, transform=transform), size))
+                             parameters=parameters, transform=transform,
+                             chunk_size=chunk_size), size))
     finally:
         # Commit to close the transaction before the iterator has been exhausted
         conn.commit()
@@ -193,7 +203,8 @@ def fetchmany(select_query, conn, size=1, parameters=(),
 
 
 def fetchall(select_query, conn, parameters=(),
-             row_factory=namedtuple_row_factory, transform=None):
+             row_factory=namedtuple_row_factory, transform=None,
+             chunk_size=CHUNKSIZE):
     """
     Get all results of query as a list.  See iter_rows for details.
     :param select_query: str, SQL query to execute
@@ -203,13 +214,16 @@ def fetchall(select_query, conn, parameters=(),
                         for parsing each row
     :param transform: function that accepts an iterable (e.g. list) of rows and
                       returns an iterable of rows (possibly of different shape)
+    :param chunk_size: int, size of chunks to group data by
     """
     return list(iter_rows(select_query, conn, row_factory=row_factory,
-                          parameters=parameters, transform=transform))
+                          parameters=parameters, transform=transform,
+                          chunk_size=chunk_size))
 
 
 def dump_rows(select_query, conn, output_func=print, parameters=(),
-              row_factory=namedtuple_row_factory, transform=None):
+              row_factory=namedtuple_row_factory, transform=None,
+              chunk_size=CHUNKSIZE):
     """
     Call output_func(row) one-by-one on results of query.  See iter_rows for
     details.
@@ -222,13 +236,16 @@ def dump_rows(select_query, conn, output_func=print, parameters=(),
                         for parsing each row
     :param transform: function that accepts an iterable (e.g. list) of rows and
                       returns an iterable of rows (possibly of different shape)
+    :param chunk_size: int, size of chunks to group data by
     """
     for row in iter_rows(select_query, conn, parameters=parameters,
-                         row_factory=row_factory, transform=transform):
+                         row_factory=row_factory, transform=transform,
+                         chunk_size=chunk_size):
         output_func(row)
 
 
-def executemany(query, conn, rows, on_error=None, commit_chunks=True):
+def executemany(query, conn, rows, on_error=None, commit_chunks=True,
+                chunk_size=CHUNKSIZE):
     """
     Use query to insert/update data from rows to database at conn.  This
     method uses the executemany or execute_batch (PostgreSQL) commands to
@@ -253,17 +270,18 @@ def executemany(query, conn, rows, on_error=None, commit_chunks=True):
     :param rows: List of tuples containing data to be inserted/updated
     :param on_error: Function to be applied to failed rows in each chunk
     :param commit_chunks: bool, commit after each chunk has been inserted/updated
+    :param chunk_size: int, size of chunks to group data by
     :return row_count: int, number of rows inserted/updated
     """
-    logger.info(f"Executing many (chunksize={CHUNKSIZE})")
-    logger.debug(f"Executing:\n\n{query}\n\nagainst\n\n{conn}")
+    logger.info("Executing many (chunk_size=%s)", chunk_size)
+    logger.debug("Executing:\n\n%s\n\nagainst\n\n%s", query, conn)
 
     helper = DB_HELPER_FACTORY.from_conn(conn)
     processed = 0
     failed = 0
 
     with helper.cursor(conn) as cursor:
-        for chunk in _chunker(rows, CHUNKSIZE):
+        for chunk in _chunker(rows, chunk_size):
             # Run query
             try:
                 # Chunker pads to whole chunk with None; remove these
@@ -338,7 +356,7 @@ def _execute_by_row(cursor, query, chunk, conn):
 def copy_rows(select_query, source_conn, insert_query, dest_conn,
               parameters=(), row_factory=namedtuple_row_factory,
               transform=None, commit_chunks=True,
-              read_lob=False):
+              read_lob=False, chunk_size=CHUNKSIZE):
     """
     Copy rows from source_conn to dest_conn.  select_query and insert_query
     specify the data to be transferred.
@@ -362,12 +380,14 @@ def copy_rows(select_query, source_conn, insert_query, dest_conn,
                       returns an iterable of rows (possibly of different shape)
     :param commit_chunks: bool, commit after each chunk (see executemany)
     :param read_lob: bool, convert Oracle LOB objects to strings
+    :param chunk_size: int, size of chunks to group data by
     """
     rows_generator = iter_rows(select_query, source_conn,
                                parameters=parameters, row_factory=row_factory,
-                               transform=transform, read_lob=read_lob)
+                               transform=transform, read_lob=read_lob,
+                               chunk_size=chunk_size)
     executemany(insert_query, dest_conn, rows_generator,
-                commit_chunks=commit_chunks)
+                commit_chunks=commit_chunks, chunk_size=chunk_size)
 
 
 def execute(query, conn, parameters=()):
@@ -399,7 +419,8 @@ def execute(query, conn, parameters=()):
 
 def copy_table_rows(table, source_conn, dest_conn, target=None,
                     row_factory=namedtuple_row_factory,
-                    transform=None, commit_chunks=True, read_lob=False):
+                    transform=None, commit_chunks=True, read_lob=False,
+                    chunk_size=CHUNKSIZE):
     """
     Copy rows from 'table' in source_conn to same or target table in dest_conn.
     This is a simple copy of all columns and rows using `load` to insert data.
@@ -418,17 +439,20 @@ def copy_table_rows(table, source_conn, dest_conn, target=None,
                       returns an iterable of rows (possibly of different shape)
     :param commit_chunks: bool, commit after each chunk (see executemany)
     :param read_lob: bool, convert Oracle LOB objects to strings
+    :param chunk_size: int, size of chunks to group data by
     """
     select_query = f"SELECT * FROM {table}"
     if not target:
         target = table
 
     rows_generator = iter_rows(select_query, source_conn, row_factory=row_factory,
-                               transform=transform, read_lob=read_lob)
-    load(target, dest_conn, rows_generator, commit_chunks=commit_chunks)
+                               transform=transform, read_lob=read_lob,
+                               chunk_size=chunk_size)
+    load(target, dest_conn, rows_generator, commit_chunks=commit_chunks,
+         chunk_size=chunk_size)
 
 
-def load(table, conn, rows, commit_chunks=True):
+def load(table, conn, rows, commit_chunks=True, chunk_size=CHUNKSIZE):
     """
     Load data from iterable of named tuples or dictionaries into pre-existing
     table in database on conn.
@@ -437,6 +461,7 @@ def load(table, conn, rows, commit_chunks=True):
     :param conn: open dbapi connection
     :param rows: iterable of named tuples or dictionaries of data
     :param commit_chunks: bool, commit after each chunk (see executemany)
+    :param chunk_size: int, size of chunks to group data by
     """
     # Get first row without losing it from row iteration
     rows = iter(rows)
@@ -447,7 +472,8 @@ def load(table, conn, rows, commit_chunks=True):
     query = generate_insert_sql(table, first_row, conn)
 
     # Insert data
-    executemany(query, conn, rows, commit_chunks=True)
+    executemany(query, conn, rows, commit_chunks=commit_chunks,
+                chunk_size=chunk_size)
 
 
 def generate_insert_sql(table, row, conn):
