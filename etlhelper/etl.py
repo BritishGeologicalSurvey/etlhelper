@@ -355,7 +355,7 @@ def _execute_by_row(cursor, query, chunk, conn):
 
 def copy_rows(select_query, source_conn, insert_query, dest_conn,
               parameters=(), row_factory=namedtuple_row_factory,
-              transform=None, commit_chunks=True,
+              transform=None, on_error=None, commit_chunks=True,
               read_lob=False, chunk_size=CHUNKSIZE):
     """
     Copy rows from source_conn to dest_conn.  select_query and insert_query
@@ -369,6 +369,13 @@ def copy_rows(select_query, source_conn, insert_query, dest_conn,
     and inserted into PostGIS with:
       ST_GeomFromText(%s, 27700)
 
+    Default behaviour is to raise an exception in the case of SQL errors such
+    as primary key violations.  If the on_error parameter is specified, the
+    exception will be caught then then rows of each chunk re-tried individually.
+    Further errors will be caught and appended to a list of (row, exception)
+    tuples.  on_error is a function that is called at the end of each chunk,
+    with the list as the only argument.
+
     :param select_query: str, select rows from Oracle.
     :param source_conn: open dbapi connection
     :param insert_query:
@@ -378,6 +385,7 @@ def copy_rows(select_query, source_conn, insert_query, dest_conn,
                         for parsing each row
     :param transform: function that accepts an iterable (e.g. list) of rows and
                       returns an iterable of rows (possibly of different shape)
+    :param on_error: Function to be applied to failed rows in each chunk
     :param commit_chunks: bool, commit after each chunk (see executemany)
     :param read_lob: bool, convert Oracle LOB objects to strings
     :param chunk_size: int, size of chunks to group data by
@@ -386,7 +394,7 @@ def copy_rows(select_query, source_conn, insert_query, dest_conn,
                                parameters=parameters, row_factory=row_factory,
                                transform=transform, read_lob=read_lob,
                                chunk_size=chunk_size)
-    executemany(insert_query, dest_conn, rows_generator,
+    executemany(insert_query, dest_conn, rows_generator, on_error=on_error,
                 commit_chunks=commit_chunks, chunk_size=chunk_size)
 
 
@@ -419,8 +427,8 @@ def execute(query, conn, parameters=()):
 
 def copy_table_rows(table, source_conn, dest_conn, target=None,
                     row_factory=namedtuple_row_factory,
-                    transform=None, commit_chunks=True, read_lob=False,
-                    chunk_size=CHUNKSIZE):
+                    transform=None, on_error=None, commit_chunks=True,
+                    read_lob=False, chunk_size=CHUNKSIZE):
     """
     Copy rows from 'table' in source_conn to same or target table in dest_conn.
     This is a simple copy of all columns and rows using `load` to insert data.
@@ -430,6 +438,13 @@ def copy_table_rows(table, source_conn, dest_conn, target=None,
     Note: ODBC driver requires separate connections for source_conn and
     dest_conn, even if they represent the same database.
 
+    Default behaviour is to raise an exception in the case of SQL errors such
+    as primary key violations.  If the on_error parameter is specified, the
+    exception will be caught then then rows of each chunk re-tried individually.
+    Further errors will be caught and appended to a list of (row, exception)
+    tuples.  on_error is a function that is called at the end of each chunk,
+    with the list as the only argument.
+
     :param source_conn: open dbapi connection
     :param dest_conn: open dbapi connection
     :param target: name of target table, if different from source
@@ -437,6 +452,7 @@ def copy_table_rows(table, source_conn, dest_conn, target=None,
                         for parsing each row
     :param transform: function that accepts an iterable (e.g. list) of rows and
                       returns an iterable of rows (possibly of different shape)
+    :param on_error: Function to be applied to failed rows in each chunk
     :param commit_chunks: bool, commit after each chunk (see executemany)
     :param read_lob: bool, convert Oracle LOB objects to strings
     :param chunk_size: int, size of chunks to group data by
@@ -448,18 +464,27 @@ def copy_table_rows(table, source_conn, dest_conn, target=None,
     rows_generator = iter_rows(select_query, source_conn, row_factory=row_factory,
                                transform=transform, read_lob=read_lob,
                                chunk_size=chunk_size)
-    load(target, dest_conn, rows_generator, commit_chunks=commit_chunks,
-         chunk_size=chunk_size)
+    load(target, dest_conn, rows_generator, on_error=on_error,
+         commit_chunks=commit_chunks, chunk_size=chunk_size)
 
 
-def load(table, conn, rows, commit_chunks=True, chunk_size=CHUNKSIZE):
+def load(table, conn, rows, on_error=None, commit_chunks=True,
+         chunk_size=CHUNKSIZE):
     """
     Load data from iterable of named tuples or dictionaries into pre-existing
     table in database on conn.
 
+    Default behaviour is to raise an exception in the case of SQL errors such
+    as primary key violations.  If the on_error parameter is specified, the
+    exception will be caught then then rows of each chunk re-tried individually.
+    Further errors will be caught and appended to a list of (row, exception)
+    tuples.  on_error is a function that is called at the end of each chunk,
+    with the list as the only argument.
+
     :param table: name of table
     :param conn: open dbapi connection
     :param rows: iterable of named tuples or dictionaries of data
+    :param on_error: Function to be applied to failed rows in each chunk
     :param commit_chunks: bool, commit after each chunk (see executemany)
     :param chunk_size: int, size of chunks to group data by
     """
@@ -472,8 +497,8 @@ def load(table, conn, rows, commit_chunks=True, chunk_size=CHUNKSIZE):
     query = generate_insert_sql(table, first_row, conn)
 
     # Insert data
-    executemany(query, conn, rows, commit_chunks=commit_chunks,
-                chunk_size=chunk_size)
+    executemany(query, conn, rows, on_error=on_error,
+                commit_chunks=commit_chunks, chunk_size=chunk_size)
 
 
 def generate_insert_sql(table, row, conn):
