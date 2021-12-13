@@ -1,6 +1,7 @@
 """Test for etl load functions.  Data loading is carried out using
 the executemany call.  These are run against PostgreSQL."""
 # pylint: disable=unused-argument, missing-docstring
+from psycopg2.errors import UniqueViolation
 import pytest
 
 from etlhelper import iter_rows, get_rows, executemany, load
@@ -32,12 +33,13 @@ def test_insert_rows_on_error(pgtestdb_conn, pgtestdb_test_tables,
     # Parameterized to ensure success with and without commit_chunks
     # Arrange
     insert_sql = pgtestdb_insert_sql.replace('src', 'dest')
-    # Add a duplicate rows to data that will fail primary key check
-    test_table_data = test_table_data * 2
+    # Create duplicated rows to data that will fail primary key check
+    duplicated_rows = test_table_data * 2
 
     # Act
     errors = []
-    executemany(insert_sql, pgtestdb_conn, test_table_data, on_error=1)
+    executemany(insert_sql, pgtestdb_conn, duplicated_rows,
+                on_error=errors.extend, commit_chunks=commit_chunks)
 
     # Assert
     sql = "SELECT * FROM dest"
@@ -46,8 +48,8 @@ def test_insert_rows_on_error(pgtestdb_conn, pgtestdb_test_tables,
 
     # Assert error handling
     failed_rows, exceptions = zip(*errors)
-    assert failed_rows == test_table_data  # Second set of rows all fail
-    assert False
+    assert set(failed_rows) == set(test_table_data)
+    assert set([type(e) for e in exceptions]) == {UniqueViolation}
 
 
 @pytest.mark.parametrize('chunk_size', [1, 2, 3, 4])
