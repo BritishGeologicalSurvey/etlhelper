@@ -12,9 +12,9 @@ NO_OUTPUT = []
 INFO = [
     'Executing many (chunksize=1)',
     'Fetching rows',
-    '1 rows processed',
-    '2 rows processed',
-    '3 rows processed',
+    '1 rows processed (0 failed)',
+    '2 rows processed (0 failed)',
+    '3 rows processed (0 failed)',
     '3 rows returned',
     '3 rows processed in total']
 INFO_AND_DEBUG = [
@@ -47,9 +47,9 @@ INFO_AND_DEBUG = [
     "First row: Row(id=1, value=1.234, simple_text='text', utf8_text='Öæ°\\nz', "
     'day=datetime.date(2018, 12, 7), date_time=datetime.datetime(2018, 12, 7, 13, '
     '1, 59))',
-    '1 rows processed',
-    '2 rows processed',
-    '3 rows processed',
+    '1 rows processed (0 failed)',
+    '2 rows processed (0 failed)',
+    '3 rows processed (0 failed)',
     '3 rows returned',
     '3 rows processed in total']
 
