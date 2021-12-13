@@ -266,9 +266,6 @@ def executemany(query, conn, rows, on_error=None, commit_chunks=True):
         for chunk in _chunker(rows, CHUNKSIZE):
             # Run query
             try:
-                # Chunker pads to whole chunk with None; remove these
-                chunk = [row for row in chunk if row is not None]
-
                 # Show first row as example of data
                 if processed == 0:
                     logger.debug(f"First row: {chunk[0]}")
@@ -507,7 +504,10 @@ def _chunker(iterable, n_chunks, fillvalue=None):
     """
     # _chunker('ABCDEFG', 3, 'x') --> ABC DEF Gxx"
     args = [iter(iterable)] * n_chunks
-    return zip_longest(*args, fillvalue=fillvalue)
+    padded_chunk = zip_longest(*args, fillvalue=fillvalue)
+
+    # zip_longest pads to whole chunk with None; remove these before return
+    return [row for row in padded_chunk if row is not None]
 
 
 def _read_lob(rows):
