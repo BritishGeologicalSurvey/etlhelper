@@ -280,7 +280,7 @@ def executemany(query, conn, rows, on_error=None, commit_chunks=True):
 
                 # Collect and process failed rows if on_error function provided
                 if on_error:
-                    failed_rows = _execute_by_row(cursor, query, chunk, helper)
+                    failed_rows = _execute_by_row(cursor, query, chunk, conn)
                     failed += len(failed_rows)
                     logger.debug("Calling on_error function on %s failed rows",
                                  failed)
@@ -305,7 +305,7 @@ def executemany(query, conn, rows, on_error=None, commit_chunks=True):
     logger.info(f'{processed} rows processed in total')
 
 
-def _execute_by_row(cursor, query, chunk, conn, helper):
+def _execute_by_row(cursor, query, chunk, conn):
     """
     Retry execution of rows individually and return failed rows along with
     their errors.  Successful inserts are committed.  This is because
@@ -315,9 +315,9 @@ def _execute_by_row(cursor, query, chunk, conn, helper):
     :param query: str, SQL command with placeholders for data
     :param chunk: list, list of row parameters
     :param conn: open dbapi connection, used for transactions
-    :param helper: DbHelper associated with cursor
     :returns failed_rows: list of (row, exception) tuples
     """
+    helper = DB_HELPER_FACTORY.from_conn(conn)
     FailedRow = namedtuple('FailedRow', 'row, exception')
     failed_rows = []
 
