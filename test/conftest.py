@@ -46,7 +46,7 @@ def pgtestdb_test_tables(test_table_data, pgtestdb_conn, pgtestdb_insert_sql):
     create_src_sql = dedent("""
           CREATE TABLE src
             (
-              id integer primary key,
+              id integer,
               value double precision,
               simple_text text,
               utf8_text text,
@@ -90,44 +90,6 @@ def test_table_data():
             dt.datetime(2018, 12, 8, 13, 1, 59)),
         Row(3, 2.234, 'text', 'Öæ°\nz', dt.date(2018, 12, 9),
             dt.datetime(2018, 12, 9, 13, 1, 59)),
-    ]
-    return data
-
-
-@pytest.fixture(scope='module')
-def test_table_overlapping_data():
-    """
-    Return list of tuples of test data
-    """
-    Row = namedtuple('Row',
-                     'id, value, simple_text, utf8_text, day, date_time')
-    data = [
-        Row(1, 1.234, 'text', 'Öæ°\nz', dt.date(2018, 12, 7),
-            dt.datetime(2018, 12, 7, 13, 1, 59)),
-        Row(2, 2.234, 'text', 'Öæ°\nz', dt.date(2018, 12, 8),
-            dt.datetime(2018, 12, 8, 13, 1, 59)),
-        Row(3, 2.234, 'text', 'Öæ°\nz', dt.date(2018, 12, 9),
-            dt.datetime(2018, 12, 9, 13, 1, 59)),
-        Row(4, 4.234, 'text', 'Öæ°\nz', dt.date(2018, 12, 10),
-            dt.datetime(2018, 12, 10, 13, 1, 59)),
-        Row(5, 5.234, 'text', 'Öæ°\nz', dt.date(2018, 12, 11),
-            dt.datetime(2018, 12, 11, 13, 1, 59)),
-    ]
-    return data
-
-
-@pytest.fixture(scope='module')
-def test_table_extra_data():
-    """
-    Return list of tuples of test data
-    """
-    Row = namedtuple('Row',
-                     'id, value, simple_text, utf8_text, day, date_time')
-    data = [
-        Row(4, 4.234, 'text', 'Öæ°\nz', dt.date(2018, 12, 10),
-            dt.datetime(2018, 12, 10, 13, 1, 59)),
-        Row(5, 5.234, 'text', 'Öæ°\nz', dt.date(2018, 12, 11),
-            dt.datetime(2018, 12, 11, 13, 1, 59)),
     ]
     return data
 
