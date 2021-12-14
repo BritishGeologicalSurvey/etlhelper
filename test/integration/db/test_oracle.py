@@ -136,7 +136,7 @@ def test_copy_table_rows_on_error(test_tables, testdb_conn, test_table_data):
     # changes the case of column names
     row, exception = errors[0]
     assert row.ID == 1
-    assert isinstance(exception, cx_Oracle.IntegrityError)
+    assert "unique" in str(exception).lower()
 
     # Check that other rows were inserted correctly
     assert fixed_dates[1:] == test_table_data[1:]

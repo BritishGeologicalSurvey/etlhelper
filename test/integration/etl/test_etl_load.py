@@ -4,7 +4,6 @@ the executemany call.  These are run against PostgreSQL."""
 import re
 from unittest.mock import sentinel, Mock, ANY
 
-from psycopg2.errors import UniqueViolation
 import pytest
 
 from etlhelper import iter_rows, get_rows, executemany, load
@@ -50,10 +49,10 @@ def test_insert_rows_on_error(pgtestdb_conn, pgtestdb_test_tables,
     result = get_rows(sql, pgtestdb_conn)
     assert result == test_table_data
 
-    # Assert error handling
+    # Assert full set of failed rows failing unique constraint
     failed_rows, exceptions = zip(*errors)
     assert set(failed_rows) == set(test_table_data)
-    assert set([type(e) for e in exceptions]) == {UniqueViolation}
+    assert all(['unique' in str(e).lower() for e in exceptions])
 
 
 @pytest.mark.parametrize('chunk_size', [1, 2, 3, 4])
