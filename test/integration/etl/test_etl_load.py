@@ -2,7 +2,7 @@
 the executemany call.  These are run against PostgreSQL."""
 # pylint: disable=unused-argument, missing-docstring
 import re
-from unittest.mock import sentinel, Mock, ANY, call
+from unittest.mock import sentinel, Mock, ANY
 
 from psycopg2.errors import UniqueViolation
 import pytest
@@ -143,7 +143,8 @@ def test_load_parameters_pass_to_executemany(monkeypatch, pgtestdb_conn,
     chunk_size = sentinel.chunk_size
 
     # Act
-    load(table, pgtestdb_conn, test_table_data, commit_chunks, chunk_size)
+    load(table, pgtestdb_conn, test_table_data, commit_chunks=commit_chunks,
+         chunk_size=chunk_size)
 
     # Assert
     # load() function writes SQL query
@@ -154,6 +155,6 @@ def test_load_parameters_pass_to_executemany(monkeypatch, pgtestdb_conn,
     sql = re.sub(r"\s\s+", " ", sql)  # replace newlines and whitespace
 
     mock_executemany.assert_called_once_with(
-        sql, pgtestdb_conn, ANY, commit_chunks=sentinel.commit_chunks,
+        sql, pgtestdb_conn, ANY, on_error=None,
+        commit_chunks=sentinel.commit_chunks,
         chunk_size=sentinel.chunk_size)
-
