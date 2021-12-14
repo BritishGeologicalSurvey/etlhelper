@@ -18,6 +18,7 @@ database with Python.
 + `get_rows`, `iter_rows`, `fetchone` and other functions for querying database
 + `execute`, `executemany`, and `load` functions to insert data
 + `copy_rows` and `copy_table_rows` to transfer data from one database to another
++ `on_error` function to process rows that fail to insert
 + Support for parameterised queries and in-flight transformation of data
 + Output results as namedtuple or dictionary
 + Timestamped log messages for tracking long-running data transfers
@@ -308,6 +309,22 @@ placeholders for the INSERT query (e.g. `%(id)s` instead of `%s` for
 PostgreSQL, `:id` instead of `:1` for Oracle).
 
 
+#### Transform
+
+The `transform` parameter allows passing of a function to transform the data
+before returning it.
+The function must take a list of rows and return a list of modified rows.
+See `copy_rows` for more details.
+
+
+#### Chunk size
+
+All data extraction functions use `iter_chunks` behind the scenes.
+This reads rows from the database in chunks to prevent them all being loaded
+into memory at once.
+The default `chunk_size` is 5000 and this can be set via keyword argument.
+
+
 ### Insert rows
 
 `execute` can be used to insert a single row or to execute other single
@@ -323,9 +340,10 @@ rows = [(1, 'value'), (2, 'another value')]
 insert_sql = "INSERT INTO some_table (col1, col2) VALUES (%s, %s)"
 
 with POSTGRESDB.connect('PGPASSWORD') as conn:
-    executemany(insert_sql, conn, rows)
+    executemany(insert_sql, conn, rows, chunk_size=1000)
 ```
 
+The `chunk_size` default is 5,000 and it can be set with a keyword argument.
 The `commit_chunks` flag defaults to `True`.
 This ensures that an error during a large data transfer doesn't require all the
 records to be sent again.
@@ -347,6 +365,55 @@ with POSTGRESDB.connect('PGPASSWORD') as conn:
 print(result.id)
 ```
 
+The `load` function is similar to `executemany` except that it autogenerates
+an insert query based on the data provided.
+
+
+#### Handling insert errors
+
+The default behaviour of `etlhelper` is to raise an exception on the first
+error and abort the transfer.
+Sometimes it is desirable to ignore the errors and to do something else with
+the failed rows.
+The `on_error` parameter allows a function to be passed that is applied to the
+failed rows of each chunk.
+The input is a list of (row, exception) tuples.
+
+Different examples are given here.  The simplest approach is to collect all the
+errors into a list to process at the end.
+
+```python
+errors = []
+executemany(sql, conn, rows, on_error=errors.extend)
+
+if errors:
+    do_something()
+```
+
+Errors can be logged to the `etlhelper` logger.
+
+```python
+from etlhelper import logger
+
+def log_errors(failed_rows):
+    for row, exception in failed_rows:
+        logger.error(exception)
+
+executemany(sql, conn, rows, on_error=log_errors)
+```
+
+The IDs of failed rows can be written to a file.
+
+```python
+def write_bad_ids(failed_rows):
+    with open('bad_ids.txt', 'at') as out_file:
+        for row, exception in failed_rows:
+            out_file.write(f"{row.id}\n")
+
+executemany(sql, conn, rows, on_error=write_bad_ids)
+```
+
+
 ### Copy table rows
 
 `copy_table_rows` provides a simple way to copy all the data from one table to
@@ -362,6 +429,8 @@ with ORACLEDB.connect("ORA_PASSWORD") as src_conn:
     with POSTGRESDB.connect("PG_PASSWORD") as dest_conn:
 	copy_table_rows('my_table', src_conn, dest_conn)
 ```
+
+The `chunk_size`, `commit_chunks` and `on_error` parameters can all be set.
 
 
 ### Combining `iter_rows` with `load`
@@ -416,7 +485,7 @@ with ORACLEDB.connect("ORA_PASSWORD") as src_conn:
 ```
 
 `parameters` can be passed to the SELECT query as before and the
-`commit_chunks` flag can be set.
+`commit_chunks`, `chunk_size` and `on_error` options can be set.
 
 
 ### Transform
