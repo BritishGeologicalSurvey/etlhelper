@@ -517,10 +517,6 @@ def generate_insert_sql(table, row, conn):
     # Namedtuples use a query with positional placeholders
     if not hasattr(row, 'keys'):
         paramstyle = helper.positional_paramstyle
-        if not paramstyle:
-            msg = (f"Database connection ({str(conn.__class__)}) doesn't support positional parameters.  "
-                   "Pass data as dictionaries instead.")
-            raise ETLHelperInsertError(msg)
 
         # Convert namedtuple to dictionary to easily access keys
         try:
