@@ -301,7 +301,16 @@ def executemany(query, conn, rows, on_error=None, commit_chunks=True,
 
                 # Collect and process failed rows if on_error function provided
                 if on_error:
-                    failed_rows = _execute_by_row(query, conn, chunk)
+                    # Temporarily disable logging
+                    old_level = logger.level
+                    logger.setLevel(logging.ERROR)
+
+                    try:
+                        failed_rows = _execute_by_row(query, conn, chunk)
+                    finally:
+                        # Restore logging
+                        logger.setLevel(old_level)
+
                     failed += len(failed_rows)
                     logger.debug("Calling on_error function on %s failed rows",
                                  failed)
