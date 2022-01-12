@@ -854,27 +854,37 @@ The following script is an example of using the `load` function to import data
 from a CSV file into a database.
 It shows how a `transform` function can perform common parsing tasks such as
 renaming columns and converting timestamps into datetime objects.
+The database has a `CHECK` constraint that rejects any rows with an ID
+divisible by 1000.
+An example `on_error` function prints the IDs of rows that fail to insert.
 
 ```python
-"""Script to create database and load observations data from csv file
+"""
+Script to create database and load observations data from csv file. It also
+demonstrates how an `on_error` function can handle failed rows.
 
 Generate observations.csv with:
-curl 'https://sensors.bgs.ac.uk/FROST-Server/v1.1/Observations?$select=@iot.id,result,phenomenonTime&$top=50000&$resultFormat=csv' -o observations.csv
+curl 'https://sensors.bgs.ac.uk/FROST-Server/v1.1/Observations?$select=@iot.id,result,phenomenonTime&$top=20000&$resultFormat=csv' -o observations.csv
 """
 import csv
 import datetime as dt
-import sqlite3
-from typing import Iterable
+from typing import Iterable, List, Tuple
 
 from etlhelper import execute, load, DbParams
 
 
 def load_observations(csv_file, conn):
     """Load observations from csv_file to db_file."""
-    # Create table (if required)
+    # Drop table (helps with repeated test runs!)
+    drop_table_sql = """
+        DROP TABLE IF EXISTS observations
+        """
+    execute(drop_table_sql, conn)
+
+    # Create table (reject ids with no remainder when divided by 1000)
     create_table_sql = """
         CREATE TABLE IF NOT EXISTS observations (
-          id INTEGER PRIMARY KEY,
+          id INTEGER PRIMARY KEY CHECK (id % 1000),
           time TIMESTAMP,
           result FLOAT
           )"""
@@ -883,7 +893,15 @@ def load_observations(csv_file, conn):
     # Load data
     with open(csv_file, 'rt') as f:
         reader = csv.DictReader(f)
-        load('observations', conn, transform(reader))
+        load('observations', conn, transform(reader), on_error=on_error)
+
+
+# The on_error function is called after each chunk with all the failed rows
+def on_error(failed_rows: List[Tuple[dict, Exception]]) -> None:
+    """Print the IDs of failed rows"""
+    rows, exceptions = zip(*failed_rows)
+    failed_ids = [row['id'] for row in rows]
+    print(f"Failed IDs: {failed_ids}")
 
 
 # A transform function that takes an iterable and yields one row at a time
