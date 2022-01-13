@@ -46,7 +46,7 @@ def pgtestdb_test_tables(test_table_data, pgtestdb_conn, pgtestdb_insert_sql):
     create_src_sql = dedent("""
           CREATE TABLE src
             (
-              id integer,
+              id integer primary key,
               value double precision,
               simple_text text,
               utf8_text text,

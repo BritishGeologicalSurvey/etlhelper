@@ -5,20 +5,19 @@ import pytest
 import re
 
 from etlhelper import copy_rows, execute, logger
-import etlhelper
 
 
 NO_OUTPUT = []
 INFO = [
-    'Executing many (chunksize=1)',
-    'Fetching rows',
-    '1 rows processed',
-    '2 rows processed',
-    '3 rows processed',
+    'Executing many (chunk_size=1)',
+    'Fetching rows (chunk_size=1)',
+    '1 rows processed (0 failed)',
+    '2 rows processed (0 failed)',
+    '3 rows processed (0 failed)',
     '3 rows returned',
     '3 rows processed in total']
 INFO_AND_DEBUG = [
-    'Executing many (chunksize=1)',
+    'Executing many (chunk_size=1)',
     'Executing:\n'
     '\n'
     'INSERT INTO dest (id, value, simple_text, utf8_text,\n'
@@ -31,7 +30,7 @@ INFO_AND_DEBUG = [
     '\n'
     "<connection object at ???; dsn: 'user=etlhelper_user password=xxx "
     "dbname=etlhelper host=??? port=???', closed: 0>",
-    'Fetching rows',
+    'Fetching rows (chunk_size=1)',
     'Fetching:\n'
     '\n'
     'SELECT * FROM src\n'
@@ -47,9 +46,9 @@ INFO_AND_DEBUG = [
     "First row: Row(id=1, value=1.234, simple_text='text', utf8_text='Öæ°\\nz', "
     'day=datetime.date(2018, 12, 7), date_time=datetime.datetime(2018, 12, 7, 13, '
     '1, 59))',
-    '1 rows processed',
-    '2 rows processed',
-    '3 rows processed',
+    '1 rows processed (0 failed)',
+    '2 rows processed (0 failed)',
+    '3 rows processed (0 failed)',
     '3 rows returned',
     '3 rows processed in total']
 
@@ -63,13 +62,14 @@ def test_logging_copy_rows(caplog, level, expected,
                            pgtestdb_conn, pgtestdb_test_tables,
                            pgtestdb_insert_sql, test_table_data):
     # Arrange
-    etlhelper.etl.CHUNKSIZE = 1
     caplog.set_level(level, logger=logger.name)
     select_sql = "SELECT * FROM src"
     insert_sql = pgtestdb_insert_sql.replace('src', 'dest')
 
     # Act
-    copy_rows(select_sql, pgtestdb_conn, insert_sql, pgtestdb_conn)
+    copy_rows(select_sql, pgtestdb_conn, insert_sql, pgtestdb_conn,
+              chunk_size=1)
+
     # ID for connection object and hostname vary between tests
     # and test environments
     messages = [re.sub(r'object at .*;', 'object at ???;', m)

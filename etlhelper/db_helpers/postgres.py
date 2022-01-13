@@ -22,7 +22,8 @@ class PostgresDbHelper(DbHelper):
             import psycopg2
             self.sql_exceptions = (psycopg2.ProgrammingError,
                                    psycopg2.InterfaceError,
-                                   psycopg2.InternalError)
+                                   psycopg2.InternalError,
+                                   psycopg2.errors.UniqueViolation)
             self.connect_exceptions = (psycopg2.OperationalError)
             self.paramstyle = psycopg2.paramstyle
             self._connect_func = psycopg2.connect

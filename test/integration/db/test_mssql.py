@@ -139,6 +139,33 @@ def test_copy_table_rows_happy_path_fast_true(
     assert result == test_table_data
 
 
+def test_copy_table_rows_on_error(test_tables, testdb_conn, test_table_data):
+    # Arrange
+    duplicate_id_row_sql = """
+       INSERT INTO dest (id)
+       VALUES (
+         1
+         )""".strip()
+    execute(duplicate_id_row_sql, testdb_conn)
+
+    # Act
+    errors = []
+    copy_table_rows('src', testdb_conn, testdb_conn, target='dest',
+                    on_error=errors.extend)
+
+    # Assert
+    sql = "SELECT * FROM dest"
+    result = get_rows(sql, testdb_conn)
+
+    # Check that first row was caught as error
+    row, exception = errors[0]
+    assert row.id == 1
+    assert "unique" in str(exception).lower()
+
+    # Check that other rows were inserted correctly
+    assert result[1:] == test_table_data[1:]
+
+
 def test_get_rows_with_parameters(test_tables, testdb_conn,
                                   test_table_data):
     # parameters=None is tested by default in other tests

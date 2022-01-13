@@ -5,7 +5,13 @@ from datetime import datetime, date
 
 import pytest
 
-from etlhelper import iter_rows, copy_rows, get_rows, copy_table_rows
+from etlhelper import (
+    copy_rows,
+    copy_table_rows,
+    execute,
+    get_rows,
+    iter_rows,
+)
 from etlhelper.row_factories import dict_row_factory
 
 
@@ -31,6 +37,34 @@ def test_copy_table_rows_happy_path(pgtestdb_conn, pgtestdb_test_tables,
     sql = "SELECT * FROM dest"
     result = get_rows(sql, pgtestdb_conn)
     assert result == test_table_data
+
+
+def test_copy_table_rows_on_error(pgtestdb_test_tables, pgtestdb_conn,
+                                  test_table_data):
+    # Arrange
+    duplicate_id_row_sql = """
+       INSERT INTO dest (id)
+       VALUES (
+         1
+         )""".strip()
+    execute(duplicate_id_row_sql, pgtestdb_conn)
+
+    # Act
+    errors = []
+    copy_table_rows('src', pgtestdb_conn, pgtestdb_conn, target='dest',
+                    on_error=errors.extend)
+
+    # Assert
+    sql = "SELECT * FROM dest"
+    result = get_rows(sql, pgtestdb_conn)
+
+    # Check that first row was caught as error
+    row, exception = errors[0]
+    assert row.id == 1
+    assert "unique" in str(exception).lower()
+
+    # Check that other rows were inserted correctly
+    assert result[1:] == test_table_data[1:]
 
 
 def transform_return_list(rows):

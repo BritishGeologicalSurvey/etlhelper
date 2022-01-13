@@ -20,13 +20,13 @@ from etlhelper.row_factories import dict_row_factory, namedtuple_row_factory
         (2, [slice(0, 2), slice(2, 3)]),
         (5000, [slice(0, 3)])])
 def test_iter_chunks(pgtestdb_test_tables, pgtestdb_conn,
-                     test_table_data, monkeypatch, chunk_size, slices):
+                     test_table_data, chunk_size, slices):
     # Arrange
-    monkeypatch.setattr('etlhelper.etl.CHUNKSIZE', chunk_size)
     sql = "SELECT * FROM src"
 
     # Act
-    result = [list(chunk) for chunk in iter_chunks(sql, pgtestdb_conn)]
+    result = [list(chunk) for chunk in
+              iter_chunks(sql, pgtestdb_conn, chunk_size=chunk_size)]
 
     # Assert
     expected = [test_table_data[s] for s in slices]
@@ -218,9 +218,10 @@ def test_arguments_passed_to_iter_rows(
     sql = sentinel.sql
     parameters = sentinel.parameters
     transform = sentinel.transform
+    chunk_size = sentinel.chunk_size
 
     # Act
-    # getattr returns fetchmethod, which we call  with given parameters
+    # getattr returns fetchmethod, which we call with given parameters
     # Use real connection parameters to ensure we reach the call to iter_rows
     # Use dict_row_factory to demonstrate the default (namedtuple_row_factory)
     # isn't called
@@ -228,7 +229,8 @@ def test_arguments_passed_to_iter_rows(
         getattr(etlhelper_etl, fetchmethod)(sql, pgtestdb_conn,
                                             parameters=parameters,
                                             row_factory=dict_row_factory,
-                                            transform=transform)
+                                            transform=transform,
+                                            chunk_size=chunk_size)
     except TypeError:
         # We expect an error here as the mock_iter_rows breaks the functions
         # that called it.
@@ -238,7 +240,8 @@ def test_arguments_passed_to_iter_rows(
     mock_iter_rows.assert_called_once_with(sql, pgtestdb_conn,
                                            parameters=parameters,
                                            row_factory=dict_row_factory,
-                                           transform=transform)
+                                           transform=transform,
+                                           chunk_size=chunk_size)
 
 
 def test_execute_happy_path(pgtestdb_test_tables, pgtestdb_conn):
