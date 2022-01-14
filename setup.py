@@ -24,7 +24,7 @@ setup(
     name="etlhelper",
     version=versioneer.get_version(),
     cmdclass=versioneer.get_cmdclass(),
-    description="A Python library to simplify data transfer between databases.",
+    description="A Python library to simplify data transfer into and out of databases.",
     long_description=README,
     long_description_content_type="text/markdown",
     url="https://github.com/BritishGeologicalSurvey/etlhelper",
