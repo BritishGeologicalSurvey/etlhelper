@@ -468,6 +468,8 @@ def copy_table_rows(table, source_conn, dest_conn, target=None,
     :param commit_chunks: bool, commit after each chunk (see executemany)
     :param read_lob: bool, convert Oracle LOB objects to strings
     :param chunk_size: int, size of chunks to group data by
+    :param select_sql_suffix: str, SQL clause(s) to append to select statement
+                              e.g. WHERE, ORDER BY, LIMIT
     :return processed, failed: (int, int) number of rows processed, failed
     """
     select_query = f"SELECT * FROM {table}"
@@ -544,7 +546,7 @@ def generate_insert_sql(table, row, conn):
         try:
             row = row._asdict()
         except AttributeError:
-            msg = f"Row is not dictionary or namedtuple ({type(row)})"
+            msg = f"Row is not a dictionary or namedtuple ({type(row)})"
             raise ETLHelperInsertError(msg)
 
         columns = row.keys()

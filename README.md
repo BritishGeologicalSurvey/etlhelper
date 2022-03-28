@@ -367,7 +367,10 @@ print(result.id)
 ```
 
 The `load` function is similar to `executemany` except that it autogenerates
-an insert query based on the data provided.
+an insert query based on the data provided. It uses `generate_insert_query`
+to remove the need to explicitly write the query for simple cases. By
+calling this function manually, users can create a base insert query that can
+be extended with clauses such as `ON CONFLICT DO NOTHING`.
 
 
 #### Handling insert errors

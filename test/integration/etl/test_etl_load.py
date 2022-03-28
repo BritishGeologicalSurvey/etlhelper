@@ -1,12 +1,18 @@
 """Test for etl load functions.  Data loading is carried out using
 the executemany call.  These are run against PostgreSQL."""
 # pylint: disable=unused-argument, missing-docstring
+from collections import namedtuple
 import re
 from unittest.mock import sentinel, Mock, ANY
 
 import pytest
 
-from etlhelper import iter_rows, get_rows, executemany, load
+from etlhelper import (
+    executemany,
+    generate_insert_sql,
+    get_rows,
+    iter_rows,
+    load)
 from etlhelper.etl import ETLHelperInsertError
 import etlhelper.etl as etlhelper_etl
 
@@ -183,3 +189,48 @@ def test_load_parameters_pass_to_executemany(monkeypatch, pgtestdb_conn,
         sql, pgtestdb_conn, ANY, on_error=None,
         commit_chunks=sentinel.commit_chunks,
         chunk_size=sentinel.chunk_size)
+
+
+def test_generate_insert_sql_tuple(pgtestdb_conn):
+    # Arrange
+    data = (1, 'one')
+
+    # Act
+    with pytest.raises(ETLHelperInsertError,
+                       match="Row is not a dictionary or namedtuple"):
+        generate_insert_sql('my_table', data, pgtestdb_conn)
+
+
+def test_generate_insert_sql_named_tuple(pgtestdb_conn):
+    # Arrange
+    TwoColumnRow = namedtuple('TwoColumnRow', ('id', 'data'))
+    data = TwoColumnRow(1, 'one')
+    expected = 'INSERT INTO my_table (id, data) VALUES (%s, %s)'
+
+    # Act
+    sql = generate_insert_sql('my_table', data, pgtestdb_conn)
+
+    # Assert
+    assert sql == expected
+
+
+def test_generate_insert_sql_dictionary(pgtestdb_conn):
+    # Act
+    data = {'id': 1, 'data': 'one'}
+    expected = 'INSERT INTO my_table (id, data) VALUES (%(id)s, %(data)s)'
+
+    # Act
+    sql = generate_insert_sql('my_table', data, pgtestdb_conn)
+
+    # Assert
+    assert sql == expected
+
+
+def test_generate_insert_sql_None(pgtestdb_conn):
+    # Arrange
+    data = None
+
+    # Act
+    with pytest.raises(ETLHelperInsertError,
+                       match="Row is not a dictionary or namedtuple"):
+        generate_insert_sql('my_table', data, pgtestdb_conn)
