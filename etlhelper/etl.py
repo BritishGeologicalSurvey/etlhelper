@@ -494,6 +494,10 @@ def load(table, conn, rows, on_error=None, commit_chunks=True,
     :param commit_chunks: bool, commit after each chunk (see executemany)
     :param chunk_size: int, size of chunks to group data by
     """
+    # Return early if rows is empty
+    if not rows:
+        return
+
     # Get first row without losing it from row iteration
     rows = iter(rows)
     first_row = next(rows)

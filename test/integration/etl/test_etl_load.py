@@ -118,6 +118,13 @@ def test_load_dicts(pgtestdb_conn, pgtestdb_test_tables, test_table_data):
     assert result == test_table_data
 
 
+@pytest.mark.parametrize('null_data', [None, [], ()])
+def test_load_no_data(pgtestdb_conn, pgtestdb_test_tables, null_data):
+    # Act
+    # Function should not crash when data are missing
+    result = load('dest', pgtestdb_conn, null_data)
+
+
 @pytest.mark.parametrize('chunk_size', [1, 2, 3, 4])
 def test_load_named_tuples_chunk_size(pgtestdb_conn, pgtestdb_test_tables,
                                       test_table_data, chunk_size):
