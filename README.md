@@ -332,6 +332,7 @@ statements e.g. "CREATE TABLE ...".
 The `executemany` function is used to insert multiple rows of data.
 Large datasets are broken into chunks and inserted in batches to reduce the
 number of queries.
+A tuple with counts of rows processed and failed is returned.
 
 ```python
 from etlhelper import executemany
@@ -340,7 +341,7 @@ rows = [(1, 'value'), (2, 'another value')]
 insert_sql = "INSERT INTO some_table (col1, col2) VALUES (%s, %s)"
 
 with POSTGRESDB.connect('PGPASSWORD') as conn:
-    executemany(insert_sql, conn, rows, chunk_size=1000)
+    processed, failed = executemany(insert_sql, conn, rows, chunk_size=1000)
 ```
 
 The `chunk_size` default is 5,000 and it can be set with a keyword argument.

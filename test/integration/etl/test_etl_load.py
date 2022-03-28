@@ -20,10 +20,13 @@ def test_insert_rows_happy_path(pgtestdb_conn, pgtestdb_test_tables,
     insert_sql = pgtestdb_insert_sql.replace('src', 'dest')
 
     # Act
-    executemany(insert_sql, pgtestdb_conn, test_table_data,
-                commit_chunks=commit_chunks)
+    processed, failed = executemany(insert_sql, pgtestdb_conn, test_table_data,
+                                    commit_chunks=commit_chunks)
 
     # Assert
+    assert processed == len(test_table_data)
+    assert failed == 0
+
     sql = "SELECT * FROM dest"
     result = get_rows(sql, pgtestdb_conn)
     assert result == test_table_data
@@ -41,10 +44,13 @@ def test_insert_rows_on_error(pgtestdb_conn, pgtestdb_test_tables,
 
     # Act
     errors = []
-    executemany(insert_sql, pgtestdb_conn, duplicated_rows,
-                on_error=errors.extend, commit_chunks=commit_chunks)
+    processed, failed = executemany(insert_sql, pgtestdb_conn, duplicated_rows,
+                                    on_error=errors.extend, commit_chunks=commit_chunks)
 
     # Assert
+    assert processed == len(duplicated_rows)
+    assert failed == len(errors)
+
     sql = "SELECT * FROM dest"
     result = get_rows(sql, pgtestdb_conn)
     assert result == test_table_data
@@ -78,9 +84,12 @@ def test_insert_rows_no_rows(pgtestdb_conn, pgtestdb_test_tables,
     insert_sql = pgtestdb_insert_sql.replace('src', 'dest')
 
     # Act
-    executemany(insert_sql, pgtestdb_conn, [])
+    processed, failed = executemany(insert_sql, pgtestdb_conn, [])
 
     # Assert
+    assert processed == 0
+    assert failed == 0
+
     sql = "SELECT * FROM dest"
     result = iter_rows(sql, pgtestdb_conn)
     assert list(result) == []

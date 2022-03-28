@@ -271,7 +271,7 @@ def executemany(query, conn, rows, on_error=None, commit_chunks=True,
     :param on_error: Function to be applied to failed rows in each chunk
     :param commit_chunks: bool, commit after each chunk has been inserted/updated
     :param chunk_size: int, size of chunks to group data by
-    :return row_count: int, number of rows inserted/updated
+    :return processed, failed: (int, int) number of rows processed, failed
     """
     logger.info("Executing many (chunk_size=%s)", chunk_size)
     logger.debug("Executing:\n\n%s\n\nagainst\n\n%s", query, conn)
@@ -333,6 +333,7 @@ def executemany(query, conn, rows, on_error=None, commit_chunks=True,
         conn.commit()
 
     logger.info(f'{processed} rows processed in total')
+    return processed, failed
 
 
 def _execute_by_row(query, conn, chunk):
@@ -496,7 +497,7 @@ def load(table, conn, rows, on_error=None, commit_chunks=True,
     """
     # Return early if rows is empty
     if not rows:
-        return
+        return 0
 
     # Get first row without losing it from row iteration
     rows = iter(rows)
