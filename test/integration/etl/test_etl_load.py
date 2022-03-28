@@ -106,9 +106,12 @@ def test_insert_rows_bad_query(pgtestdb_conn, test_table_data):
 
 def test_load_named_tuples(pgtestdb_conn, pgtestdb_test_tables, test_table_data):
     # Act
-    load('dest', pgtestdb_conn, test_table_data)
+    processed, failed = load('dest', pgtestdb_conn, test_table_data)
 
     # Assert
+    assert processed == len(test_table_data)
+    assert failed == 0
+
     sql = "SELECT * FROM dest"
     result = get_rows(sql, pgtestdb_conn)
     assert result == test_table_data
@@ -119,9 +122,12 @@ def test_load_dicts(pgtestdb_conn, pgtestdb_test_tables, test_table_data):
     data_as_dicts = [row._asdict() for row in test_table_data]
 
     # Act
-    load('dest', pgtestdb_conn, data_as_dicts)
+    processed, failed = load('dest', pgtestdb_conn, data_as_dicts)
 
     # Assert
+    assert processed == len(test_table_data)
+    assert failed == 0
+
     sql = "SELECT * FROM dest"
     result = get_rows(sql, pgtestdb_conn)
     assert result == test_table_data
@@ -131,7 +137,10 @@ def test_load_dicts(pgtestdb_conn, pgtestdb_test_tables, test_table_data):
 def test_load_no_data(pgtestdb_conn, pgtestdb_test_tables, null_data):
     # Act
     # Function should not crash when data are missing
-    result = load('dest', pgtestdb_conn, null_data)
+    processed, failed = load('dest', pgtestdb_conn, null_data)
+
+    assert processed == 0
+    assert failed == 0
 
 
 @pytest.mark.parametrize('chunk_size', [1, 2, 3, 4])
@@ -151,6 +160,7 @@ def test_load_parameters_pass_to_executemany(monkeypatch, pgtestdb_conn,
     # Arrange
     # Patch 'iter_rows' function within etlhelper.etl module
     mock_executemany = Mock()
+    mock_executemany.return_value = (0, 0)
     monkeypatch.setattr(etlhelper_etl, 'executemany', mock_executemany)
     # Sentinel items are unique so confirm object that was passed through
     table = sentinel.table

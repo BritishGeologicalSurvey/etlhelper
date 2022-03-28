@@ -20,9 +20,12 @@ def test_copy_rows_happy_path(pgtestdb_conn, pgtestdb_test_tables,
     # Arrange and act
     select_sql = "SELECT * FROM src"
     insert_sql = pgtestdb_insert_sql.replace('src', 'dest')
-    copy_rows(select_sql, pgtestdb_conn, insert_sql, pgtestdb_conn)
+    processed, failed = copy_rows(select_sql, pgtestdb_conn, insert_sql, pgtestdb_conn)
 
     # Assert
+    assert processed == len(test_table_data)
+    assert failed == 0
+
     sql = "SELECT * FROM dest"
     result = iter_rows(sql, pgtestdb_conn)
     assert list(result) == test_table_data
@@ -31,9 +34,12 @@ def test_copy_rows_happy_path(pgtestdb_conn, pgtestdb_test_tables,
 def test_copy_table_rows_happy_path(pgtestdb_conn, pgtestdb_test_tables,
                                     pgtestdb_insert_sql, test_table_data):
     # Arrange and act
-    copy_table_rows('src', pgtestdb_conn, pgtestdb_conn, target='dest')
+    processed, failed = copy_table_rows('src', pgtestdb_conn, pgtestdb_conn, target='dest')
 
     # Assert
+    assert processed == len(test_table_data)
+    assert failed == 0
+
     sql = "SELECT * FROM dest"
     result = get_rows(sql, pgtestdb_conn)
     assert result == test_table_data
@@ -51,10 +57,13 @@ def test_copy_table_rows_on_error(pgtestdb_test_tables, pgtestdb_conn,
 
     # Act
     errors = []
-    copy_table_rows('src', pgtestdb_conn, pgtestdb_conn, target='dest',
-                    on_error=errors.extend)
+    processed, failed = copy_table_rows('src', pgtestdb_conn, pgtestdb_conn, target='dest',
+                                        on_error=errors.extend)
 
     # Assert
+    assert processed == len(test_table_data)
+    assert failed == len(errors)
+
     sql = "SELECT * FROM dest"
     result = get_rows(sql, pgtestdb_conn)
 

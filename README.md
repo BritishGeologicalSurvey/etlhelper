@@ -414,6 +414,9 @@ def write_bad_ids(failed_rows):
 executemany(sql, conn, rows, on_error=write_bad_ids)
 ```
 
+`executemany`, `load`, `copy_rows` and `copy_table_rows` can all take an
+`on_error` parameter.  They each return a tuple containing the number of rows
+processed and the number of rows that failed.
 
 ### Copy table rows
 
@@ -432,6 +435,7 @@ with ORACLEDB.connect("ORA_PASSWORD") as src_conn:
 ```
 
 The `chunk_size`, `commit_chunks` and `on_error` parameters can all be set.
+A tuple with counts of rows processed and failed is returned.
 
 
 ### Combining `iter_rows` with `load`
@@ -487,6 +491,8 @@ with ORACLEDB.connect("ORA_PASSWORD") as src_conn:
 
 `parameters` can be passed to the SELECT query as before and the
 `commit_chunks`, `chunk_size` and `on_error` options can be set.
+
+A tuple of rows processed and failed is returned.
 
 
 ### Transform
