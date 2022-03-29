@@ -1,6 +1,4 @@
 flake8
-ipdb
-ipython
 pytest>=4.6
 pytest-cov
 versioneer==0.20
