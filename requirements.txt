@@ -1,11 +1,11 @@
+cx-oracle
 flake8
 ipdb
 ipython
-pytest>=4.6
-pytest-cov
-versioneer==0.20
-cx-oracle
-pyodbc
 psycopg2-binary
+pyodbc
+pytest-cov
+pytest>=4.6
 twine
+versioneer==0.20
 wheel

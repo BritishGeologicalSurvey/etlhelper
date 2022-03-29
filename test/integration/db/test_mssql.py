@@ -2,6 +2,7 @@
 These currently run against internal BGS instance.
 """
 # pylint: disable=unused-argument, missing-docstring
+from collections import namedtuple
 import os
 from textwrap import dedent
 
@@ -15,6 +16,7 @@ from etlhelper import (
     copy_table_rows,
     execute,
     get_rows,
+    generate_insert_sql,
     load,
 )
 from etlhelper.exceptions import (
@@ -207,6 +209,35 @@ def test_load_dicts(testdb_conn, test_tables, test_table_data):
         load('dest', testdb_conn, data_as_dicts)
 
     assert str(exc_info.value) == expected_message
+
+
+def test_generate_insert_sql_tuple(testdb_conn):
+    # Act
+    data = (1, 'one')
+    with pytest.raises(ETLHelperInsertError,
+                       match="Row is not a dictionary or namedtuple"):
+        generate_insert_sql('my_table', data, testdb_conn)
+
+
+def test_generate_insert_sql_named_tuple(testdb_conn):
+    # Arrange
+    TwoColumnRow = namedtuple('TwoColumnRow', ('id', 'data'))
+    data = TwoColumnRow(1, 'one')
+    expected = 'INSERT INTO my_table (id, data) VALUES (?, ?)'
+
+    # Act
+    sql = generate_insert_sql('my_table', data, testdb_conn)
+
+    # Assert
+    assert sql == expected
+
+
+def test_generate_insert_sql_dictionary(testdb_conn):
+    # Act
+    data = {'id': 1, 'data': 'one'}
+    with pytest.raises(ETLHelperInsertError,
+                       match="doesn't support named parameters"):
+        generate_insert_sql('my_table', data, testdb_conn)
 
 
 # -- Fixtures here --

@@ -11,7 +11,13 @@ from pathlib import Path
 from textwrap import dedent
 from urllib.error import URLError
 
-import cx_Oracle
+try:
+    import cx_Oracle
+except ModuleNotFoundError:
+    print("cx_Oracle module not found.  "
+          "Please install via `pip install etlhelper[oracle]` or "
+          "`pip install cx_Oracle`.")
+    sys.exit(1)
 
 formatter = logging.Formatter('setup_oracle_client: %(message)s')
 handler = logging.StreamHandler()

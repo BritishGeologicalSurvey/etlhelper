@@ -54,7 +54,7 @@ class DbHelper(metaclass=ABCMeta):
         try:
             conn = self._connect_func(conn_str, **kwargs)
         except self.connect_exceptions as exc:
-            msg = f"Error connecting to {conn_str} via dbapi: {exc}"
+            msg = f"Error connecting to {db_params} via dbapi: {exc}"
             raise ETLHelperConnectionError(msg)
         return conn
 

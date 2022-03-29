@@ -271,7 +271,7 @@ def executemany(query, conn, rows, on_error=None, commit_chunks=True,
     :param on_error: Function to be applied to failed rows in each chunk
     :param commit_chunks: bool, commit after each chunk has been inserted/updated
     :param chunk_size: int, size of chunks to group data by
-    :return row_count: int, number of rows inserted/updated
+    :return processed, failed: (int, int) number of rows processed, failed
     """
     logger.info("Executing many (chunk_size=%s)", chunk_size)
     logger.debug("Executing:\n\n%s\n\nagainst\n\n%s", query, conn)
@@ -333,6 +333,7 @@ def executemany(query, conn, rows, on_error=None, commit_chunks=True,
         conn.commit()
 
     logger.info(f'{processed} rows processed in total')
+    return processed, failed
 
 
 def _execute_by_row(query, conn, chunk):
@@ -395,13 +396,18 @@ def copy_rows(select_query, source_conn, insert_query, dest_conn,
     :param commit_chunks: bool, commit after each chunk (see executemany)
     :param read_lob: bool, convert Oracle LOB objects to strings
     :param chunk_size: int, size of chunks to group data by
+    :return processed, failed: (int, int) number of rows processed, failed
     """
     rows_generator = iter_rows(select_query, source_conn,
                                parameters=parameters, row_factory=row_factory,
                                transform=transform, read_lob=read_lob,
                                chunk_size=chunk_size)
-    executemany(insert_query, dest_conn, rows_generator, on_error=on_error,
-                commit_chunks=commit_chunks, chunk_size=chunk_size)
+    processed, failed = executemany(insert_query, dest_conn,
+                                    rows_generator,
+                                    on_error=on_error,
+                                    commit_chunks=commit_chunks,
+                                    chunk_size=chunk_size)
+    return processed, failed
 
 
 def execute(query, conn, parameters=()):
@@ -462,6 +468,9 @@ def copy_table_rows(table, source_conn, dest_conn, target=None,
     :param commit_chunks: bool, commit after each chunk (see executemany)
     :param read_lob: bool, convert Oracle LOB objects to strings
     :param chunk_size: int, size of chunks to group data by
+    :param select_sql_suffix: str, SQL clause(s) to append to select statement
+                              e.g. WHERE, ORDER BY, LIMIT
+    :return processed, failed: (int, int) number of rows processed, failed
     """
     select_query = f"SELECT * FROM {table}"
     if not target:
@@ -470,8 +479,9 @@ def copy_table_rows(table, source_conn, dest_conn, target=None,
     rows_generator = iter_rows(select_query, source_conn, row_factory=row_factory,
                                transform=transform, read_lob=read_lob,
                                chunk_size=chunk_size)
-    load(target, dest_conn, rows_generator, on_error=on_error,
-         commit_chunks=commit_chunks, chunk_size=chunk_size)
+    processed, failed = load(target, dest_conn, rows_generator, on_error=on_error,
+                             commit_chunks=commit_chunks, chunk_size=chunk_size)
+    return processed, failed
 
 
 def load(table, conn, rows, on_error=None, commit_chunks=True,
@@ -493,7 +503,12 @@ def load(table, conn, rows, on_error=None, commit_chunks=True,
     :param on_error: Function to be applied to failed rows in each chunk
     :param commit_chunks: bool, commit after each chunk (see executemany)
     :param chunk_size: int, size of chunks to group data by
+    :return processed, failed: (int, int) number of rows processed, failed
     """
+    # Return early if rows is empty
+    if not rows:
+        return 0, 0
+
     # Get first row without losing it from row iteration
     rows = iter(rows)
     first_row = next(rows)
@@ -503,8 +518,11 @@ def load(table, conn, rows, on_error=None, commit_chunks=True,
     query = generate_insert_sql(table, first_row, conn)
 
     # Insert data
-    executemany(query, conn, rows, on_error=on_error,
-                commit_chunks=commit_chunks, chunk_size=chunk_size)
+    processed, failed = executemany(query, conn, rows,
+                                    on_error=on_error,
+                                    commit_chunks=commit_chunks,
+                                    chunk_size=chunk_size)
+    return processed, failed
 
 
 def generate_insert_sql(table, row, conn):
@@ -528,7 +546,7 @@ def generate_insert_sql(table, row, conn):
         try:
             row = row._asdict()
         except AttributeError:
-            msg = f"Row is not dictionary or namedtuple ({type(row)})"
+            msg = f"Row is not a dictionary or namedtuple ({type(row)})"
             raise ETLHelperInsertError(msg)
 
         columns = row.keys()

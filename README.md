@@ -332,6 +332,7 @@ statements e.g. "CREATE TABLE ...".
 The `executemany` function is used to insert multiple rows of data.
 Large datasets are broken into chunks and inserted in batches to reduce the
 number of queries.
+A tuple with counts of rows processed and failed is returned.
 
 ```python
 from etlhelper import executemany
@@ -340,7 +341,7 @@ rows = [(1, 'value'), (2, 'another value')]
 insert_sql = "INSERT INTO some_table (col1, col2) VALUES (%s, %s)"
 
 with POSTGRESDB.connect('PGPASSWORD') as conn:
-    executemany(insert_sql, conn, rows, chunk_size=1000)
+    processed, failed = executemany(insert_sql, conn, rows, chunk_size=1000)
 ```
 
 The `chunk_size` default is 5,000 and it can be set with a keyword argument.
@@ -366,7 +367,10 @@ print(result.id)
 ```
 
 The `load` function is similar to `executemany` except that it autogenerates
-an insert query based on the data provided.
+an insert query based on the data provided. It uses `generate_insert_query`
+to remove the need to explicitly write the query for simple cases. By
+calling this function manually, users can create a base insert query that can
+be extended with clauses such as `ON CONFLICT DO NOTHING`.
 
 
 #### Handling insert errors
@@ -413,6 +417,9 @@ def write_bad_ids(failed_rows):
 executemany(sql, conn, rows, on_error=write_bad_ids)
 ```
 
+`executemany`, `load`, `copy_rows` and `copy_table_rows` can all take an
+`on_error` parameter.  They each return a tuple containing the number of rows
+processed and the number of rows that failed.
 
 ### Copy table rows
 
@@ -431,6 +438,7 @@ with ORACLEDB.connect("ORA_PASSWORD") as src_conn:
 ```
 
 The `chunk_size`, `commit_chunks` and `on_error` parameters can all be set.
+A tuple with counts of rows processed and failed is returned.
 
 
 ### Combining `iter_rows` with `load`
@@ -486,6 +494,8 @@ with ORACLEDB.connect("ORA_PASSWORD") as src_conn:
 
 `parameters` can be passed to the SELECT query as before and the
 `commit_chunks`, `chunk_size` and `on_error` options can be set.
+
+A tuple of rows processed and failed is returned.
 
 
 ### Transform
