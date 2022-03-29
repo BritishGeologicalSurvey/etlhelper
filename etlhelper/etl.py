@@ -509,10 +509,14 @@ def load(table, conn, rows, on_error=None, commit_chunks=True,
     if not rows:
         return 0, 0
 
-    # Get first row without losing it from row iteration
-    rows = iter(rows)
-    first_row = next(rows)
-    rows = chain([first_row], rows)
+    # Get first row without losing it from row iteration, returning early if
+    # the generator was empty.
+    try:
+        rows = iter(rows)
+        first_row = next(rows)  # This line throws the exception if empty
+        rows = chain([first_row], rows)
+    except StopIteration:
+        return 0, 0
 
     # Generate insert query
     query = generate_insert_sql(table, first_row, conn)
