@@ -139,7 +139,12 @@ def test_load_dicts(pgtestdb_conn, pgtestdb_test_tables, test_table_data):
     assert result == test_table_data
 
 
-@pytest.mark.parametrize('null_data', [None, [], ()])
+@pytest.mark.parametrize('null_data', [
+    None,
+    [],
+    (),
+    (item for item in ())  # empty generator
+    ])
 def test_load_no_data(pgtestdb_conn, pgtestdb_test_tables, null_data):
     # Act
     # Function should not crash when data are missing
