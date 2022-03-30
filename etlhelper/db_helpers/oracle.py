@@ -20,8 +20,10 @@ class OracleDbHelper(DbHelper):
 
         try:
             import cx_Oracle
-            self.sql_exceptions = (cx_Oracle.DatabaseError)
-            self.connect_exceptions = (cx_Oracle.DatabaseError)
+            self.sql_exceptions = (cx_Oracle.DatabaseError,
+                                   cx_Oracle.InterfaceError)
+            self.connect_exceptions = (cx_Oracle.DatabaseError,
+                                       cx_Oracle.InterfaceError)
             self.paramstyle = cx_Oracle.paramstyle
             self._connect_func = cx_Oracle.connect
         except ImportError:

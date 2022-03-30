@@ -20,8 +20,10 @@ class MSSQLDbHelper(DbHelper):
 
         try:
             import pyodbc
-            self.sql_exceptions = (pyodbc.DatabaseError)
-            self.connect_exceptions = (pyodbc.DatabaseError, pyodbc.InterfaceError)
+            self.sql_exceptions = (pyodbc.DatabaseError,
+                                   pyodbc.InterfaceError)
+            self.connect_exceptions = (pyodbc.DatabaseError,
+                                       pyodbc.InterfaceError)
             self.paramstyle = pyodbc.paramstyle
             self._connect_func = pyodbc.connect
             self.use_fast_executemany = True

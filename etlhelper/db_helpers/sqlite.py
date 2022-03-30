@@ -21,9 +21,10 @@ class SQLiteDbHelper(DbHelper):
 
         try:
             import sqlite3
-            self.sql_exceptions = (sqlite3.OperationalError,
-                                   sqlite3.IntegrityError)
-            self.connect_exceptions = (sqlite3.OperationalError)
+            self.sql_exceptions = (sqlite3.DatabaseError,
+                                   sqlite3.InterfaceError)
+            self.connect_exceptions = (sqlite3.DatabaseError,
+                                       sqlite3.InterfaceError)
             self.paramstyle = sqlite3.paramstyle
             self._connect_func = sqlite3.connect
         except ImportError:
