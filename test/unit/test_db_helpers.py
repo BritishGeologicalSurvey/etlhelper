@@ -30,23 +30,26 @@ SQLITEDB = DbParams(dbtype='SQLITE', filename='/myfile.db')
 
 
 @pytest.mark.parametrize('helper, expected', [
-    (OracleDbHelper, (cx_Oracle.DatabaseError)),
-    (MSSQLDbHelper, (pyodbc.DatabaseError)),
-    (PostgresDbHelper, (psycopg2.ProgrammingError, psycopg2.InterfaceError,
-                        psycopg2.InternalError, psycopg2.errors.UniqueViolation)),
-    (SQLiteDbHelper, (sqlite3.OperationalError, sqlite3.IntegrityError))
+    (OracleDbHelper, (cx_Oracle.DatabaseError, cx_Oracle.InterfaceError)),
+    (MSSQLDbHelper, (pyodbc.DatabaseError, pyodbc.InterfaceError)),
+    (PostgresDbHelper, (psycopg2.DatabaseError, psycopg2.InterfaceError)),
+    (SQLiteDbHelper, (sqlite3.DatabaseError, sqlite3.InterfaceError))
 ])
 def test_sql_exceptions(helper, expected):
+    # DBAPI 2.0 specifies that all exceptions must inherit from DatabaseError
+    # or InterfaceError. See https://peps.python.org/pep-0249/#exceptions
     assert helper().sql_exceptions == expected
 
 
 @pytest.mark.parametrize('helper, expected', [
-    (OracleDbHelper, (cx_Oracle.DatabaseError)),
+    (OracleDbHelper, (cx_Oracle.DatabaseError, cx_Oracle.InterfaceError)),
     (MSSQLDbHelper, (pyodbc.DatabaseError, pyodbc.InterfaceError)),
-    (PostgresDbHelper, (psycopg2.OperationalError)),
-    (SQLiteDbHelper, (sqlite3.OperationalError))
+    (PostgresDbHelper, (psycopg2.DatabaseError, psycopg2.InterfaceError)),
+    (SQLiteDbHelper, (sqlite3.DatabaseError, sqlite3.InterfaceError))
 ])
 def test_connect_exceptions(helper, expected):
+    # DBAPI 2.0 specifies that all exceptions must inherit from DatabaseError
+    # or InterfaceError. See https://peps.python.org/pep-0249/#exceptions
     assert helper().connect_exceptions == expected
 
 
