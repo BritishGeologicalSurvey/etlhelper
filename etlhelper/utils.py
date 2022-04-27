@@ -19,7 +19,7 @@ def describe_columns(table, conn, schema=None):
     :param schema: str, optional name of schema for table
     """
     helper = DB_HELPER_FACTORY.from_conn(conn)
-    params = {'table': table, 'schema': schema}
+    params = {'table_name': table, 'schema_name': schema}
 
     result = fetchall(helper.describe_columns_query, conn, parameters=params)
     columns = [Column(*row) for row in result]
