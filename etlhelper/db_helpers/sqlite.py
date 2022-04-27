@@ -2,6 +2,7 @@
 Database helper for SQLite
 """
 from contextlib import contextmanager
+from textwrap import dedent
 import warnings
 from etlhelper.db_helpers.db_helper import DbHelper
 
@@ -10,6 +11,14 @@ class SQLiteDbHelper(DbHelper):
     """
     SQLite DB helper class
     """
+    # schema_name is not used for SQLite but is required as parameter to be
+    # consistent with other databases.  The WHERE clause is always true,
+    # whether schema_name is NULL or not.
+    describe_columns_query = dedent("""
+        SELECT name, type from pragma_table_info(:table_name)
+        WHERE name IS NOT COALESCE('impossible table name;|@£$%^&', :schema_name)
+        ;""").strip()
+
     def __init__(self):
         super().__init__()
         self.required_params = {'filename'}

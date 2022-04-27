@@ -20,6 +20,7 @@ from etlhelper import (
     generate_insert_sql,
     load,
 )
+from etlhelper.utils import describe_columns, Column
 from etlhelper.exceptions import (
     ETLHelperConnectionError,
     ETLHelperInsertError,
@@ -195,6 +196,54 @@ def test_generate_insert_sql_dictionary(testdb_conn):
     assert sql == expected
 
 
+def test_describe_columns_no_schema_no_duplicates(testdb_conn, test_tables):
+    # Arrange
+    expected = [
+        Column(name='id', type='integer'),
+        Column(name='value', type='float'),
+        Column(name='simple_text', type='text'),
+        Column(name='utf8_text', type='text'),
+        Column(name='day', type='date'),
+        Column(name='date_time', type='timestamp')
+    ]
+
+    # Act
+    columns = describe_columns('src', testdb_conn)
+
+    # Assert
+    assert columns == expected
+
+
+def test_describe_columns_with_schema_no_duplicates(testdb_conn, test_tables):
+    # Arrange
+    expected = [
+        Column(name='id', type='integer'),
+        Column(name='value', type='float'),
+        Column(name='simple_text', type='text'),
+        Column(name='utf8_text', type='text'),
+        Column(name='day', type='date'),
+        Column(name='date_time', type='timestamp')
+    ]
+
+    # Act
+    columns = describe_columns('src', testdb_conn, schema='etlhelper')
+
+    # Assert
+    assert columns == expected
+
+
+def test_describe_columns_bad_table_name_no_schema(testdb_conn, test_tables):
+    # Arrange, act and assert
+    with pytest.raises(ETLHelperQueryError, match=r"Table name 'bad_table' not found."):
+        describe_columns('bad_table', testdb_conn)
+
+
+def test_describe_columns_bad_table_name_with_schema(testdb_conn, test_tables):
+    # Arrange, act and assert
+    with pytest.raises(ETLHelperQueryError, match=r"Table name 'etlhelper.bad_table' not found."):
+        describe_columns('bad_table', testdb_conn, schema='etlhelper')
+
+
 # -- Fixtures here --
 
 INSERT_SQL = dedent("""
@@ -238,7 +287,7 @@ def test_tables(test_table_data, testdb_conn):
     create_src_sql = dedent("""
         CREATE TABLE src
           (
-            id INTEGER PRIMARY KEY,
+            id integer primary key,
             value float,
             simple_text text,
             utf8_text text,
