@@ -8,9 +8,8 @@ welcome, particularly in the following areas:
 
 + support for more database types (MySQL, Informix)
 + additional recipes / case studies
-+ addition of connection pools and `connect_to_pool` method
-+ add type hints
-+ run more integration tests in Travis CI
++ add type annotations
++ run more integration tests in Travis CI (or port to GitHub Actions)
 + performance optimisation
 + improved documentation
 
