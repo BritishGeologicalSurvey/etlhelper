@@ -2,6 +2,7 @@
 Database helper for mssql
 """
 import warnings
+from textwrap import dedent
 from etlhelper.db_helpers.db_helper import DbHelper
 
 
@@ -9,6 +10,12 @@ class MSSQLDbHelper(DbHelper):
     """
     MS Sql server helper class
     """
+    describe_columns_query = dedent("""
+        SELECT column_name as name, data_type as type
+        FROM INFORMATION_SCHEMA.COLUMNS
+        WHERE LOWER(table_name) = LOWER(?)
+        """).strip()
+
     def __init__(self):
         super().__init__()
         self.required_params = {'host', 'port', 'dbname', 'user', 'odbc_driver'}
@@ -74,3 +81,16 @@ class MSSQLDbHelper(DbHelper):
             )
             cursor.fast_executemany = False
             cursor.executemany(query, chunk)
+
+    def fetch_columns(self, conn, table, schema=None):
+        """
+        Return the name and data type for columns in a table.
+
+        :param table: str, the table to describe
+        :param conn: dbapi connection
+        :param schema: str, optional name of schema for table
+        """
+        from etlhelper import fetchall
+        params = (table,)
+        result = fetchall(self.describe_columns_query, conn, parameters=params)
+        return result
