@@ -10,7 +10,7 @@ class MSSQLDbHelper(DbHelper):
     """
     MS Sql server helper class
     """
-    describe_columns_query = dedent("""
+    table_info_query = dedent("""
         SELECT column_name as name, data_type as type
         FROM INFORMATION_SCHEMA.COLUMNS
         WHERE LOWER(table_name) = LOWER(?)

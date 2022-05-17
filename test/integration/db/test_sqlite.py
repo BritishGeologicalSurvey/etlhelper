@@ -20,7 +20,7 @@ from etlhelper import (
     generate_insert_sql,
     load,
 )
-from etlhelper.utils import describe_columns, Column
+from etlhelper.utils import table_info, Column
 from etlhelper.exceptions import (
     ETLHelperConnectionError,
     ETLHelperInsertError,
@@ -196,7 +196,7 @@ def test_generate_insert_sql_dictionary(testdb_conn):
     assert sql == expected
 
 
-def test_describe_columns_no_schema_no_duplicates(testdb_conn, test_tables):
+def test_table_info_no_schema_no_duplicates(testdb_conn, test_tables):
     # Arrange
     expected = [
         Column(name='id', type='integer'),
@@ -208,13 +208,13 @@ def test_describe_columns_no_schema_no_duplicates(testdb_conn, test_tables):
     ]
 
     # Act
-    columns = describe_columns('src', testdb_conn)
+    columns = table_info('src', testdb_conn)
 
     # Assert
     assert columns == expected
 
 
-def test_describe_columns_with_schema_no_duplicates(testdb_conn, test_tables):
+def test_table_info_with_schema_no_duplicates(testdb_conn, test_tables):
     # Arrange
     expected = [
         Column(name='id', type='integer'),
@@ -226,22 +226,22 @@ def test_describe_columns_with_schema_no_duplicates(testdb_conn, test_tables):
     ]
 
     # Act
-    columns = describe_columns('src', testdb_conn, schema='etlhelper')
+    columns = table_info('src', testdb_conn, schema='etlhelper')
 
     # Assert
     assert columns == expected
 
 
-def test_describe_columns_bad_table_name_no_schema(testdb_conn, test_tables):
+def test_table_info_bad_table_name_no_schema(testdb_conn, test_tables):
     # Arrange, act and assert
     with pytest.raises(ETLHelperQueryError, match=r"Table name 'bad_table' not found."):
-        describe_columns('bad_table', testdb_conn)
+        table_info('bad_table', testdb_conn)
 
 
-def test_describe_columns_bad_table_name_with_schema(testdb_conn, test_tables):
+def test_table_info_bad_table_name_with_schema(testdb_conn, test_tables):
     # Arrange, act and assert
     with pytest.raises(ETLHelperQueryError, match=r"Table name 'etlhelper.bad_table' not found."):
-        describe_columns('bad_table', testdb_conn, schema='etlhelper')
+        table_info('bad_table', testdb_conn, schema='etlhelper')
 
 
 # -- Fixtures here --

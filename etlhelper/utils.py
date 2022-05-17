@@ -10,7 +10,7 @@ from etlhelper.db_helper_factory import DB_HELPER_FACTORY
 Column = namedtuple('Column', ['name', 'type'])
 
 
-def describe_columns(table, conn, schema=None):
+def table_info(table, conn, schema=None):
     """
     Describe the name and data type for columns in a table.
 
@@ -21,7 +21,7 @@ def describe_columns(table, conn, schema=None):
     helper = DB_HELPER_FACTORY.from_conn(conn)
 
     params = (table, schema)
-    result = fetchall(helper.describe_columns_query, conn, parameters=params)
+    result = fetchall(helper.table_info_query, conn, parameters=params)
     columns = [Column(*row) for row in result]
 
     if not columns:

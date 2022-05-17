@@ -10,7 +10,7 @@ class PostgresDbHelper(DbHelper):
     """
     Postgres db helper class
     """
-    describe_columns_query = dedent("""
+    table_info_query = dedent("""
         SELECT
             pg_attribute.attname AS name,
             pg_catalog.format_type(pg_attribute.atttypid, pg_attribute.atttypmod) AS type
