@@ -16,7 +16,9 @@ class SQLiteDbHelper(DbHelper):
     # whether schema_name is NULL or not.
     describe_columns_query = dedent("""
         SELECT name, type from pragma_table_info(:table_name)
-        WHERE name IS NOT COALESCE('impossible table name;|@£$%^&', :schema_name)
+        -- this effectively ignores the unused schema_name
+        -- parameter since schemas are not used in sqlite
+        WHERE COALESCE(TRUE, :schema_name)
         ;""").strip()
 
     def __init__(self):
