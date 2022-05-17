@@ -3,6 +3,7 @@ Utility functions to help with tasks such as programatically generating SQL quer
 """
 from collections import namedtuple
 
+from etlhelper import fetchall
 from etlhelper.exceptions import ETLHelperQueryError
 from etlhelper.db_helper_factory import DB_HELPER_FACTORY
 
@@ -19,7 +20,8 @@ def describe_columns(table, conn, schema=None):
     """
     helper = DB_HELPER_FACTORY.from_conn(conn)
 
-    result = helper.fetch_columns(conn, table, schema)
+    params = (table, schema)
+    result = fetchall(helper.describe_columns_query, conn, parameters=params)
     columns = [Column(*row) for row in result]
 
     if not columns:

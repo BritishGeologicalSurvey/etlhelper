@@ -106,19 +106,6 @@ class DbHelper(metaclass=ABCMeta):
         """
         return conn.cursor()
 
-    def fetch_columns(self, conn, table, schema=None):
-        """
-        Return the name and data type for columns in a table.
-
-        :param table: str, the table to describe
-        :param conn: dbapi connection
-        :param schema: str, optional name of schema for table
-        """
-        from etlhelper import fetchall
-        params = {'table_name': table, 'schema_name': schema}
-        result = fetchall(self.describe_columns_query, conn, parameters=params)
-        return result
-
     def _raise_missing_driver_error_on_connect(self, *args, **kwargs):
         """
         Raise an exception with helpful message if user tries to connect without driver installed.

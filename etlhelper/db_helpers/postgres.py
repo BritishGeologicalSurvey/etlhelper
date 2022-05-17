@@ -23,8 +23,8 @@ class PostgresDbHelper(DbHelper):
         WHERE
             pg_attribute.attnum > 0
             AND NOT pg_attribute.attisdropped
-            AND pg_namespace.nspname ~ COALESCE(%(schema_name)s, '.*')
-            AND pg_class.relname = %(table_name)s
+            AND pg_class.relname = %s
+            AND pg_namespace.nspname ~ COALESCE(%s, '.*')
         ORDER BY
             attnum ASC;
         """).strip()

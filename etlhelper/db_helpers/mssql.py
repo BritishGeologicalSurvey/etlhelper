@@ -82,16 +82,3 @@ class MSSQLDbHelper(DbHelper):
             )
             cursor.fast_executemany = False
             cursor.executemany(query, chunk)
-
-    def fetch_columns(self, conn, table, schema=None):
-        """
-        Return the name and data type for columns in a table.
-
-        :param table: str, the table to describe
-        :param conn: dbapi connection
-        :param schema: str, optional name of schema for table
-        """
-        from etlhelper import fetchall
-        params = (table, schema)
-        result = fetchall(self.describe_columns_query, conn, parameters=params)
-        return result
