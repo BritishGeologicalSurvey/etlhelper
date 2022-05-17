@@ -14,6 +14,7 @@ class MSSQLDbHelper(DbHelper):
         SELECT column_name as name, data_type as type
         FROM INFORMATION_SCHEMA.COLUMNS
         WHERE LOWER(table_name) = LOWER(?)
+        AND LOWER(table_schema) LIKE COALESCE(LOWER(?), '%%')
         """).strip()
 
     def __init__(self):
@@ -91,6 +92,6 @@ class MSSQLDbHelper(DbHelper):
         :param schema: str, optional name of schema for table
         """
         from etlhelper import fetchall
-        params = (table,)
+        params = (table, schema)
         result = fetchall(self.describe_columns_query, conn, parameters=params)
         return result
