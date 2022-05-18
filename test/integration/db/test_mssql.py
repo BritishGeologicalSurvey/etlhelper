@@ -244,12 +244,12 @@ def test_generate_insert_sql_dictionary(testdb_conn):
 def test_table_info_no_schema_no_duplicates(testdb_conn, test_tables):
     # Arrange
     expected = [
-        Column(name='id', type='int', not_null=0),
-        Column(name='value', type='float', not_null=0),
-        Column(name='simple_text', type='nvarchar', not_null=0),
-        Column(name='utf8_text', type='nvarchar', not_null=0),
-        Column(name='day', type='date', not_null=0),
-        Column(name='date_time', type='datetime2', not_null=0)
+        Column(name='id', type='int', not_null=0, has_default=0),
+        Column(name='value', type='float', not_null=0, has_default=0),
+        Column(name='simple_text', type='nvarchar', not_null=0, has_default=0),
+        Column(name='utf8_text', type='nvarchar', not_null=0, has_default=0),
+        Column(name='day', type='date', not_null=0, has_default=0),
+        Column(name='date_time', type='datetime2', not_null=0, has_default=0)
     ]
 
     # Act
@@ -262,12 +262,12 @@ def test_table_info_no_schema_no_duplicates(testdb_conn, test_tables):
 def test_table_info_with_schema_no_duplicates(testdb_conn, test_tables):
     # Arrange
     expected = [
-        Column(name='id', type='int', not_null=0),
-        Column(name='value', type='float', not_null=0),
-        Column(name='simple_text', type='nvarchar', not_null=0),
-        Column(name='utf8_text', type='nvarchar', not_null=0),
-        Column(name='day', type='date', not_null=0),
-        Column(name='date_time', type='datetime2', not_null=0)
+        Column(name='id', type='int', not_null=0, has_default=0),
+        Column(name='value', type='float', not_null=0, has_default=0),
+        Column(name='simple_text', type='nvarchar', not_null=0, has_default=0),
+        Column(name='utf8_text', type='nvarchar', not_null=0, has_default=0),
+        Column(name='day', type='date', not_null=0, has_default=0),
+        Column(name='date_time', type='datetime2', not_null=0, has_default=0)
     ]
 
     # Act

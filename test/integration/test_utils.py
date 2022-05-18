@@ -10,12 +10,12 @@ from etlhelper.utils import Column, table_info
 def test_table_info_no_schema_no_duplicates(pgtestdb_conn, pgtestdb_test_tables):
     # Arrange
     expected = [
-        Column('id', 'integer', not_null=1),
-        Column('value', 'double precision', not_null=0),
-        Column('simple_text', 'text', not_null=0),
-        Column('utf8_text', 'text', not_null=0),
-        Column('day', 'date', not_null=0),
-        Column('date_time', 'timestamp without time zone', not_null=0)
+        Column('id', 'integer', not_null=1, has_default=0),
+        Column('value', 'double precision', not_null=0, has_default=0),
+        Column('simple_text', 'text', not_null=0, has_default=0),
+        Column('utf8_text', 'text', not_null=0, has_default=0),
+        Column('day', 'date', not_null=0, has_default=0),
+        Column('date_time', 'timestamp without time zone', not_null=0, has_default=0)
     ]
 
     # Act
@@ -28,12 +28,12 @@ def test_table_info_no_schema_no_duplicates(pgtestdb_conn, pgtestdb_test_tables)
 def test_table_info_with_schema_no_duplicates(pgtestdb_conn, pgtestdb_test_tables):
     # Arrange
     expected = [
-        Column('id', 'integer', not_null=1),
-        Column('value', 'double precision', not_null=0),
-        Column('simple_text', 'text', not_null=0),
-        Column('utf8_text', 'text', not_null=0),
-        Column('day', 'date', not_null=0),
-        Column('date_time', 'timestamp without time zone', not_null=0)
+        Column('id', 'integer', not_null=1, has_default=0),
+        Column('value', 'double precision', not_null=0, has_default=0),
+        Column('simple_text', 'text', not_null=0, has_default=0),
+        Column('utf8_text', 'text', not_null=0, has_default=0),
+        Column('day', 'date', not_null=0, has_default=0),
+        Column('date_time', 'timestamp without time zone', not_null=0, has_default=0)
     ]
 
     # Act
@@ -52,12 +52,12 @@ def test_table_info_no_schema_with_duplicates(pgtestdb_conn, duplicate_schema):
 def test_table_info_with_schema_with_duplicates(pgtestdb_conn, duplicate_schema):
     # Arrange
     expected = [
-        Column('id', 'integer', not_null=1),
-        Column('value', 'double precision', not_null=0),
-        Column('simple_text', 'text', not_null=0),
-        Column('utf8_text', 'text', not_null=0),
-        Column('day', 'date', not_null=0),
-        Column('date_time', 'timestamp without time zone', not_null=0)
+        Column('id', 'integer', not_null=1, has_default=0),
+        Column('value', 'double precision', not_null=0, has_default=0),
+        Column('simple_text', 'text', not_null=0, has_default=0),
+        Column('utf8_text', 'text', not_null=0, has_default=0),
+        Column('day', 'date', not_null=0, has_default=0),
+        Column('date_time', 'timestamp without time zone', not_null=0, has_default=0)
     ]
 
     # Act

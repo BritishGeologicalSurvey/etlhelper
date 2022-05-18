@@ -14,7 +14,8 @@ class MSSQLDbHelper(DbHelper):
         SELECT
             column_name as name,
             data_type as type,
-            (case when is_nullable = 'NO' then 1 else 0 end) as not_null
+            (case when is_nullable = 'NO' then 1 else 0 end) as not_null,
+            (case when column_default is not null then 1 else 0 end) as has_default
         FROM INFORMATION_SCHEMA.COLUMNS
         WHERE LOWER(table_name) = LOWER(?)
         AND LOWER(table_schema) LIKE COALESCE(LOWER(?), '%%')

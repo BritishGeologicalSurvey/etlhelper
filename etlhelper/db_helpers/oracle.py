@@ -14,7 +14,8 @@ class OracleDbHelper(DbHelper):
         SELECT
             column_name as name,
             data_type as type,
-            (case when nullable = 'N' then 1 else 0 end) as not_null
+            (case when nullable = 'N' then 1 else 0 end) as not_null,
+            (case when data_default is not null then 1 else 0 end) as has_default
         FROM all_tab_columns
         WHERE LOWER(table_name) = LOWER(:1)
         AND REGEXP_LIKE(LOWER(owner), '^' || COALESCE(LOWER(:2), '.*')  || '$')

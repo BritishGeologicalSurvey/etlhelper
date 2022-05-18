@@ -251,12 +251,12 @@ def test_generate_insert_sql_dictionary(testdb_conn):
 def test_table_info_no_schema_no_duplicates(testdb_conn, test_tables):
     # Arrange
     expected = [
-        Column(name='ID', type='NUMBER', not_null=0),
-        Column(name='VALUE', type='NUMBER', not_null=0),
-        Column(name='SIMPLE_TEXT', type='VARCHAR2', not_null=0),
-        Column(name='UTF8_TEXT', type='VARCHAR2', not_null=0),
-        Column(name='DAY', type='DATE', not_null=0),
-        Column(name='DATE_TIME', type='DATE', not_null=0)
+        Column(name='ID', type='NUMBER', not_null=0, has_default=0),
+        Column(name='VALUE', type='NUMBER', not_null=0, has_default=0),
+        Column(name='SIMPLE_TEXT', type='VARCHAR2', not_null=0, has_default=0),
+        Column(name='UTF8_TEXT', type='VARCHAR2', not_null=0, has_default=0),
+        Column(name='DAY', type='DATE', not_null=0, has_default=0),
+        Column(name='DATE_TIME', type='DATE', not_null=0, has_default=0)
     ]
 
     # Act
@@ -269,12 +269,12 @@ def test_table_info_no_schema_no_duplicates(testdb_conn, test_tables):
 def test_table_info_with_schema_no_duplicates(testdb_conn, test_tables):
     # Arrange
     expected = [
-        Column(name='ID', type='NUMBER', not_null=0),
-        Column(name='VALUE', type='NUMBER', not_null=0),
-        Column(name='SIMPLE_TEXT', type='VARCHAR2', not_null=0),
-        Column(name='UTF8_TEXT', type='VARCHAR2', not_null=0),
-        Column(name='DAY', type='DATE', not_null=0),
-        Column(name='DATE_TIME', type='DATE', not_null=0)
+        Column(name='ID', type='NUMBER', not_null=0, has_default=0),
+        Column(name='VALUE', type='NUMBER', not_null=0, has_default=0),
+        Column(name='SIMPLE_TEXT', type='VARCHAR2', not_null=0, has_default=0),
+        Column(name='UTF8_TEXT', type='VARCHAR2', not_null=0, has_default=0),
+        Column(name='DAY', type='DATE', not_null=0, has_default=0),
+        Column(name='DATE_TIME', type='DATE', not_null=0, has_default=0)
     ]
 
     # Act
