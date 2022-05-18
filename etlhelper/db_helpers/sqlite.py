@@ -15,7 +15,7 @@ class SQLiteDbHelper(DbHelper):
     # consistent with other databases.  The WHERE clause is always true,
     # whether schema_name is NULL or not.
     table_info_query = dedent("""
-        SELECT name, type from pragma_table_info(:table_name)
+        SELECT name, type, "notnull" as not_null FROM pragma_table_info(:table_name)
         -- this effectively ignores the unused schema_name
         -- parameter since schemas are not used in sqlite
         WHERE COALESCE(TRUE, :schema_name)

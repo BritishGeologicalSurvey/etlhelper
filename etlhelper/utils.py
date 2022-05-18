@@ -7,7 +7,7 @@ from etlhelper import fetchall
 from etlhelper.exceptions import ETLHelperQueryError
 from etlhelper.db_helper_factory import DB_HELPER_FACTORY
 
-Column = namedtuple('Column', ['name', 'type'])
+Column = namedtuple('Column', ['name', 'type', 'not_null'])
 
 
 def table_info(table, conn, schema=None):

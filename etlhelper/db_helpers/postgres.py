@@ -13,7 +13,8 @@ class PostgresDbHelper(DbHelper):
     table_info_query = dedent("""
         SELECT
             pg_attribute.attname AS name,
-            pg_catalog.format_type(pg_attribute.atttypid, pg_attribute.atttypmod) AS type
+            pg_catalog.format_type(pg_attribute.atttypid, pg_attribute.atttypmod) AS type,
+            (case when pg_attribute.attnotnull then 1 else 0 end) as not_null
         FROM
             pg_catalog.pg_attribute
         INNER JOIN
