@@ -12,8 +12,8 @@ class OracleDbHelper(DbHelper):
     """
     table_info_query = dedent("""
         SELECT column_name as name, data_type as type FROM all_tab_columns
-        WHERE LOWER(table_name) = LOWER(:table_name)
-        AND REGEXP_LIKE(LOWER(owner), COALESCE(LOWER(:schema_name), '.*'))
+        WHERE LOWER(table_name) = LOWER(:1)
+        AND REGEXP_LIKE(LOWER(owner), '^' || COALESCE(LOWER(:2), '.*')  || '$')
         """).strip()
 
     def __init__(self):
