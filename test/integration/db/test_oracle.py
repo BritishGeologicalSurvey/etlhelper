@@ -252,8 +252,8 @@ def test_table_info_no_schema_no_duplicates(testdb_conn, test_tables):
     # Arrange
     expected = [
         Column(name='ID', type='NUMBER', not_null=0, has_default=0),
-        Column(name='VALUE', type='NUMBER', not_null=0, has_default=0),
-        Column(name='SIMPLE_TEXT', type='VARCHAR2', not_null=0, has_default=0),
+        Column(name='VALUE', type='NUMBER', not_null=1, has_default=0),
+        Column(name='SIMPLE_TEXT', type='VARCHAR2', not_null=0, has_default=1),
         Column(name='UTF8_TEXT', type='VARCHAR2', not_null=0, has_default=0),
         Column(name='DAY', type='DATE', not_null=0, has_default=0),
         Column(name='DATE_TIME', type='DATE', not_null=0, has_default=0)
@@ -270,8 +270,8 @@ def test_table_info_with_schema_no_duplicates(testdb_conn, test_tables):
     # Arrange
     expected = [
         Column(name='ID', type='NUMBER', not_null=0, has_default=0),
-        Column(name='VALUE', type='NUMBER', not_null=0, has_default=0),
-        Column(name='SIMPLE_TEXT', type='VARCHAR2', not_null=0, has_default=0),
+        Column(name='VALUE', type='NUMBER', not_null=1, has_default=0),
+        Column(name='SIMPLE_TEXT', type='VARCHAR2', not_null=0, has_default=1),
         Column(name='UTF8_TEXT', type='VARCHAR2', not_null=0, has_default=0),
         Column(name='DAY', type='DATE', not_null=0, has_default=0),
         Column(name='DATE_TIME', type='DATE', not_null=0, has_default=0)
@@ -333,8 +333,8 @@ def test_tables(test_table_data, testdb_conn):
         CREATE TABLE src
           (
             id NUMBER UNIQUE,
-            value NUMBER,
-            simple_text VARCHAR2(100),
+            value NUMBER not null,
+            simple_text VARCHAR2(100) default 'default',
             utf8_text VARCHAR2(100),
             day DATE,
             date_time DATE

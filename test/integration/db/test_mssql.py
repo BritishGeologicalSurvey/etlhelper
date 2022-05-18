@@ -245,8 +245,8 @@ def test_table_info_no_schema_no_duplicates(testdb_conn, test_tables):
     # Arrange
     expected = [
         Column(name='id', type='int', not_null=0, has_default=0),
-        Column(name='value', type='float', not_null=0, has_default=0),
-        Column(name='simple_text', type='nvarchar', not_null=0, has_default=0),
+        Column(name='value', type='float', not_null=1, has_default=0),
+        Column(name='simple_text', type='nvarchar', not_null=0, has_default=1),
         Column(name='utf8_text', type='nvarchar', not_null=0, has_default=0),
         Column(name='day', type='date', not_null=0, has_default=0),
         Column(name='date_time', type='datetime2', not_null=0, has_default=0)
@@ -263,8 +263,8 @@ def test_table_info_with_schema_no_duplicates(testdb_conn, test_tables):
     # Arrange
     expected = [
         Column(name='id', type='int', not_null=0, has_default=0),
-        Column(name='value', type='float', not_null=0, has_default=0),
-        Column(name='simple_text', type='nvarchar', not_null=0, has_default=0),
+        Column(name='value', type='float', not_null=1, has_default=0),
+        Column(name='simple_text', type='nvarchar', not_null=0, has_default=1),
         Column(name='utf8_text', type='nvarchar', not_null=0, has_default=0),
         Column(name='day', type='date', not_null=0, has_default=0),
         Column(name='date_time', type='datetime2', not_null=0, has_default=0)
@@ -346,8 +346,8 @@ def test_tables(test_table_data, testdb_conn):
         CREATE TABLE src
           (
             id integer unique,
-            value double precision,
-            simple_text nvarchar(max),
+            value double precision not null,
+            simple_text nvarchar(max) default 'default',
             utf8_text nvarchar(max),
             day date,
             date_time datetime2(6)
