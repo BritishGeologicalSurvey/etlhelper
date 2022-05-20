@@ -16,7 +16,7 @@ class DbHelper(metaclass=ABCMeta):
     """
     sql_exceptions = None
     connect_exceptions = None
-    describe_columns_query = None
+    table_info_query = None
     # The following are used to help create parameterized queries.  Although
     # paramstyle is require by DBAPI2, most drivers support both a named and
     # positional style.

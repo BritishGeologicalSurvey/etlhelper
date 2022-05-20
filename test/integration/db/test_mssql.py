@@ -19,6 +19,7 @@ from etlhelper import (
     generate_insert_sql,
     load,
 )
+from etlhelper.utils import table_info, Column
 from etlhelper.exceptions import (
     ETLHelperConnectionError,
     ETLHelperInsertError,
@@ -240,6 +241,54 @@ def test_generate_insert_sql_dictionary(testdb_conn):
         generate_insert_sql('my_table', data, testdb_conn)
 
 
+def test_table_info_no_schema_no_duplicates(testdb_conn, test_tables):
+    # Arrange
+    expected = [
+        Column(name='id', type='int', not_null=0, has_default=0),
+        Column(name='value', type='float', not_null=1, has_default=0),
+        Column(name='simple_text', type='nvarchar', not_null=0, has_default=1),
+        Column(name='utf8_text', type='nvarchar', not_null=0, has_default=0),
+        Column(name='day', type='date', not_null=0, has_default=0),
+        Column(name='date_time', type='datetime2', not_null=0, has_default=0)
+    ]
+
+    # Act
+    columns = table_info('src', testdb_conn)
+
+    # Assert
+    assert columns == expected
+
+
+def test_table_info_with_schema_no_duplicates(testdb_conn, test_tables):
+    # Arrange
+    expected = [
+        Column(name='id', type='int', not_null=0, has_default=0),
+        Column(name='value', type='float', not_null=1, has_default=0),
+        Column(name='simple_text', type='nvarchar', not_null=0, has_default=1),
+        Column(name='utf8_text', type='nvarchar', not_null=0, has_default=0),
+        Column(name='day', type='date', not_null=0, has_default=0),
+        Column(name='date_time', type='datetime2', not_null=0, has_default=0)
+    ]
+
+    # Act
+    columns = table_info('src', testdb_conn, schema='etlhelper')
+
+    # Assert
+    assert columns == expected
+
+
+def test_table_info_bad_table_name_no_schema(testdb_conn, test_tables):
+    # Arrange, act and assert
+    with pytest.raises(ETLHelperQueryError, match=r"Table name 'bad_table' not found."):
+        table_info('bad_table', testdb_conn)
+
+
+def test_table_info_bad_table_name_with_schema(testdb_conn, test_tables):
+    # Arrange, act and assert
+    with pytest.raises(ETLHelperQueryError, match=r"Table name 'etlhelper.bad_table' not found."):
+        table_info('bad_table', testdb_conn, schema='etlhelper')
+
+
 # -- Fixtures here --
 
 INSERT_SQL = dedent("""
@@ -297,8 +346,8 @@ def test_tables(test_table_data, testdb_conn):
         CREATE TABLE src
           (
             id integer unique,
-            value double precision,
-            simple_text nvarchar(max),
+            value double precision not null,
+            simple_text nvarchar(max) default 'default',
             utf8_text nvarchar(max),
             day date,
             date_time datetime2(6)

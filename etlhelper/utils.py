@@ -7,10 +7,10 @@ from etlhelper import fetchall
 from etlhelper.exceptions import ETLHelperQueryError
 from etlhelper.db_helper_factory import DB_HELPER_FACTORY
 
-Column = namedtuple('Column', ['name', 'type'])
+Column = namedtuple('Column', ['name', 'type', 'not_null', 'has_default'])
 
 
-def describe_columns(table, conn, schema=None):
+def table_info(table, conn, schema=None):
     """
     Describe the name and data type for columns in a table.
 
@@ -19,9 +19,9 @@ def describe_columns(table, conn, schema=None):
     :param schema: str, optional name of schema for table
     """
     helper = DB_HELPER_FACTORY.from_conn(conn)
-    params = {'table_name': table, 'schema_name': schema}
 
-    result = fetchall(helper.describe_columns_query, conn, parameters=params)
+    params = (table, schema)
+    result = fetchall(helper.table_info_query, conn, parameters=params)
     columns = [Column(*row) for row in result]
 
     if not columns:
