@@ -26,6 +26,9 @@ from etlhelper.connect import (
     get_connection_string,
     get_sqlalchemy_connection_string,
 )
+from etlhelper.utils import (
+    table_info,
+)
 
 from . import _version
 __version__ = _version.get_versions()['version']

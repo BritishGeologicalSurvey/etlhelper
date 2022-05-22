@@ -12,11 +12,12 @@ Column = namedtuple('Column', ['name', 'type', 'not_null', 'has_default'])
 
 def table_info(table, conn, schema=None):
     """
-    Describe the name and data type for columns in a table.
+    Return basic metadata for each of the columns of 'table' on 'conn'.
 
     :param table: str, the table to describe
     :param conn: dbapi connection
     :param schema: str, optional name of schema for table
+    :returns columns: list, tuples of (name, type, not_null, has_default)
     """
     helper = DB_HELPER_FACTORY.from_conn(conn)
 
