@@ -44,6 +44,7 @@ For a high level introduction to `etlhelper`, see the FOSS4GUK 2019 presentation
  + [Installation](#installation)
  + [Connect to databases](#connect-to-databases)
  + [Transfer data](#transfer-data)
+ + [Utilities](#utilities)
  + [Recipes](#recipes)
  + [Development](#development)
  + [References](#references)
