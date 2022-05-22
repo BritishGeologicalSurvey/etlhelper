@@ -109,11 +109,10 @@ def test_copy_table_rows_happy_path(test_tables, testdb_conn, test_table_data):
 def test_copy_table_rows_on_error(test_tables, testdb_conn, test_table_data):
     # Arrange
     duplicate_id_row_sql = """
-       INSERT INTO dest (id, day, date_time)
+       INSERT INTO dest (id, value)
        VALUES (
          1,
-         TO_DATE('2003/05/03 21:02:44', 'yyyy/mm/dd hh24:mi:ss'),
-         TO_DATE('2003/05/03 21:02:44', 'yyyy/mm/dd hh24:mi:ss')
+         1.234
          )""".strip()
     execute(duplicate_id_row_sql, testdb_conn)
 
@@ -126,15 +125,6 @@ def test_copy_table_rows_on_error(test_tables, testdb_conn, test_table_data):
     sql = "SELECT * FROM dest"
     result = get_rows(sql, testdb_conn)
 
-    # Fix result date and datetime strings to native classes
-    fixed_dates = []
-    for row in result:
-        fixed_dates.append((
-            *row[:4],
-            row.DAY.date(),
-            row.DATE_TIME
-        ))
-
     # Check that first row was caught as error, noting that Oracle
     # changes the case of column names
     row, exception = errors[0]
@@ -142,7 +132,16 @@ def test_copy_table_rows_on_error(test_tables, testdb_conn, test_table_data):
     assert "unique" in str(exception).lower()
 
     # Check that other rows were inserted correctly
-    assert fixed_dates[1:] == test_table_data[1:]
+    # Fix result date and datetime strings to native classes
+    fixed_dates = []
+    for row in result[1:]:
+        fixed_dates.append((
+            *row[:4],
+            row.DAY.date(),
+            row.DATE_TIME
+        ))
+
+    assert fixed_dates == test_table_data[1:]
 
 
 def test_get_rows_with_parameters(test_tables, testdb_conn,

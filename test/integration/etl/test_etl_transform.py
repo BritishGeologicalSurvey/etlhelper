@@ -49,10 +49,8 @@ def test_copy_table_rows_on_error(pgtestdb_test_tables, pgtestdb_conn,
                                   test_table_data):
     # Arrange
     duplicate_id_row_sql = """
-       INSERT INTO dest (id)
-       VALUES (
-         1
-         )""".strip()
+       INSERT INTO dest (id, value)
+       VALUES (1, 1.234)""".strip()
     execute(duplicate_id_row_sql, pgtestdb_conn)
 
     # Act
@@ -78,12 +76,12 @@ def test_copy_table_rows_on_error(pgtestdb_test_tables, pgtestdb_conn,
 
 def transform_return_list(rows):
     # Simple transform function that changes size and number of rows
-    return [(row.id,) for row in rows if row.id > 1]
+    return [(row.id, row.value) for row in rows if row.id > 1]
 
 
 def transform_return_generator(rows):
     # Simple transform function that changes size and number of rows
-    return ((row.id,) for row in rows if row.id > 1)
+    return ((row.id, row.value) for row in rows if row.id > 1)
 
 
 @pytest.mark.parametrize('my_transform',
@@ -91,10 +89,10 @@ def transform_return_generator(rows):
 def test_copy_rows_transform(pgtestdb_conn, pgtestdb_test_tables, my_transform):
     # Arrange
     select_sql = "SELECT * FROM src"
-    insert_sql = "INSERT INTO dest (id) VALUES (%s)"
+    insert_sql = "INSERT INTO dest (id, value) VALUES (%s, %s)"
 
-    expected = [(2, None, None, None, None, None),
-                (3, None, None, None, None, None)]
+    expected = [(2, 2.234, 'default', None, None, None),
+                (3, 2.234, 'default', None, None, None)]
 
     # Act
     copy_rows(select_sql, pgtestdb_conn, insert_sql, pgtestdb_conn,

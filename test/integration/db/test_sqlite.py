@@ -94,9 +94,10 @@ def test_copy_table_rows_happy_path(test_tables, testdb_conn, test_table_data):
 def test_copy_table_rows_on_error(test_tables, testdb_conn, test_table_data):
     # Arrange
     duplicate_id_row_sql = """
-       INSERT INTO dest (id)
+       INSERT INTO dest (id, value)
        VALUES (
-         1
+         1,
+         1.234
          )""".strip()
     execute(duplicate_id_row_sql, testdb_conn)
 
