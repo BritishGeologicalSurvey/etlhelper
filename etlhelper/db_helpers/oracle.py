@@ -1,6 +1,7 @@
 """
 Database helper for Oracle
 """
+from textwrap import dedent
 import warnings
 from etlhelper.db_helpers.db_helper import DbHelper
 
@@ -9,6 +10,17 @@ class OracleDbHelper(DbHelper):
     """
     Oracle DB helper class
     """
+    table_info_query = dedent("""
+        SELECT
+            column_name as name,
+            data_type as type,
+            (case when nullable = 'N' then 1 else 0 end) as not_null,
+            (case when data_default is not null then 1 else 0 end) as has_default
+        FROM all_tab_columns
+        WHERE LOWER(table_name) = LOWER(:1)
+        AND REGEXP_LIKE(LOWER(owner), '^' || COALESCE(LOWER(:2), '.*')  || '$')
+        """).strip()
+
     def __init__(self):
         super().__init__()
         self.required_params = {'host', 'port', 'dbname', 'user'}

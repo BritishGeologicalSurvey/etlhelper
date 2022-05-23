@@ -19,6 +19,7 @@ from etlhelper import (
     generate_insert_sql,
     load,
 )
+from etlhelper.utils import table_info, Column
 from etlhelper.exceptions import (
     ETLHelperConnectionError,
     ETLHelperInsertError,
@@ -108,11 +109,10 @@ def test_copy_table_rows_happy_path(test_tables, testdb_conn, test_table_data):
 def test_copy_table_rows_on_error(test_tables, testdb_conn, test_table_data):
     # Arrange
     duplicate_id_row_sql = """
-       INSERT INTO dest (id, day, date_time)
+       INSERT INTO dest (id, value)
        VALUES (
          1,
-         TO_DATE('2003/05/03 21:02:44', 'yyyy/mm/dd hh24:mi:ss'),
-         TO_DATE('2003/05/03 21:02:44', 'yyyy/mm/dd hh24:mi:ss')
+         1.234
          )""".strip()
     execute(duplicate_id_row_sql, testdb_conn)
 
@@ -125,15 +125,6 @@ def test_copy_table_rows_on_error(test_tables, testdb_conn, test_table_data):
     sql = "SELECT * FROM dest"
     result = get_rows(sql, testdb_conn)
 
-    # Fix result date and datetime strings to native classes
-    fixed_dates = []
-    for row in result:
-        fixed_dates.append((
-            *row[:4],
-            row.DAY.date(),
-            row.DATE_TIME
-        ))
-
     # Check that first row was caught as error, noting that Oracle
     # changes the case of column names
     row, exception = errors[0]
@@ -141,7 +132,16 @@ def test_copy_table_rows_on_error(test_tables, testdb_conn, test_table_data):
     assert "unique" in str(exception).lower()
 
     # Check that other rows were inserted correctly
-    assert fixed_dates[1:] == test_table_data[1:]
+    # Fix result date and datetime strings to native classes
+    fixed_dates = []
+    for row in result[1:]:
+        fixed_dates.append((
+            *row[:4],
+            row.DAY.date(),
+            row.DATE_TIME
+        ))
+
+    assert fixed_dates == test_table_data[1:]
 
 
 def test_get_rows_with_parameters(test_tables, testdb_conn,
@@ -247,6 +247,54 @@ def test_generate_insert_sql_dictionary(testdb_conn):
     assert sql == expected
 
 
+def test_table_info_no_schema_no_duplicates(testdb_conn, test_tables):
+    # Arrange
+    expected = [
+        Column(name='ID', type='NUMBER', not_null=0, has_default=0),
+        Column(name='VALUE', type='NUMBER', not_null=1, has_default=0),
+        Column(name='SIMPLE_TEXT', type='VARCHAR2', not_null=0, has_default=1),
+        Column(name='UTF8_TEXT', type='VARCHAR2', not_null=0, has_default=0),
+        Column(name='DAY', type='DATE', not_null=0, has_default=0),
+        Column(name='DATE_TIME', type='DATE', not_null=0, has_default=0)
+    ]
+
+    # Act
+    columns = table_info('src', testdb_conn)
+
+    # Assert
+    assert columns == expected
+
+
+def test_table_info_with_schema_no_duplicates(testdb_conn, test_tables):
+    # Arrange
+    expected = [
+        Column(name='ID', type='NUMBER', not_null=0, has_default=0),
+        Column(name='VALUE', type='NUMBER', not_null=1, has_default=0),
+        Column(name='SIMPLE_TEXT', type='VARCHAR2', not_null=0, has_default=1),
+        Column(name='UTF8_TEXT', type='VARCHAR2', not_null=0, has_default=0),
+        Column(name='DAY', type='DATE', not_null=0, has_default=0),
+        Column(name='DATE_TIME', type='DATE', not_null=0, has_default=0)
+    ]
+
+    # Act
+    columns = table_info('src', testdb_conn, schema='etlhelper')
+
+    # Assert
+    assert columns == expected
+
+
+def test_table_info_bad_table_name_no_schema(testdb_conn, test_tables):
+    # Arrange, act and assert
+    with pytest.raises(ETLHelperQueryError, match=r"Table name 'bad_table' not found."):
+        table_info('bad_table', testdb_conn)
+
+
+def test_table_info_bad_table_name_with_schema(testdb_conn, test_tables):
+    # Arrange, act and assert
+    with pytest.raises(ETLHelperQueryError, match=r"Table name 'etlhelper.bad_table' not found."):
+        table_info('bad_table', testdb_conn, schema='etlhelper')
+
+
 # -- Fixtures here --
 
 INSERT_SQL = dedent("""
@@ -284,8 +332,8 @@ def test_tables(test_table_data, testdb_conn):
         CREATE TABLE src
           (
             id NUMBER UNIQUE,
-            value NUMBER,
-            simple_text VARCHAR2(100),
+            value NUMBER not null,
+            simple_text VARCHAR2(100) default 'default',
             utf8_text VARCHAR2(100),
             day DATE,
             date_time DATE

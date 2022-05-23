@@ -47,8 +47,8 @@ def pgtestdb_test_tables(test_table_data, pgtestdb_conn, pgtestdb_insert_sql):
           CREATE TABLE src
             (
               id integer primary key,
-              value double precision,
-              simple_text text,
+              value double precision not null,
+              simple_text text default 'default',
               utf8_text text,
               day date,
               date_time timestamp without time zone

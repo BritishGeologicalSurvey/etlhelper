@@ -44,6 +44,7 @@ For a high level introduction to `etlhelper`, see the FOSS4GUK 2019 presentation
  + [Installation](#installation)
  + [Connect to databases](#connect-to-databases)
  + [Transfer data](#transfer-data)
+ + [Utilities](#utilities)
  + [Recipes](#recipes)
  + [Development](#development)
  + [References](#references)
@@ -557,6 +558,39 @@ generators.  Each chunk or row of data is only accessed when it is required.
 The transform function can also be written to return a generator instead of
 a list.  Data transformation can then be performed via [memory-efficient
 iterator-chains](https://dbader.org/blog/python-iterator-chains).
+
+
+## Utilities
+
+The following utility functions provide useful database metadata.
+
+
+### Table info
+
+
+The `table_info` function provides basic metadata for a table. An optional schema
+can be used. Note that for `sqlite` the schema value is currently ignored.
+
+```python
+from etlhelper.utils import table_info
+
+with ORACLEDB.connect("ORA_PASSWORD") as conn:
+    columns = table_info('my_table', conn, schema='my_schema')
+```
+
+The returned value is a list of named tuples of four values. Each tuple represents
+one column in the table, giving its name, type, if it has a NOT NULL constraint
+and if is has a DEFAULT value constraint. For example,
+
+```python
+[
+    Column(name='ID', type='NUMBER', not_null=1, has_default=0),
+    Column(name='VALUE', type='VARCHAR2', not_null=0, has_default=1),
+]
+```
+
+the ID column is of type NUMBER and has a NOT NULL constraint but not a DEFAULT value,
+while the VALUE column is of type VARCHAR2, can be NULL but does have a DEFAULT value.
 
 
 ## Recipes

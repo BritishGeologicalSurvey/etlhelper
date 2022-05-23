@@ -1,6 +1,7 @@
 """
 Database helper for PostgreSQL
 """
+from textwrap import dedent
 import warnings
 from etlhelper.db_helpers.db_helper import DbHelper
 
@@ -9,6 +10,27 @@ class PostgresDbHelper(DbHelper):
     """
     Postgres db helper class
     """
+    table_info_query = dedent("""
+        SELECT
+            pg_attribute.attname AS name,
+            pg_catalog.format_type(pg_attribute.atttypid, pg_attribute.atttypmod) AS type,
+            (case when pg_attribute.attnotnull then 1 else 0 end) as not_null,
+            (case when pg_attribute.atthasdef then 1 else 0 end) as has_default
+        FROM
+            pg_catalog.pg_attribute
+        INNER JOIN
+            pg_catalog.pg_class ON pg_class.oid = pg_attribute.attrelid
+        INNER JOIN
+            pg_catalog.pg_namespace ON pg_namespace.oid = pg_class.relnamespace
+        WHERE
+            pg_attribute.attnum > 0
+            AND NOT pg_attribute.attisdropped
+            AND pg_class.relname = %s
+            AND pg_namespace.nspname ~ COALESCE(%s, '.*')
+        ORDER BY
+            attnum ASC;
+        """).strip()
+
     def __init__(self):
         super().__init__()
         self.required_params = {'host', 'port', 'dbname', 'user'}
