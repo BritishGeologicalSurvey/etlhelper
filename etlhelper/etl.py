@@ -4,10 +4,12 @@ Functions for transferring data in and out of databases.
 from collections import namedtuple
 from itertools import zip_longest, islice, chain
 import logging
+import re
 
 from etlhelper.row_factories import namedtuple_row_factory
 from etlhelper.db_helper_factory import DB_HELPER_FACTORY
 from etlhelper.exceptions import (
+    ETLHelperBadIdentifierError,
     ETLHelperExtractError,
     ETLHelperInsertError,
     ETLHelperQueryError,
@@ -574,6 +576,27 @@ def generate_insert_sql(table, row, conn):
     sql = f"INSERT INTO {table} ({', '.join(columns)}) VALUES ({', '.join(placeholders)})"
 
     return sql
+
+
+def validate_identifier(identifier):
+    """
+    Validate characters used in identifier e.g. table or column name.
+    Identifiers must comprise alpha-numeric characters, plus `_` or `$` and
+    cannot start with `$`, or numbers.
+
+    :raises ETLHelperBadIdentifierError:
+    """
+    # Identifier rules are based on PostgreSQL specifications, defined here:
+    # https://www.postgresql.org/docs/current/sql-syntax-lexical.html#SQL-SYNTAX-IDENTIFIERS
+
+    # `\w` represents all alphanumeric characters (including unicode) plus `_`
+    # `(?![0-9])` is a "negative-lookahead assertion" to remove numbers from
+    # the match for the first character.
+    regex = re.compile(r"(?![0-9])[\w][\w$]*$")
+
+    if not regex.match(identifier):
+        msg = f"'{identifier}' contains invalid characters."
+        raise ETLHelperBadIdentifierError(msg)
 
 
 def _chunker(iterable, n_chunks, fillvalue=None):
