@@ -373,6 +373,10 @@ to remove the need to explicitly write the query for simple cases. By
 calling this function manually, users can create a base insert query that can
 be extended with clauses such as `ON CONFLICT DO NOTHING`.
 
+As `generate_insert_query` creates SQL statements from user-provided input,
+it checks the table and column names to ensure that they only contain valid
+characters.
+
 
 #### Handling insert errors
 

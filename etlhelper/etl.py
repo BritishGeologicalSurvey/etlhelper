@@ -573,6 +573,11 @@ def generate_insert_sql(table, row, conn):
         columns = row.keys()
         placeholders = [paramstyles[paramstyle].format(name=c) for c in columns]
 
+    # Validate identifiers to prevent malicious code injection
+    for identifier in (table, *columns):
+        validate_identifier(identifier)
+
+    # Generate insert statement
     sql = f"INSERT INTO {table} ({', '.join(columns)}) VALUES ({', '.join(placeholders)})"
 
     return sql

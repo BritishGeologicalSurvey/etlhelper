@@ -15,6 +15,7 @@ from etlhelper import (
     load)
 from etlhelper.etl import ETLHelperInsertError
 import etlhelper.etl as etlhelper_etl
+from etlhelper.exceptions import ETLHelperBadIdentifierError
 
 
 @pytest.mark.parametrize('commit_chunks', [True, False])
@@ -174,7 +175,7 @@ def test_load_parameters_pass_to_executemany(monkeypatch, pgtestdb_conn,
     mock_executemany.return_value = (0, 0)
     monkeypatch.setattr(etlhelper_etl, 'executemany', mock_executemany)
     # Sentinel items are unique so confirm object that was passed through
-    table = sentinel.table
+    table = 'my_table'
     commit_chunks = sentinel.commit_chunks
     chunk_size = sentinel.chunk_size
 
@@ -185,7 +186,7 @@ def test_load_parameters_pass_to_executemany(monkeypatch, pgtestdb_conn,
     # Assert
     # load() function writes SQL query
     sql = """
-      INSERT INTO sentinel.table (id, value, simple_text, utf8_text, day,
+      INSERT INTO my_table (id, value, simple_text, utf8_text, day,
           date_time)
       VALUES (%s, %s, %s, %s, %s, %s)""".strip()
     sql = re.sub(r"\s\s+", " ", sql)  # replace newlines and whitespace
@@ -239,3 +240,13 @@ def test_generate_insert_sql_None(pgtestdb_conn):
     with pytest.raises(ETLHelperInsertError,
                        match="Row is not a dictionary or namedtuple"):
         generate_insert_sql('my_table', data, pgtestdb_conn)
+
+
+@pytest.mark.parametrize('table, data', [
+    ('Bobby; DROP TABLE students', {'id': 1}),  # bad table
+    ('my_table', {'Bobby; DROP TABLE students': 1})  # bad column
+])
+def test_generate_insert_sql_bad_identifers(table, data, pgtestdb_conn):
+    # Act
+    with pytest.raises(ETLHelperBadIdentifierError):
+        generate_insert_sql(table, data, pgtestdb_conn)
