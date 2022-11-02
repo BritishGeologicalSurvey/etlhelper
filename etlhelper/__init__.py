@@ -5,6 +5,7 @@ import logging
 
 # Import helper functions here for more convenient access
 # flake8: noqa
+from etlhelper.abort import abort
 from etlhelper.db_params import DbParams
 from etlhelper.etl import (
     copy_rows,

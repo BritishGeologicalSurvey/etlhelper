@@ -5,6 +5,7 @@ from collections import namedtuple
 from itertools import zip_longest, islice, chain
 import logging
 
+from etlhelper.abort import raise_for_abort
 from etlhelper.row_factories import namedtuple_row_factory
 from etlhelper.db_helper_factory import DB_HELPER_FACTORY
 from etlhelper.exceptions import (
