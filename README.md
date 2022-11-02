@@ -1,6 +1,6 @@
 # etlhelper
 
-> etlhelper is a Python library to simplify data transfer into and out of databases.
+> etlhelper is a Python ETL library to simplify data transfer into and out of databases.
 
 ## Overview
 
