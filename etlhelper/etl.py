@@ -5,7 +5,7 @@ from collections import namedtuple
 from itertools import zip_longest, islice, chain
 import logging
 
-from etlhelper.abort import raise_for_abort
+from etlhelper.abort import raise_for_abort, clear_abort_event
 from etlhelper.row_factories import namedtuple_row_factory
 from etlhelper.db_helper_factory import DB_HELPER_FACTORY
 from etlhelper.exceptions import (
@@ -52,6 +52,8 @@ def iter_chunks(select_query, conn, parameters=(),
 
     helper = DB_HELPER_FACTORY.from_conn(conn)
     with helper.cursor(conn) as cursor:
+        clear_abort_event()
+
         # Run query
         try:
             cursor.execute(select_query, parameters)
@@ -69,6 +71,8 @@ def iter_chunks(select_query, conn, parameters=(),
         # Parse results
         first_pass = True
         while True:
+            raise_for_abort("abort() called during iter_chunks")
+
             rows = cursor.fetchmany(chunk_size)
 
             # No more rows to process

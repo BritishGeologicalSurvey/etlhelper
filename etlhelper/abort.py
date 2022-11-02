@@ -17,7 +17,7 @@ def abort():
     abort_event.set()
 
 
-def clear_abort():
+def clear_abort_event():
     """Clear abort_event."""
     abort_event.clear()
 
