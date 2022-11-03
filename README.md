@@ -560,6 +560,25 @@ a list.  Data transformation can then be performed via [memory-efficient
 iterator-chains](https://dbader.org/blog/python-iterator-chains).
 
 
+### Aborting running jobs
+
+When running as a script, `etlhelper` jobs can be stopped by pressing _CTRL-C_.
+This option is not available when the job is running as a background process,
+e.g. in a GUI application.
+The `abort_etlhelper_threads()` function is provided to cancel jobs running in
+a separate thread by raising an `ETLHelperAbort` exception within the thread.
+
+The state of the data when the job is cancelled (or crashes) depends on the
+arguments passed to `executemany` (or the functions that call it e.g. `load`,
+`copy_rows`).
+
++ If `commit_chunks` is `True` (default), all chunks up to the one where the
+  error occured are committed.
++ If `commit_chunks` is `False`, everything is rolled back and the database is
+  unchanged.
++ If an `on_error` function is defined, all rows without errors are committed.
+
+
 ## Utilities
 
 The following utility functions provide useful database metadata.
