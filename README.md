@@ -2,6 +2,11 @@
 
 > etlhelper is a Python library to simplify data transfer into and out of databases.
 
+> Note: There are a number of breaking changes planned for `etlhelper` version 1.0.
+> Please pin the version number in your dependency list to avoid disruption and
+> watch the project on GitHub for notification of new releases (in Custom section).
+
+
 ## Overview
 
 `etlhelper` makes it easy to run a SQL query via Python and return the results.
