@@ -27,6 +27,10 @@ class ETLHelperInsertError(ETLHelperError):
     """Exception raised when inserting data."""
 
 
+class ETLHelperAbort(ETLHelperError):
+    """Exception raised when `abort` is called."""
+
+
 class ETLHelperHelperError(ETLHelperError):
     """Exception raised when helper selection fails."""
 

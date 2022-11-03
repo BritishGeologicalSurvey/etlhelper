@@ -2,6 +2,11 @@
 
 > etlhelper is a Python ETL library to simplify data transfer into and out of databases.
 
+> Note: There are a number of breaking changes planned for `etlhelper` version 1.0.
+> Please pin the version number in your dependency list to avoid disruption and
+> watch the project on GitHub for notification of new releases (in Custom section).
+
+
 ## Overview
 
 `etlhelper` makes it easy to run a SQL query via Python and return the results.
@@ -579,6 +584,25 @@ generators.  Each chunk or row of data is only accessed when it is required.
 The transform function can also be written to return a generator instead of
 a list.  Data transformation can then be performed via [memory-efficient
 iterator-chains](https://dbader.org/blog/python-iterator-chains).
+
+
+### Aborting running jobs
+
+When running as a script, `etlhelper` jobs can be stopped by pressing _CTRL-C_.
+This option is not available when the job is running as a background process,
+e.g. in a GUI application.
+The `abort_etlhelper_threads()` function is provided to cancel jobs running in
+a separate thread by raising an `ETLHelperAbort` exception within the thread.
+
+The state of the data when the job is cancelled (or crashes) depends on the
+arguments passed to `executemany` (or the functions that call it e.g. `load`,
+`copy_rows`).
+
++ If `commit_chunks` is `True` (default), all chunks up to the one where the
+  error occured are committed.
++ If `commit_chunks` is `False`, everything is rolled back and the database is
+  unchanged.
++ If an `on_error` function is defined, all rows without errors are committed.
 
 
 ## Utilities
