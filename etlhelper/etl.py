@@ -49,10 +49,10 @@ def iter_chunks(select_query, conn, parameters=(),
     logger.info("Fetching rows (chunk_size=%s)", chunk_size)
     logger.debug(f"Fetching:\n\n{select_query}\n\nwith parameters:\n\n"
                  f"{parameters}\n\nagainst\n\n{conn}")
+    clear_abort_event()
 
     helper = DB_HELPER_FACTORY.from_conn(conn)
     with helper.cursor(conn) as cursor:
-        clear_abort_event()
 
         # Run query
         try:
@@ -71,7 +71,7 @@ def iter_chunks(select_query, conn, parameters=(),
         # Parse results
         first_pass = True
         while True:
-            raise_for_abort("abort() called during iter_chunks")
+            raise_for_abort("abort_etlhelper_threads() called during iter_chunks")
 
             rows = cursor.fetchmany(chunk_size)
 
@@ -280,6 +280,7 @@ def executemany(query, conn, rows, on_error=None, commit_chunks=True,
     """
     logger.info("Executing many (chunk_size=%s)", chunk_size)
     logger.debug("Executing:\n\n%s\n\nagainst\n\n%s", query, conn)
+    clear_abort_event()
 
     helper = DB_HELPER_FACTORY.from_conn(conn)
     processed = 0
@@ -287,6 +288,8 @@ def executemany(query, conn, rows, on_error=None, commit_chunks=True,
 
     with helper.cursor(conn) as cursor:
         for chunk in _chunker(rows, chunk_size):
+            raise_for_abort("abort_etlhelper_threads() called during executemany")
+
             # Run query
             try:
                 # Chunker pads to whole chunk with None; remove these
