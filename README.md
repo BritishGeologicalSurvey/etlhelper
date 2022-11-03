@@ -290,7 +290,16 @@ with ORACLEDB.connect("ORA_PASSWORD") as conn:
 #### Row factories
 
 Row factories control the output format of returned rows.
-To return each row as a dictionary, use the following:
+Four different versions are included:
+
+|Row Factory|Attribute access|Mutable|Parameter placeholder|
+|---|---|---|---|
+|namedtuple_row_factory (default)| `row.id` or `row[0]` | No | Positional |
+|dict_row_factory| `row["id"]`| Yes | Named |
+|tuple_row_factory| `row[0]`| No | Positional |
+|list_row_factory| `row[0]`| Yes | Positional |
+
+For example return each row as a dictionary, use the following:
 
 ```python
 from etlhelper import get_rows
@@ -303,11 +312,19 @@ with ORACLEDB.connect('ORACLE_PASSWORD') as conn:
         print(row['id'])
 ```
 
+Mutable rows can be convenient when used with transform functions because they
+can be modified without need to create a whole new output row.
+
+When using different row factories with `copy_rows`, it may be necessary to use
+different placeholder styles for parameters in the INSERT query.  The
+`dict_row_factory` requires named placeholders (e.g. `%(id)s` instead of `%s`
+ for PostgreSQL, `:id` instead of `:1` for Oracle).
+Using the `load` function requires that data are either named tuples or
+dictionaries.
+The `pyodbc` driver for MSSQL only supports positional placeholders.
+
 The `dict_row_factory` is useful when data are to be serialised to JSON/YAML,
-or when modifying individual fields with a `transform` function (see below).
-When using `dict_row_factory` with `copy_rows`, it is necessary to use named
-placeholders for the INSERT query (e.g. `%(id)s` instead of `%s` for
-PostgreSQL, `:id` instead of `:1` for Oracle).
+as those formats use dictionaries as input.
 
 
 #### Transform

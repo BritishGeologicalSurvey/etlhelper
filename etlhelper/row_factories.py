@@ -1,7 +1,6 @@
 """
-Functions that process row data as it comes from the database.  These are
-applied by the iter_rows function because the implementations for different
-database engines are different.
+Row factories are functions that process row data as it comes from the database.
+These are applied by the iter_rows function.
 
 A row_factory function must:
   + accept a cursor object as an input
@@ -15,7 +14,14 @@ import re
 
 
 def namedtuple_row_factory(cursor):
-    """Return output as a named tuple"""
+    """
+    Return function to convert output row to a named tuple.
+
+    Named tuples allow access to attributes via both position (e.g. row[0]) or
+    name (using dot notation, e.g. row.id).  They are immutable, so cannot be
+    modified directly in transform functions.  Insert statements based on named
+    tuples must use positional placeholders for parameters (e.g. ?, :1, %s).
+    """
     column_names = [d[0] for d in cursor.description]
 
     try:
@@ -36,7 +42,14 @@ def namedtuple_row_factory(cursor):
 
 
 def dict_row_factory(cursor):
-    """Replace the default tuple output with a dict"""
+    """
+    Return function to convert output row to a dictionary.
+
+    Dictionaries allow access to attributes via name (using key notation, e.g.
+    row["id"].  They are mutable, so are convenient to modify directly in
+    transform functions.  Insert statements based on dictionaries must use
+    named placeholders for parameters (e.g. :id, %(id)s).
+    """
     column_names = [d[0] for d in cursor.description]
 
     def create_row(row):
@@ -44,6 +57,39 @@ def dict_row_factory(cursor):
         for i, column_name in enumerate(column_names):
             row_dict[column_name] = row[i]
         return row_dict
+
+    return create_row
+
+
+def tuple_row_factory(cursor):
+    """
+    Return function to convert output row to a tuple.
+
+    Tuples allow access to attributes via position (e.g. row[0]).  They are
+    immutable, so cannot be modified directly in transform functions.  Insert
+    statements based on tuples must use positional placeholders for parameters
+    (e.g. ?, :1, %s).
+
+    As the DBAPI default is already to return rows as tuples, using the tuple
+    row factory minimises processing overhead.
+    """
+    def create_row(row):
+        return row
+
+    return create_row
+
+
+def list_row_factory(cursor):
+    """
+    Return function to convert output row to a list.
+
+    Lists allow access to attributes via position (e.g. row[0]).  They are
+    mutable, so are convient to modify directly in transform functions.  Insert
+    statements based on lists must use positional placeholders for parameters
+    (e.g. ?, :1, %s).
+    """
+    def create_row(row):
+        return list(row)
 
     return create_row
 

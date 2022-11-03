@@ -12,7 +12,11 @@ import etlhelper.etl as etlhelper_etl
 from etlhelper import (iter_chunks, iter_rows, get_rows, dump_rows, execute,
                        fetchone, fetchmany, fetchall)
 from etlhelper.etl import ETLHelperExtractError, ETLHelperQueryError
-from etlhelper.row_factories import dict_row_factory, namedtuple_row_factory
+from etlhelper.row_factories import (
+    dict_row_factory,
+    list_row_factory,
+    namedtuple_row_factory,
+    tuple_row_factory)
 
 
 @pytest.mark.parametrize('chunk_size, slices', [
@@ -72,24 +76,6 @@ def test_iter_rows_transform(pgtestdb_test_tables, pgtestdb_conn,
     assert list(result) == expected
 
 
-def test_iter_rows_dict_factory(pgtestdb_test_tables, pgtestdb_conn):
-    sql = "SELECT * FROM src"
-    result = iter_rows(sql, pgtestdb_conn, row_factory=dict_row_factory)
-    expected = [
-        {'id': 1, 'value': 1.234, 'simple_text': 'text', 'utf8_text': 'Öæ°\nz',
-         'day': datetime.date(2018, 12, 7),
-         'date_time': datetime.datetime(2018, 12, 7, 13, 1, 59)},
-        {'id': 2, 'value': 2.234, 'simple_text': 'text', 'utf8_text': 'Öæ°\nz',
-         'day': datetime.date(2018, 12, 8),
-         'date_time': datetime.datetime(2018, 12, 8, 13, 1, 59)},
-        {'id': 3, 'value': 2.234, 'simple_text': 'text', 'utf8_text': 'Öæ°\nz',
-         'day': datetime.date(2018, 12, 9),
-         'date_time': datetime.datetime(2018, 12, 9, 13, 1, 59)},
-    ]
-
-    assert list(result) == expected
-
-
 def test_iter_rows_namedtuple_factory(
         pgtestdb_test_tables, pgtestdb_conn, test_table_data):
     sql = "SELECT * FROM src"
@@ -105,6 +91,26 @@ def test_iter_rows_namedtuple_factory(
     # The final assertion is skipped because the test fails, even though the
     # correct value has been assigned.  I don't know why.
     # assert row.date_time == datetime.datetime(2018, 12, 9, 13, 1, 59)
+
+
+@pytest.mark.parametrize('row_factory, expected', [
+    (dict_row_factory, {
+        'id': 1, 'value': 1.234, 'simple_text': 'text',
+        'utf8_text': 'Öæ°\nz', 'day': datetime.date(2018, 12, 7),
+        'date_time': datetime.datetime(2018, 12, 7, 13, 1, 59)}),
+    (tuple_row_factory, (
+        1, 1.234, 'text', 'Öæ°\nz', datetime.date(2018, 12, 7),
+        datetime.datetime(2018, 12, 7, 13, 1, 59))),
+    (list_row_factory, [
+        1, 1.234, 'text', 'Öæ°\nz', datetime.date(2018, 12, 7),
+        datetime.datetime(2018, 12, 7, 13, 1, 59)]),
+])
+def test_iter_rows_other_row_factories(row_factory, expected,
+                                       pgtestdb_test_tables, pgtestdb_conn):
+    sql = "SELECT * FROM src LIMIT 1"
+    result = iter_rows(sql, pgtestdb_conn, row_factory=row_factory)
+
+    assert list(result) == [expected]
 
 
 def test_iter_rows_no_results(pgtestdb_test_tables, pgtestdb_conn):
