@@ -9,14 +9,19 @@ from time import sleep
 
 import pytest
 
-from etlhelper import execute, executemany, fetchall, abort
+from etlhelper import (
+    abort_etlhelper_threads,
+    execute,
+    executemany,
+    fetchall,
+)
 from etlhelper.exceptions import ETLHelperAbort
 
 logger = logging.getLogger('abort_test')
 logger.setLevel(logging.INFO)
 
 
-def test_abort_on_fetchall(tmpdir, caplog):
+def test_abort_etlhelper_threads(tmpdir, caplog):
     """
     Fetch one row at a time from temporary database within a thread pool,
     call abort() then assert that exception was raised and not all
@@ -51,7 +56,7 @@ def test_abort_on_fetchall(tmpdir, caplog):
 
         # Call abort after short delay
         sleep(0.2)
-        abort()
+        abort_etlhelper_threads()
 
         # Exception raised when result is retrieved
         with pytest.raises(ETLHelperAbort, match="iter_chunks"):

@@ -8,7 +8,7 @@ from etlhelper.exceptions import ETLHelperAbort
 abort_event = threading.Event()
 
 
-def abort():
+def abort_etlhelper_threads():
     """
     Abort the ETLHelper process at the end of the current chunk.  During
     threaded operation, this will cause an ETLHelperAbort error to be
