@@ -29,3 +29,10 @@ class ETLHelperInsertError(ETLHelperError):
 
 class ETLHelperHelperError(ETLHelperError):
     """Exception raised when helper selection fails."""
+
+
+class ETLHelperBadIdentifierError(ETLHelperError):
+    """
+    Exception raised when identifier contains invalid characters.  This may
+    indicate an attempt at SQL injection.
+    """
