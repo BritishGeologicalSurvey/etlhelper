@@ -295,14 +295,6 @@ with ORACLEDB.connect("ORA_PASSWORD") as conn:
 #### Row factories
 
 Row factories control the output format of returned rows.
-Four different versions are included:
-
-|Row Factory|Attribute access|Mutable|Parameter placeholder|
-|---|---|---|---|
-|namedtuple_row_factory (default)| `row.id` or `row[0]` | No | Positional |
-|dict_row_factory| `row["id"]`| Yes | Named |
-|tuple_row_factory| `row[0]`| No | Positional |
-|list_row_factory| `row[0]`| Yes | Positional |
 
 For example return each row as a dictionary, use the following:
 
@@ -317,19 +309,33 @@ with ORACLEDB.connect('ORACLE_PASSWORD') as conn:
         print(row['id'])
 ```
 
-Mutable rows can be convenient when used with transform functions because they
-can be modified without need to create a whole new output row.
-
-When using different row factories with `copy_rows`, it may be necessary to use
-different placeholder styles for parameters in the INSERT query.  The
-`dict_row_factory` requires named placeholders (e.g. `%(id)s` instead of `%s`
- for PostgreSQL, `:id` instead of `:1` for Oracle).
-Using the `load` function requires that data are either named tuples or
-dictionaries.
-The `pyodbc` driver for MSSQL only supports positional placeholders.
-
 The `dict_row_factory` is useful when data are to be serialised to JSON/YAML,
 as those formats use dictionaries as input.
+
+Four different row_factories are included, based in built-in Python types:
+
+|Row Factory|Attribute access|Mutable|Parameter placeholder|
+|---|---|---|---|
+|namedtuple_row_factory (default)| `row.id` or `row[0]` | No | Positional |
+|dict_row_factory| `row["id"]`| Yes | Named |
+|tuple_row_factory| `row[0]`| No | Positional |
+|list_row_factory| `row[0]`| Yes | Positional |
+
+The choice of row factory depends on the use case.  In general named tuples
+and dictionaries are best for readable code, while using tuples or lists can
+give a slight increase in performance.
+Mutable rows are convenient when used with transform functions because they
+can be modified without need to create a whole new output row.
+
+When using `copy_rows`, it is necessary to use approriate parameter placeholder
+style for the chosen row factory in the INSERT query.
+Using the `dict_row_factory` requires a switch from named to positional
+parameter placeholders (e.g. `%(id)s` instead of `%s` for PostgreSQL, `:id`
+instead of `:1` for Oracle).
+The `pyodbc` driver for MSSQL only supports positional placeholders.
+
+When using the `load` function in conjuction with `iter_chunks` data must be
+either named tuples or dictionaries.
 
 
 #### Transform
