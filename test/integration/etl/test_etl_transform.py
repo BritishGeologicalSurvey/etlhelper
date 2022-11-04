@@ -13,6 +13,7 @@ from etlhelper import (
     iter_rows,
 )
 from etlhelper.row_factories import dict_row_factory
+from etlhelper.exceptions import ETLHelperBadIdentifierError
 
 
 def test_copy_rows_happy_path(pgtestdb_conn, pgtestdb_test_tables,
@@ -72,6 +73,13 @@ def test_copy_table_rows_on_error(pgtestdb_test_tables, pgtestdb_conn,
 
     # Check that other rows were inserted correctly
     assert result[1:] == test_table_data[1:]
+
+
+def test_copy_table_rows_bad_table(pgtestdb_conn, pgtestdb_test_tables,
+                                   pgtestdb_insert_sql, test_table_data):
+    # Arrange and act
+    with pytest.raises(ETLHelperBadIdentifierError):
+        copy_table_rows('bad; sql', pgtestdb_conn, pgtestdb_conn, target='dest')
 
 
 def transform_return_list(rows):
