@@ -69,7 +69,7 @@ def test_abort_etlhelper_threads(do_etl, log_keyword, tmpdir, caplog):
     """
     # Arrange
     # Create and populate a temporary SQLite database
-    db = tmpdir / 'test.db'
+    db = str(tmpdir / 'test.db')  # sqlite3 on Python 3.6 requires a string
 
     with sqlite3.connect(db) as conn:
         execute("CREATE TABLE test (id INTEGER)", conn)
