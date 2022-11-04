@@ -482,6 +482,8 @@ def copy_table_rows(table, source_conn, dest_conn, target=None,
                               e.g. WHERE, ORDER BY, LIMIT
     :return processed, failed: (int, int) number of rows processed, failed
     """
+    validate_identifier(table)
+
     select_query = f"SELECT * FROM {table}"
     if not target:
         target = table
