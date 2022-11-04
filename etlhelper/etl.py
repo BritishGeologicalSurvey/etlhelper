@@ -605,7 +605,9 @@ def validate_identifier(identifier):
     # `\w` represents all alphanumeric characters (including unicode) plus `_`
     # `(?![0-9])` is a "negative-lookahead assertion" to remove numbers from
     # the match for the first character.
-    regex = re.compile(r"(?![0-9])[\w][\w$]*$")
+    # The regex comprises two very similar groups.  The first is optional and
+    # ends with a dot.  This represents the schema name.
+    regex = re.compile(r"((?![0-9])[\w][\w$]*\.?)?((?![0-9])[\w][\w$]*)$")
 
     if not regex.match(identifier):
         msg = f"'{identifier}' contains invalid characters."
