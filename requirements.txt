@@ -6,6 +6,7 @@ psycopg2-binary
 pyodbc
 pytest-cov
 pytest>=4.6
+sphinx_rtd_theme
 twine
 versioneer==0.20
 wheel
