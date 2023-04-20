@@ -31,7 +31,7 @@ jobs:
     - name: Lint app/ with flake8
       run: |
         # exit-zero treats all errors as warnings. 
-        flake8 app/ --exit-zero 
+        flake8 etlhelper/ --exit-zero 
 
     - name: Lint test/ with flake8
       run: |
