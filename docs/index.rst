@@ -1,8 +1,3 @@
-.. ETLHelper documentation master file, created by
-   sphinx-quickstart on Thu Apr 20 13:05:46 2023.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
-
 Welcome to ETLHelper's documentation!
 =====================================
 
@@ -13,6 +8,25 @@ Welcome to ETLHelper's documentation!
 **etlhelper** is a Python ETL library to simplify data transfer into and out of databases.
 
 .. note::  Note: There are a number of breaking changes planned for etlhelper version 1.0. Please pin the version number in your dependency list to avoid disruption and watch the project on GitHub for notification of new releases (in Custom section).
+
+.. toctree::
+   :maxdepth: 3
+   :caption: Contents:
+
+   index
+   modules
+
+Documentation
+~~~~~~~~~~~~~
+
+-  `Installation <#installation>`__
+-  `Connect to databases <#connect-to-databases>`__
+-  `Transfer data <#transfer-data>`__
+-  `Utilities <#utilities>`__
+-  `Recipes <#recipes>`__
+-  `Development <#development>`__
+-  `References <#references>`__
+
 
 Overview
 --------
@@ -67,17 +81,6 @@ For a high level introduction to ``etlhelper``, see the FOSS4GUK 2019
 presentation *Open Source Spatial ETL with Python and Apache Airflow*:
 `video <https://www.youtube.com/watch?v=12rzUW4ps74&feature=youtu.be&t=6238>`__
 (20 mins), `slides <https://volcan01010.github.io/FOSS4G2019-talk>`__.
-
-Documentation
-~~~~~~~~~~~~~
-
--  `Installation <#installation>`__
--  `Connect to databases <#connect-to-databases>`__
--  `Transfer data <#transfer-data>`__
--  `Utilities <#utilities>`__
--  `Recipes <#recipes>`__
--  `Development <#development>`__
--  `References <#references>`__
 
 Installation
 ------------
@@ -1003,7 +1006,7 @@ import data from a CSV file into a database. It shows how a
 ``transform`` function can perform common parsing tasks such as renaming
 columns and converting timestamps into datetime objects. The database
 has a ``CHECK`` constraint that rejects any rows with an ID divisible by
-1000. An example ``on_error`` function prints the IDs of rows that fail
+1.    An example ``on_error`` function prints the IDs of rows that fail
 to insert.
 
 .. code:: python
@@ -1135,15 +1138,8 @@ References
 -  `pyodbc <https://pypi.org/project/pyodbc/>`__
 -  `sqlite3 <https://docs.python.org/3/library/sqlite3.html>`__
 
-
-.. toctree::
-   :maxdepth: 3
-   :caption: Contents:
-
-   modules
-
-* LICENSE: `GNU LGPLv3 <https://www.gnu.org/licenses/lgpl-3.0.html>`_
-* 
+LICENSE: `GNU LGPLv3 <https://www.gnu.org/licenses/lgpl-3.0.html>`_
+ 
 Indices and tables
 ==================
 
