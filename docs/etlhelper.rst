@@ -1,11 +1,11 @@
 etlhelper packages
-=====================
+-------------------
 
 .. toctree::
-   :maxdepth: 4
+   :maxdepth: 3
 
 etlhelper.etl module
-------------------------
+~~~~~~~~~~~~~~~~~~~~~
 
 .. automodule:: etlhelper.etl
    :members:
@@ -13,7 +13,7 @@ etlhelper.etl module
    :show-inheritance:
 
 etlhelper.abort module
-------------------------
+~~~~~~~~~~~~~~~~~~~~~~~
 
 .. automodule:: etlhelper.abort
    :members:
@@ -21,7 +21,7 @@ etlhelper.abort module
    :show-inheritance:
 
 etlhelper.connect module
-------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. automodule:: etlhelper.connect
    :members:
@@ -29,7 +29,7 @@ etlhelper.connect module
    :show-inheritance:   
 
 etlhelper.db_helper_factory module
------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. automodule:: etlhelper.db_helper_factory
    :members:
@@ -37,7 +37,7 @@ etlhelper.db_helper_factory module
    :show-inheritance:    
 
 etlhelper.db_params module
----------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. automodule:: etlhelper.db_params
    :members:
@@ -45,7 +45,7 @@ etlhelper.db_params module
    :show-inheritance:  
 
 etlhelper.exceptions module
-----------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. automodule:: etlhelper.exceptions
    :members:
@@ -53,7 +53,7 @@ etlhelper.exceptions module
    :show-inheritance:      
 
 etlhelper.row_factories module
-------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. automodule:: etlhelper.row_factories
    :members:
@@ -62,7 +62,7 @@ etlhelper.row_factories module
 
 ..
    etlhelper.setup_oracle_client module
-   --------------------------------------
+   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
    .. automodule:: etlhelper.setup_oracle_client
       :members:
@@ -70,7 +70,7 @@ etlhelper.row_factories module
       :show-inheritance:    
 
 etlhelper.utils module
-------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. automodule:: etlhelper.utils
    :members:

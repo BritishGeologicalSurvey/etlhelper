@@ -16,18 +16,6 @@ Welcome to ETLHelper's documentation!
    index
    modules
 
-Documentation
-~~~~~~~~~~~~~
-
--  `Installation <#installation>`__
--  `Connect to databases <#connect-to-databases>`__
--  `Transfer data <#transfer-data>`__
--  `Utilities <#utilities>`__
--  `Recipes <#recipes>`__
--  `Development <#development>`__
--  `References <#references>`__
-
-
 Overview
 --------
 
