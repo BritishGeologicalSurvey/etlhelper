@@ -17,5 +17,7 @@ jobs:
       pages: write
       id-token: write
     steps:
+      run: |
+          pip install sphinx sphinx_rtd_theme
     - id: deployment
       uses: sphinx-notes/pages@v3
