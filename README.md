@@ -34,7 +34,7 @@ These tools can create easy-to-understand, lightweight, versionable and testable
 converting GIS data formats (use [ogr2ogr](https://gdal.org/programs/ogr2ogr.html) or [fiona](https://pypi.org/project/Fiona/)), for translating between SQL dialects or providing Object Relation Mapping (use [SQLAlchemy](https://www.sqlalchemy.org/)).
 However, it can be used in conjunction with each of these.
 
-![screencast](https://github.com/BritishGeologicalSurvey/etlhelper/blob/main/docs/screencast.gif?raw=true)
+![screencast](https://github.com/BritishGeologicalSurvey/etlhelper/blob/main/docs/media/screencast.gif?raw=true)
 
 The documentation below explains how the main features are used.
 See the individual function docstrings for full details of parameters and
