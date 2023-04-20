@@ -17,6 +17,7 @@ jobs:
       pages: write
       id-token: write
     steps:
+    - name: Install RTD Theme
       run: |
           pip install sphinx sphinx_rtd_theme
     - id: deployment
