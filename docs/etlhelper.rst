@@ -60,13 +60,14 @@ etlhelper.row_factories module
    :undoc-members:
    :show-inheritance:    
 
-etlhelper.setup_oracle_client module
---------------------------------------
+..
+   etlhelper.setup_oracle_client module
+   --------------------------------------
 
-.. automodule:: etlhelper.setup_oracle_client
-   :members:
-   :undoc-members:
-   :show-inheritance:    
+   .. automodule:: etlhelper.setup_oracle_client
+      :members:
+      :undoc-members:
+      :show-inheritance:    
 
 etlhelper.utils module
 ------------------------
