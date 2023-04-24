@@ -3,8 +3,8 @@ import logging
 import sys
 from unittest.mock import MagicMock, Mock
 
-import cx_Oracle
-from cx_Oracle import DatabaseError, _Error
+import oracledb
+from oracledb import DatabaseError, _Error
 import pytest
 
 import etlhelper.setup_oracle_client as soc
@@ -28,13 +28,13 @@ def test_oracle_client_is_configured(monkeypatch, caplog, emsg, expected_return,
     1) Bad Oracle client libs (libclntsh)
 
     """
-    # Arrange cx_Oracle to raise error when connect() is called
+    # Arrange oracledb to raise error when connect() is called
     cx_err = MagicMock(_Error)
     cx_err.message = emsg
 
     def mock_connect(dummy):
         raise DatabaseError(cx_err)
-    monkeypatch.setattr(cx_Oracle, 'connect', mock_connect)
+    monkeypatch.setattr(oracledb, 'connect', mock_connect)
 
     # Act
     with caplog.at_level(logging.DEBUG):
@@ -51,15 +51,15 @@ def test_oracle_client_is_configured(monkeypatch, caplog, emsg, expected_return,
 @pytest.mark.parametrize("emsg, expected_text",
                          [("DPI-1047: libnsl.so.1", NSL_MESSAGE),
                           ("DPI-9999: Some weird error",
-                              "cx_Oracle Instant Client Error: DPI-9999: Some weird error")])
+                              "oracledb Instant Client Error: DPI-9999: Some weird error")])
 def test_oracle_client_is_configured_sys_exits(monkeypatch, caplog, emsg, expected_text):
-    # Arrange cx_Oracle to raise error when connect() is called
+    # Arrange oracledb to raise error when connect() is called
     cx_err = MagicMock(_Error)
     cx_err.message = emsg
 
     def mock_connect(dummy):
         raise DatabaseError(cx_err)
-    monkeypatch.setattr(cx_Oracle, 'connect', mock_connect)
+    monkeypatch.setattr(oracledb, 'connect', mock_connect)
 
     # Act
     with pytest.raises(SystemExit):
