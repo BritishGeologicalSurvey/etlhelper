@@ -80,33 +80,9 @@ The `sqlite3` driver is included within Python's Standard Library.
 Some database drivers have additional dependencies.
 On Linux, these can be installed via the system package manager.
 
-oracledb (for Oracle):
-
-+ `sudo apt install libaio1` (Debian/Ubuntu) or `sudo dnf install libaio`
-  (CentOS, RHEL, Fedora)
-
 pyodbc (for MS SQL Server):
 
 + Follow instructions on [Microsoft SQL Docs website](https://docs.microsoft.com/en-us/sql/connect/odbc/linux-mac/installing-the-microsoft-odbc-driver-for-sql-server?view=sql-server-2017)
-
-
-### Oracle Instant Client
-
-Oracle Instant Client libraries are required to connect to Oracle databases.
-On Linux, `etlhelper` provides a script to download and unzip them from the [Oracle
-website](https://www.oracle.com/database/technologies/instant-client/linux-x86-64-downloads.html).
-Once the drivers are installed, their location must be added to LD_LIBRARY_PATH
-environment variable before they can be used.  `setup_oracle_client` writes
-a file that can then be "sourced" to do this for the current shell.  These two steps
-can be executed in a single command as:
-
-```bash
-source $(setup_oracle_client)
-```
-
-This command must be run in each new shell session.
-See `setup_oracle_client --help` for further command line flags, including
-specifying an alternative URL or filesystem path for the zipfile location.
 
 
 ## Connect to databases
@@ -1096,6 +1072,6 @@ Copyright: © BGS / UKRI 2019
 
 + [PEP249 DB API2](https://www.python.org/dev/peps/pep-0249/#cursor-objects)
 + [psycopg2](http://initd.org/psycopg/docs/cursor.html)
-+ [cx_Oracle](https://cx-oracle.readthedocs.io/en/latest/)
++ [oracledb](https://python-oracledb.readthedocs.io/en/latest/index.html)
 + [pyodbc](https://pypi.org/project/pyodbc/)
 + [sqlite3](https://docs.python.org/3/library/sqlite3.html)
