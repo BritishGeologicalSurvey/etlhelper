@@ -401,6 +401,8 @@ to remove the need to explicitly write the query for simple cases. By
 calling this function manually, users can create a base insert query that can
 be extended with clauses such as `ON CONFLICT DO NOTHING`.
 
+NOTE: the `load` function uses the first row of data to generate the list of column for the insert query. If later items in the data contain extra columns, those columns will not be inserted and no error will be raised.
+
 As `generate_insert_query` creates SQL statements from user-provided input,
 it checks the table and column names to ensure that they only contain valid
 characters.
