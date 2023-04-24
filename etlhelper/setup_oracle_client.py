@@ -12,11 +12,11 @@ from textwrap import dedent
 from urllib.error import URLError
 
 try:
-    import cx_Oracle
+    import oracledb
 except ModuleNotFoundError:
-    print("cx_Oracle module not found.  "
+    print("oracledb module not found.  "
           "Please install via `pip install etlhelper[oracle]` or "
-          "`pip install cx_Oracle`.")
+          "`pip install oracledb`.")
     sys.exit(1)
 
 formatter = logging.Formatter('setup_oracle_client: %(message)s')
@@ -277,13 +277,13 @@ def _create_ld_library_prepend_script(install_dir, ld_library_prepend_script):
 
 def _oracle_client_is_configured():
     """
-    Check if cx_Oracle can communicate with Oracle Instant Client driver.
+    Check if oracledb can communicate with Oracle Instant Client driver.
     :return: boolean
     """
     try:
         # This will always fail, as 'test' is not a valid database.
-        cx_Oracle.connect('test')
-    except cx_Oracle.DatabaseError as exc:
+        oracledb.connect('test')
+    except oracledb.DatabaseError as exc:
         msg = exc.args[0].message
 
         # Incorrectly specified service error - this is good!

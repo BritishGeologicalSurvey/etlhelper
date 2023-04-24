@@ -657,7 +657,7 @@ def _read_lob(rows):
     """
     clean_rows = []
     for row in rows:
-        clean_row = [x.read() if str(x.__class__) == "<class 'cx_Oracle.LOB'>"
+        clean_row = [x.read() if str(x.__class__) == "<class 'oracledb.LOB'>"
                      else x for x in row]
         clean_rows.append(clean_row)
 

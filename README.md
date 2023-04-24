@@ -65,7 +65,7 @@ pip install etlhelper
 
 Database driver packages are not included by default and should be specified in
 square brackets.
-Options are `oracle` (installs cx_Oracle), `mssql` (installs pyodbc) and `postgres` (installs psycopg2).
+Options are `oracle` (installs oracledb), `mssql` (installs pyodbc) and `postgres` (installs psycopg2).
 Multiple values can be separated by commas.
 
 ```
@@ -80,7 +80,7 @@ The `sqlite3` driver is included within Python's Standard Library.
 Some database drivers have additional dependencies.
 On Linux, these can be installed via the system package manager.
 
-cx_Oracle (for Oracle):
+oracledb (for Oracle):
 
 + `sudo apt install libaio1` (Debian/Ubuntu) or `sudo dnf install libaio`
   (CentOS, RHEL, Fedora)
@@ -171,7 +171,7 @@ conn3 = connect(ORACLEDB, 'ORACLE_PASSWORD')
 
 Both versions accept additional keyword arguments that are passed to the `connect`
 function of the underlying driver.  For example, the following sets the character
-encoding used by cx_Oracle to ensure that values are returned as UTF-8:
+encoding used by oracledb to ensure that values are returned as UTF-8:
 
 ```python
 conn4 = connect(ORACLEDB, 'ORACLE_PASSWORD', encoding="UTF-8", nencoding="UTF8")

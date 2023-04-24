@@ -67,7 +67,7 @@ class DbHelperFactory():
 
 
 DB_HELPER_FACTORY = DbHelperFactory()
-DB_HELPER_FACTORY.register_helper('ORACLE', "<class 'cx_Oracle.Connection'>",
+DB_HELPER_FACTORY.register_helper('ORACLE', "<class 'oracledb.Connection'>",
                                   OracleDbHelper)
 DB_HELPER_FACTORY.register_helper('PG', "<class 'psycopg2.extensions.connection'>",
                                   PostgresDbHelper)
