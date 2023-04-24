@@ -54,6 +54,7 @@ setup(
                 'pytest-cov',
                 'versioneer'
                 ],
+        'all': ['oracledb', 'cffi', 'pyodbc', 'psycopg2-binary'],
         'oracle': ['oracledb', 'cffi'],
         'mssql': ['pyodbc'],
         'postgres': ['psycopg2-binary']},
