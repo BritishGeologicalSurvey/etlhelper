@@ -3,7 +3,7 @@ name: Deploy Sphinx documentation to Pages
 on:
   push:
     branches: 
-      - main
+      - for_v1
     paths:
       - 'docs/**'  
 
