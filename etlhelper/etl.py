@@ -37,7 +37,7 @@ CHUNKSIZE = 5000
 # All data extraction processes call this function.
 def iter_chunks(select_query, conn, parameters=(),
                 row_factory=namedtuple_row_factory,
-                transform=None, read_lob=False, chunk_size=CHUNKSIZE):
+                transform=None, chunk_size=CHUNKSIZE):
     """
     Run SQL query against connection and return iterator object to loop over
     results in batches of chunksize (default 5000).
@@ -48,9 +48,6 @@ def iter_chunks(select_query, conn, parameters=(),
     The transform function is applied to chunks of data as they are extracted
     from the database.
 
-    The read_lob parameter will convert Oracle LOB objects to strings. It is
-    required to access results of some Oracle Spatial functions.
-
     :param select_query: str, SQL query to execute
     :param conn: dbapi connection
     :param parameters: sequence or dict of bind variables to insert in the query
@@ -58,7 +55,6 @@ def iter_chunks(select_query, conn, parameters=(),
                         for parsing each row
     :param transform: function that accepts an iterable (e.g. list) of rows and
                       returns an iterable of rows (possibly of different shape)
-    :param read_lob: bool, convert Oracle LOB objects to strings
     :param chunk_size: int, size of chunks to group data by
     """
     logger.info("Fetching rows (chunk_size=%s)", chunk_size)
@@ -106,10 +102,6 @@ def iter_chunks(select_query, conn, parameters=(),
                 conn.commit()
                 return
 
-            # Convert Oracle LOBs to strings if required
-            if read_lob:
-                rows = _read_lob(rows)
-
             # Apply row_factory
             rows = (create_row(row) for row in rows)
 
@@ -124,7 +116,7 @@ def iter_chunks(select_query, conn, parameters=(),
 
 def iter_rows(select_query, conn, parameters=(),
               row_factory=namedtuple_row_factory,
-              transform=None, read_lob=False, chunk_size=CHUNKSIZE):
+              transform=None, chunk_size=CHUNKSIZE):
     """
     Run SQL query against connection and return iterator object to loop over
     results, row-by-row.
@@ -136,12 +128,11 @@ def iter_rows(select_query, conn, parameters=(),
                         for parsing each row
     :param transform: function that accepts an iterable (e.g. list) of rows and
                       returns an iterable of rows (possibly of different shape)
-    :param read_lob: bool, convert Oracle LOB objects to strings
     :param chunk_size: int, size of chunks to group data by
     """
     for chunk in iter_chunks(select_query, conn, row_factory=row_factory,
                              parameters=parameters, transform=transform,
-                             read_lob=read_lob, chunk_size=chunk_size):
+                             chunk_size=chunk_size):
         for row in chunk:
             yield row
 
@@ -374,7 +365,7 @@ def _execute_by_row(query, conn, chunk):
 def copy_rows(select_query, source_conn, insert_query, dest_conn,
               parameters=(), row_factory=namedtuple_row_factory,
               transform=None, on_error=None, commit_chunks=True,
-              read_lob=False, chunk_size=CHUNKSIZE):
+              chunk_size=CHUNKSIZE):
     """
     Copy rows from source_conn to dest_conn.  select_query and insert_query
     specify the data to be transferred.
@@ -405,14 +396,12 @@ def copy_rows(select_query, source_conn, insert_query, dest_conn,
                       returns an iterable of rows (possibly of different shape)
     :param on_error: Function to be applied to failed rows in each chunk
     :param commit_chunks: bool, commit after each chunk (see executemany)
-    :param read_lob: bool, convert Oracle LOB objects to strings
     :param chunk_size: int, size of chunks to group data by
     :return processed, failed: (int, int) number of rows processed, failed
     """
     rows_generator = iter_rows(select_query, source_conn,
                                parameters=parameters, row_factory=row_factory,
-                               transform=transform, read_lob=read_lob,
-                               chunk_size=chunk_size)
+                               transform=transform, chunk_size=chunk_size)
     processed, failed = executemany(insert_query, dest_conn,
                                     rows_generator,
                                     on_error=on_error,
@@ -451,7 +440,7 @@ def execute(query, conn, parameters=()):
 def copy_table_rows(table, source_conn, dest_conn, target=None,
                     row_factory=namedtuple_row_factory,
                     transform=None, on_error=None, commit_chunks=True,
-                    read_lob=False, chunk_size=CHUNKSIZE):
+                    chunk_size=CHUNKSIZE):
     """
     Copy rows from 'table' in source_conn to same or target table in dest_conn.
     This is a simple copy of all columns and rows using `load` to insert data.
@@ -477,7 +466,6 @@ def copy_table_rows(table, source_conn, dest_conn, target=None,
                       returns an iterable of rows (possibly of different shape)
     :param on_error: Function to be applied to failed rows in each chunk
     :param commit_chunks: bool, commit after each chunk (see executemany)
-    :param read_lob: bool, convert Oracle LOB objects to strings
     :param chunk_size: int, size of chunks to group data by
     :param select_sql_suffix: str, SQL clause(s) to append to select statement
                               e.g. WHERE, ORDER BY, LIMIT
@@ -490,8 +478,7 @@ def copy_table_rows(table, source_conn, dest_conn, target=None,
         target = table
 
     rows_generator = iter_rows(select_query, source_conn, row_factory=row_factory,
-                               transform=transform, read_lob=read_lob,
-                               chunk_size=chunk_size)
+                               transform=transform, chunk_size=chunk_size)
     processed, failed = load(target, dest_conn, rows_generator, on_error=on_error,
                              commit_chunks=commit_chunks, chunk_size=chunk_size)
     return processed, failed
@@ -647,18 +634,3 @@ def _chunker(iterable, n_chunks, fillvalue=None):
     # _chunker('ABCDEFG', 3, 'x') --> ABC DEF Gxx"
     args = [iter(iterable)] * n_chunks
     return zip_longest(*args, fillvalue=fillvalue)
-
-
-def _read_lob(rows):
-    """
-    Replace Oracle LOB objects within rows with their string representation.
-    :param rows: list of tuples of output data
-    :return: list of tuples with LOB objects converted to strings
-    """
-    clean_rows = []
-    for row in rows:
-        clean_row = [x.read() if str(x.__class__) == "<class 'oracledb.LOB'>"
-                     else x for x in row]
-        clean_rows.append(clean_row)
-
-    return clean_rows
