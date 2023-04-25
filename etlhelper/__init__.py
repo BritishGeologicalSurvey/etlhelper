@@ -10,7 +10,6 @@ from etlhelper.abort import abort_etlhelper_threads
 from etlhelper.db_params import DbParams
 from etlhelper.etl import (
     copy_rows,
-    dump_rows,
     execute,
     executemany,
     fetchone,
