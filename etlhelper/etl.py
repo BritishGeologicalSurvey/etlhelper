@@ -142,7 +142,8 @@ def get_rows(select_query, conn, parameters=(),
     :param conn: dbapi connection
     :param parameters: sequence or dict of bind variables to insert in the query
     :param row_factory: function that accepts a cursor and returns a function for parsing each row
-    :param transform: function that accepts an iterable (e.g. list) of rows and returns an iterable of rows (possibly of different shape)
+    :param transform: function that accepts an iterable (e.g. list) of rows and returns an iterable
+                      of rows (possibly of different shape)
     :param chunk_size: int, size of chunks to group data by
     """
     return list(iter_rows(select_query, conn, row_factory=row_factory,
@@ -216,7 +217,8 @@ def fetchall(select_query, conn, parameters=(),
     :param conn: dbapi connection
     :param parameters: sequence or dict of bind variables to insert in the query
     :param row_factory: function that accepts a cursor and returns a function for parsing each row
-    :param transform: function that accepts an iterable (e.g. list) of rows and returns an iterable of rows (possibly of different shape)
+    :param transform: function that accepts an iterable (e.g. list) of rows and returns an iterable
+                      of rows (possibly of different shape)
     :param chunk_size: int, size of chunks to group data by
     """
     return list(iter_rows(select_query, conn, row_factory=row_factory,

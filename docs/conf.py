@@ -16,8 +16,6 @@ import os
 import sys
 sys.path.insert(0, os.path.abspath('..'))
 
-import etlhelper
-
 # -- Project information -----------------------------------------------------
 
 project = 'ETLHelper'
@@ -95,7 +93,7 @@ html_theme_options = {
     'logo_only': False,
     'navigation_depth': 5,
     'prev_next_buttons_location': 'bottom',
-}    
+}
 html_logo = "_static/logo.png"
 html_show_sourcelink = True
 
