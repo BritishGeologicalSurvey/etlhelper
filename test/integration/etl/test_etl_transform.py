@@ -1,9 +1,10 @@
 """Tests for etl copy functions.  This includes application of transforms.
 These are run against PostgreSQL."""
 # pylint: disable=unused-argument, missing-docstring
-from datetime import datetime, date
-
 import pytest
+
+from datetime import datetime, date
+from typing import Any
 
 from etlhelper import (
     copy_rows,
@@ -11,6 +12,7 @@ from etlhelper import (
     execute,
     get_rows,
     iter_rows,
+    load,
 )
 from etlhelper.row_factories import dict_row_factory
 from etlhelper.exceptions import ETLHelperBadIdentifierError
@@ -83,12 +85,16 @@ def test_copy_table_rows_bad_table(pgtestdb_conn, pgtestdb_test_tables,
 
 
 def transform_return_list(rows):
-    # Simple transform function that changes size and number of rows
+    """
+    Simple transform function that changes size and number of rows.
+    """
     return [(row.id, row.value) for row in rows if row.id > 1]
 
 
 def transform_return_generator(rows):
-    # Simple transform function that changes size and number of rows
+    """
+    Simple transform function that changes size and number of rows.
+    """
     return ((row.id, row.value) for row in rows if row.id > 1)
 
 
@@ -168,4 +174,97 @@ def test_copy_rows_with_dict_row_factory(pgtestdb_conn, pgtestdb_test_tables, pg
     # Assert
     sql = "SELECT * FROM dest"
     result = get_rows(sql, pgtestdb_conn)
+    assert result == expected
+
+
+def convert_namedtuples_dicts(rows):
+    """
+    Convert a list of namedtuples to dictionaries and rename the column 'simple_text' to 'upper_text'.
+    """
+    for idx, row in enumerate(rows):
+        row_dict = row._asdict()
+        row_dict.update({"upper_text": row_dict.pop("simple_text")})
+        rows[idx] = row_dict
+    return rows
+
+
+def transform_namedtuple(rows: list[tuple[Any]]) -> list[tuple[Any]]:
+    """
+    Simple transform function that adds 1000 to each 'id' value in a list of namedtuples.
+    """
+    for idx, row in enumerate(rows):
+        rows[idx] = row._replace(id=row.id + 1000)
+    return rows
+
+
+def transform_dict(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """
+    Simple transform function for a list of dictionaries which:
+        - Adds 1000 to each 'id' value
+        - Converts the text in the column 'upper_text' to UPPER
+        - Renames the column 'upper_text' to 'simple_text'
+    """
+    for idx, row in enumerate(rows):
+        rows[idx].update(
+            {
+                "id": row["id"] + 1000,
+                "simple_text": row.pop("upper_text").upper(),
+            }
+        )
+    return rows
+
+
+@pytest.mark.parametrize(
+    ["test_data_conversion", "my_transform", "expected"],
+    [
+        (
+            None,
+            transform_namedtuple,
+            [
+                (1, 1.234, 'text', 'Öæ°\nz', date(2018, 12, 7), datetime(2018, 12, 7, 13, 1, 59)),
+                (2, 2.234, 'text', 'Öæ°\nz', date(2018, 12, 8), datetime(2018, 12, 8, 13, 1, 59)),
+                (3, 2.234, 'text', 'Öæ°\nz', date(2018, 12, 9), datetime(2018, 12, 9, 13, 1, 59)),
+                (1001, 1.234, 'text', 'Öæ°\nz', date(2018, 12, 7), datetime(2018, 12, 7, 13, 1, 59)),
+                (1002, 2.234, 'text', 'Öæ°\nz', date(2018, 12, 8), datetime(2018, 12, 8, 13, 1, 59)),
+                (1003, 2.234, 'text', 'Öæ°\nz', date(2018, 12, 9), datetime(2018, 12, 9, 13, 1, 59)),
+            ],
+        ),
+        (
+            convert_namedtuples_dicts,
+            transform_dict,
+            [
+                (1, 1.234, 'text', 'Öæ°\nz', date(2018, 12, 7), datetime(2018, 12, 7, 13, 1, 59)),
+                (2, 2.234, 'text', 'Öæ°\nz', date(2018, 12, 8), datetime(2018, 12, 8, 13, 1, 59)),
+                (3, 2.234, 'text', 'Öæ°\nz', date(2018, 12, 9), datetime(2018, 12, 9, 13, 1, 59)),
+                (1001, 1.234, 'TEXT', 'Öæ°\nz', date(2018, 12, 7), datetime(2018, 12, 7, 13, 1, 59)),
+                (1002, 2.234, 'TEXT', 'Öæ°\nz', date(2018, 12, 8), datetime(2018, 12, 8, 13, 1, 59)),
+                (1003, 2.234, 'TEXT', 'Öæ°\nz', date(2018, 12, 9), datetime(2018, 12, 9, 13, 1, 59)),
+            ],
+        ),
+    ],
+)
+def test_load_transform(
+    pgtestdb_conn,
+    pgtestdb_test_tables,
+    test_table_data,
+    test_data_conversion,
+    my_transform,
+    expected,
+):
+    # Arrange
+    if test_data_conversion:
+        test_table_data = test_data_conversion(test_table_data)
+
+    # Act
+    processed, failed = load(
+        table="src",
+        conn=pgtestdb_conn,
+        rows=test_table_data,
+        transform=my_transform,
+    )
+
+    sql = "SELECT * FROM src"
+    result = get_rows(sql, pgtestdb_conn)
+
+    # Assert
     assert result == expected
