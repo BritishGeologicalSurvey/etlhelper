@@ -192,7 +192,8 @@ def test_load_parameters_pass_to_executemany(monkeypatch, pgtestdb_conn,
     sql = re.sub(r"\s\s+", " ", sql)  # replace newlines and whitespace
 
     mock_executemany.assert_called_once_with(
-        sql, pgtestdb_conn, ANY, on_error=None,
+        sql, pgtestdb_conn, ANY,
+        transform=None, on_error=None,
         commit_chunks=sentinel.commit_chunks,
         chunk_size=sentinel.chunk_size)
 
