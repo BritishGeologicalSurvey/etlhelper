@@ -1,10 +1,21 @@
 """
 Functions for transferring data in and out of databases.
 """
-from collections import namedtuple
-from itertools import zip_longest, islice, chain
 import logging
 import re
+
+from collections import namedtuple
+from copy import deepcopy
+from itertools import (
+    zip_longest,
+    islice,
+    chain,
+)
+from typing import (
+    Any,
+    Callable,
+)
+
 
 from etlhelper.abort import raise_for_abort, clear_abort_event
 from etlhelper.row_factories import namedtuple_row_factory
@@ -15,6 +26,8 @@ from etlhelper.exceptions import (
     ETLHelperInsertError,
     ETLHelperQueryError,
 )
+
+Chunk = Any
 
 logger = logging.getLogger('etlhelper')
 CHUNKSIZE = 5000
@@ -249,8 +262,15 @@ def dump_rows(select_query, conn, output_func=print, parameters=(),
         output_func(row)
 
 
-def executemany(query, conn, rows, on_error=None, commit_chunks=True,
-                chunk_size=CHUNKSIZE):
+def executemany(
+    query: str,
+    conn,
+    rows: list[tuple[Any]],
+    transform: Callable[[Chunk], Chunk] = None,
+    on_error: Callable = None,
+    commit_chunks: bool = True,
+    chunk_size: int = CHUNKSIZE,
+) -> tuple[int, int]:
     """
     Use query to insert/update data from rows to database at conn.  This
     method uses the executemany or execute_batch (PostgreSQL) commands to
@@ -273,6 +293,8 @@ def executemany(query, conn, rows, on_error=None, commit_chunks=True,
     :param query: str, SQL insert command with placeholders for data
     :param conn: dbapi connection
     :param rows: List of tuples containing data to be inserted/updated
+    :param transform: function that accepts an iterable (e.g. list) of rows and
+                      returns an iterable of rows (possibly of different shape)
     :param on_error: Function to be applied to failed rows in each chunk
     :param commit_chunks: bool, commit after each chunk has been inserted/updated
     :param chunk_size: int, size of chunks to group data by
@@ -290,16 +312,19 @@ def executemany(query, conn, rows, on_error=None, commit_chunks=True,
         for chunk in _chunker(rows, chunk_size):
             raise_for_abort("abort_etlhelper_threads() called during executemany")
 
+            # Chunker pads to whole chunk with None; remove these
+            chunk = [row for row in chunk if row is not None]
+
+            # Apply transform
+            if transform:
+                chunk = transform(chunk)
+
+            # Show first row as example of data
+            if processed == 0:
+                logger.debug(f"First row: {chunk[0]}")
+
             # Run query
             try:
-                # Chunker pads to whole chunk with None; remove these
-                chunk = [row for row in chunk if row is not None]
-
-                # Show first row as example of data
-                if processed == 0:
-                    logger.debug(f"First row: {chunk[0]}")
-
-                # Execute query
                 helper.executemany(cursor, query, chunk)
 
             except helper.sql_exceptions as exc:
@@ -494,8 +519,15 @@ def copy_table_rows(table, source_conn, dest_conn, target=None,
     return processed, failed
 
 
-def load(table, conn, rows, on_error=None, commit_chunks=True,
-         chunk_size=CHUNKSIZE):
+def load(
+    table: str,
+    conn,
+    rows: list,
+    transform: Callable = None,
+    on_error: Callable = None,
+    commit_chunks: bool = True,
+    chunk_size: int = CHUNKSIZE,
+):
     """
     Load data from iterable of named tuples or dictionaries into pre-existing
     table in database on conn.
@@ -510,6 +542,8 @@ def load(table, conn, rows, on_error=None, commit_chunks=True,
     :param table: name of table
     :param conn: open dbapi connection
     :param rows: iterable of named tuples or dictionaries of data
+    :param transform: function that accepts an iterable (e.g. list) of rows and
+                      returns an iterable of rows (possibly of different shape)
     :param on_error: Function to be applied to failed rows in each chunk
     :param commit_chunks: bool, commit after each chunk (see executemany)
     :param chunk_size: int, size of chunks to group data by
@@ -525,17 +559,28 @@ def load(table, conn, rows, on_error=None, commit_chunks=True,
         rows = iter(rows)
         first_row = next(rows)  # This line throws the exception if empty
         rows = chain([first_row], rows)
+
+        # Transform the first row for table columns
+        transform_first_row = deepcopy(first_row)
+        if transform:
+            transform_first_row = transform([transform_first_row])[0]
+
     except StopIteration:
         return 0, 0
 
     # Generate insert query
-    query = generate_insert_sql(table, first_row, conn)
+    query = generate_insert_sql(table, transform_first_row, conn)
 
     # Insert data
-    processed, failed = executemany(query, conn, rows,
-                                    on_error=on_error,
-                                    commit_chunks=commit_chunks,
-                                    chunk_size=chunk_size)
+    processed, failed = executemany(
+        query,
+        conn,
+        rows,
+        transform=transform,
+        on_error=on_error,
+        commit_chunks=commit_chunks,
+        chunk_size=chunk_size,
+    )
     return processed, failed
 
 
