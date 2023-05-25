@@ -4,7 +4,7 @@ These are run against PostgreSQL."""
 # pylint: disable=unused-argument, missing-docstring
 import datetime
 import time
-from unittest.mock import Mock, call, sentinel
+from unittest.mock import Mock, sentinel
 
 import pytest
 
