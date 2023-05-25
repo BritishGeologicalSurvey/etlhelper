@@ -4,12 +4,12 @@ These are run against PostgreSQL."""
 # pylint: disable=unused-argument, missing-docstring
 import datetime
 import time
-from unittest.mock import Mock, call, sentinel
+from unittest.mock import Mock, sentinel
 
 import pytest
 
 import etlhelper.etl as etlhelper_etl
-from etlhelper import (iter_chunks, iter_rows, get_rows, dump_rows, execute,
+from etlhelper import (iter_chunks, iter_rows, get_rows, execute,
                        fetchone, fetchmany, fetchall)
 from etlhelper.etl import ETLHelperExtractError, ETLHelperQueryError
 from etlhelper.row_factories import (
@@ -193,22 +193,8 @@ def test_fetchall_happy_path(pgtestdb_test_tables, pgtestdb_conn,
     assert result == test_table_data
 
 
-def test_dump_rows_happy_path(pgtestdb_test_tables, pgtestdb_conn,
-                              test_table_data):
-    # Arrange
-    sql = "SELECT * FROM src"
-    mock = Mock()
-    expected_calls = [call(row) for row in test_table_data]
-
-    # Act
-    dump_rows(sql, pgtestdb_conn, mock)
-
-    # Assert
-    assert mock.mock_calls == expected_calls
-
-
 @pytest.mark.parametrize('fetchmethod',
-                         ['get_rows', 'dump_rows', 'fetchone', 'fetchmany',
+                         ['get_rows', 'fetchone', 'fetchmany',
                           'fetchall'])
 def test_arguments_passed_to_iter_rows(
         monkeypatch, fetchmethod, pgtestdb_test_tables, pgtestdb_conn):
