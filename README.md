@@ -990,7 +990,16 @@ def load_observations(csv_file, conn):
     # Load data
     with open(csv_file, 'rt') as f:
         reader = csv.DictReader(f)
-        load('observations', conn, transform(reader), on_error=on_error)
+        load('observations', conn, reader, transform=transform, on_error=on_error)
+
+
+# A transform function that takes an iterable and returns an iterable
+def transform(rows: Iterable[dict]) -> Iterable[dict]:
+    """Rename time column and convert to Python datetime."""
+    for idx, row in enumerate(rows):
+        time_value = row.pop('phenomenonTime')
+        rows[idx]['time'] = dt.datetime.strptime(time_value, "%Y-%m-%dT%H:%M:%S.%fZ")
+    return rows
 
 
 # The on_error function is called after each chunk with all the failed rows
@@ -999,17 +1008,6 @@ def on_error(failed_rows: List[Tuple[dict, Exception]]) -> None:
     rows, exceptions = zip(*failed_rows)
     failed_ids = [row['id'] for row in rows]
     print(f"Failed IDs: {failed_ids}")
-
-
-# A transform function that takes an iterable and yields one row at a time
-# returns a "generator".  The generator is also iterable, and records are
-# processed as they are read so the whole file is never held in memory.
-def transform(rows: Iterable[dict]) -> Iterable[dict]:
-    """Rename time column and convert to Python datetime."""
-    for row in rows:
-        row['time'] = row.pop('phenomenonTime')
-        row['time'] = dt.datetime.strptime(row['time'], "%Y-%m-%dT%H:%M:%S.%fZ")
-        yield row
 
 
 if __name__ == "__main__":
