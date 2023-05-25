@@ -259,7 +259,6 @@ Data are accessible via index (`row[4]`) or name (`row.day`).
 
 Other functions are provided to select data.  `fetchone`, `fetchmany` and
 `fetchall` are equivalent to the cursor methods specified in the DBAPI v2.0.
-`dump_rows` passes each row to a function (default is `print`).
 
 
 #### iter_rows

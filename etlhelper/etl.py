@@ -239,29 +239,6 @@ def fetchall(select_query, conn, parameters=(),
                           chunk_size=chunk_size))
 
 
-def dump_rows(select_query, conn, output_func=print, parameters=(),
-              row_factory=namedtuple_row_factory, transform=None,
-              chunk_size=CHUNKSIZE):
-    """
-    Call output_func(row) one-by-one on results of query.  See iter_rows for
-    details.
-
-    :param select_query: str, SQL query to execute
-    :param conn: dbapi connection
-    :param output_func: function to be called for each row (default is print)
-    :param parameters: sequence or dict of bind variables to insert in the query
-    :param row_factory: function that accepts a cursor and returns a function
-                        for parsing each row
-    :param transform: function that accepts an iterable (e.g. list) of rows and
-                      returns an iterable of rows (possibly of different shape)
-    :param chunk_size: int, size of chunks to group data by
-    """
-    for row in iter_rows(select_query, conn, parameters=parameters,
-                         row_factory=row_factory, transform=transform,
-                         chunk_size=chunk_size):
-        output_func(row)
-
-
 def executemany(
     query: str,
     conn,
