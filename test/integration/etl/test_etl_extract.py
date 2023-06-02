@@ -30,33 +30,50 @@ from etlhelper.row_factories import (
 )
 
 
-@pytest.mark.parametrize('chunk_size, slices', [
+@pytest.mark.parametrize(
+    ["chunk_size", "slices"],
+    [
         (1, [slice(0, 1), slice(1, 2), slice(2, 3)]),
         (2, [slice(0, 2), slice(2, 3)]),
-        (5000, [slice(0, 3)])])
-def test_iter_chunks(pgtestdb_test_tables, pgtestdb_conn,
-                     test_table_data, chunk_size, slices):
+        (5000, [slice(0, 3)]),
+    ],
+)
+def test_iter_chunks(
+    pgtestdb_test_tables,
+    pgtestdb_conn,
+    test_table_data,
+    chunk_size,
+    slices,
+):
     # Arrange
     sql = "SELECT * FROM src"
 
     # Act
-    result = [list(chunk) for chunk in
-              iter_chunks(sql, pgtestdb_conn, chunk_size=chunk_size)]
+    result = [
+        list(chunk) for chunk in
+        iter_chunks(sql, pgtestdb_conn, chunk_size=chunk_size)
+    ]
 
     # Assert
     expected = [test_table_data[s] for s in slices]
     assert result == expected
 
 
-def test_iter_rows_happy_path(pgtestdb_test_tables, pgtestdb_conn,
-                              test_table_data):
+def test_iter_rows_happy_path(
+    pgtestdb_test_tables,
+    pgtestdb_conn,
+    test_table_data,
+):
     sql = "SELECT * FROM src"
     result = iter_rows(sql, pgtestdb_conn)
     assert list(result) == test_table_data
 
 
-def test_iter_rows_with_parameters(pgtestdb_test_tables, pgtestdb_conn,
-                                   test_table_data):
+def test_iter_rows_with_parameters(
+    pgtestdb_test_tables,
+    pgtestdb_conn,
+    test_table_data,
+):
     # parameters=None is tested by default in other tests
 
     # Bind by index
@@ -66,12 +83,15 @@ def test_iter_rows_with_parameters(pgtestdb_test_tables, pgtestdb_conn,
 
     # Bind by name
     sql = "SELECT * FROM src where ID = %(identifier)s"
-    result = iter_rows(sql, pgtestdb_conn, parameters={'identifier': 1})
+    result = iter_rows(sql, pgtestdb_conn, parameters={"identifier": 1})
     assert list(result) == [test_table_data[0]]
 
 
-def test_iter_rows_transform(pgtestdb_test_tables, pgtestdb_conn,
-                             test_table_data):
+def test_iter_rows_transform(
+    pgtestdb_test_tables,
+    pgtestdb_conn,
+    test_table_data,
+):
     # Arrange
     sql = "SELECT * FROM src"
 
@@ -88,15 +108,18 @@ def test_iter_rows_transform(pgtestdb_test_tables, pgtestdb_conn,
 
 
 def test_iter_rows_namedtuple_factory(
-        pgtestdb_test_tables, pgtestdb_conn, test_table_data):
+    pgtestdb_test_tables,
+    pgtestdb_conn,
+    test_table_data,
+):
     sql = "SELECT * FROM src"
     result = iter_rows(sql, pgtestdb_conn, row_factory=namedtuple_row_factory)
     row = list(result)[0]
 
     assert row.id == 1
     assert row.value == 1.234
-    assert row.simple_text == 'text'
-    assert row.utf8_text == 'Öæ°\nz'
+    assert row.simple_text == "text"
+    assert row.utf8_text == "Öæ°\nz"
     assert row.day == datetime.date(2018, 12, 7)
 
     # The final assertion is skipped because the test fails, even though the
@@ -104,20 +127,26 @@ def test_iter_rows_namedtuple_factory(
     # assert row.date_time == datetime.datetime(2018, 12, 9, 13, 1, 59)
 
 
-@pytest.mark.parametrize('row_factory, expected', [
-    (dict_row_factory, {
-        'id': 1, 'value': 1.234, 'simple_text': 'text',
-        'utf8_text': 'Öæ°\nz', 'day': datetime.date(2018, 12, 7),
-        'date_time': datetime.datetime(2018, 12, 7, 13, 1, 59)}),
-    (tuple_row_factory, (
-        1, 1.234, 'text', 'Öæ°\nz', datetime.date(2018, 12, 7),
-        datetime.datetime(2018, 12, 7, 13, 1, 59))),
-    (list_row_factory, [
-        1, 1.234, 'text', 'Öæ°\nz', datetime.date(2018, 12, 7),
-        datetime.datetime(2018, 12, 7, 13, 1, 59)]),
-])
-def test_iter_rows_other_row_factories(row_factory, expected,
-                                       pgtestdb_test_tables, pgtestdb_conn):
+@pytest.mark.parametrize(
+    ["row_factory", "expected"],
+    [
+        (dict_row_factory, {
+            "id": 1, "value": 1.234, "simple_text": "text",
+            "utf8_text": "Öæ°\nz", "day": datetime.date(2018, 12, 7),
+            "date_time": datetime.datetime(2018, 12, 7, 13, 1, 59)}),
+        (tuple_row_factory, (
+            1, 1.234, "text", "Öæ°\nz", datetime.date(2018, 12, 7),
+            datetime.datetime(2018, 12, 7, 13, 1, 59))),
+        (list_row_factory, [
+            1, 1.234, "text", "Öæ°\nz", datetime.date(2018, 12, 7),
+            datetime.datetime(2018, 12, 7, 13, 1, 59)]),
+    ],
+)
+def test_iter_rows_other_row_factories(
+    row_factory, expected,
+    pgtestdb_test_tables,
+    pgtestdb_conn,
+):
     sql = "SELECT * FROM src LIMIT 1"
     result = iter_rows(sql, pgtestdb_conn, row_factory=row_factory)
 
@@ -137,22 +166,31 @@ def test_iter_rows_bad_query(pgtestdb_test_tables, pgtestdb_conn):
         list(result)  # Call list to activate returned generator
 
 
-def test_get_rows_happy_path(pgtestdb_test_tables, pgtestdb_conn,
-                             test_table_data):
+def test_get_rows_happy_path(
+    pgtestdb_test_tables,
+    pgtestdb_conn,
+    test_table_data,
+):
     sql = "SELECT * FROM src"
     result = get_rows(sql, pgtestdb_conn)
     assert result == test_table_data
 
 
-def test_fetchone_happy_path(pgtestdb_test_tables, pgtestdb_conn,
-                             test_table_data):
+def test_fetchone_happy_path(
+    pgtestdb_test_tables,
+    pgtestdb_conn,
+    test_table_data,
+):
     sql = "SELECT * FROM src"
     result = fetchone(sql, pgtestdb_conn)
     assert result == test_table_data[0]
 
 
-def test_fetchone_none(pgtestdb_test_tables, pgtestdb_conn,
-                       test_table_data):
+def test_fetchone_none(
+    pgtestdb_test_tables,
+    pgtestdb_conn,
+    test_table_data,
+):
     sql = "SELECT * FROM src WHERE id=999"
     result = fetchone(sql, pgtestdb_conn)
     assert result is None
@@ -173,7 +211,10 @@ def test_fetchone_closes_transaction(pgtestdb_conn):
     assert time2.time > time1.time
 
 
-@pytest.mark.parametrize('fetch_func', [fetchall, get_rows])
+@pytest.mark.parametrize(
+    "fetch_func",
+    [fetchall, get_rows],
+)
 def test_fetch_funcs_close_transaction(pgtestdb_conn, fetch_func):
     sql = "SELECT now() AS time"
 
@@ -189,25 +230,33 @@ def test_fetch_funcs_close_transaction(pgtestdb_conn, fetch_func):
     assert time2.time > time1.time
 
 
-def test_fetchall_happy_path(pgtestdb_test_tables, pgtestdb_conn,
-                             test_table_data):
+def test_fetchall_happy_path(
+    pgtestdb_test_tables,
+    pgtestdb_conn,
+    test_table_data,
+):
     sql = "SELECT * FROM src"
     result = fetchall(sql, pgtestdb_conn)
     assert result == test_table_data
 
 
-@pytest.mark.parametrize('fetchmethod',
-                         ['get_rows', 'fetchone',
-                          'fetchall'])
+@pytest.mark.parametrize(
+    "fetchmethod",
+    ["get_rows", "fetchone", "fetchall"],
+)
 def test_arguments_passed_to_iter_rows(
-        monkeypatch, fetchmethod, pgtestdb_test_tables, pgtestdb_conn):
+    monkeypatch,
+    fetchmethod,
+    pgtestdb_test_tables,
+    pgtestdb_conn,
+):
     """Each of these functions calls iter_rows.  This tests check that the
     correct parameters are passed through, which confirms parameters,
     row_factory and transform can all be used."""
 
     # Arrange - patch 'iter_rows' function within etlhelper.etl module
     mock_iter_rows = Mock()
-    monkeypatch.setattr(etlhelper_etl, 'iter_rows', mock_iter_rows)
+    monkeypatch.setattr(etlhelper_etl, "iter_rows", mock_iter_rows)
 
     # Sentinel items are unique so confirm object that was passed through
     sql = sentinel.sql
@@ -221,22 +270,28 @@ def test_arguments_passed_to_iter_rows(
     # Use dict_row_factory to demonstrate the default (namedtuple_row_factory)
     # isn't called
     try:
-        getattr(etlhelper_etl, fetchmethod)(sql, pgtestdb_conn,
-                                            parameters=parameters,
-                                            row_factory=dict_row_factory,
-                                            transform=transform,
-                                            chunk_size=chunk_size)
+        getattr(etlhelper_etl, fetchmethod)(
+            sql,
+            pgtestdb_conn,
+            parameters=parameters,
+            row_factory=dict_row_factory,
+            transform=transform,
+            chunk_size=chunk_size,
+        )
     except TypeError:
         # We expect an error here as the mock_iter_rows breaks the functions
         # that called it.
         pass
 
     # Assert
-    mock_iter_rows.assert_called_once_with(sql, pgtestdb_conn,
-                                           parameters=parameters,
-                                           row_factory=dict_row_factory,
-                                           transform=transform,
-                                           chunk_size=chunk_size)
+    mock_iter_rows.assert_called_once_with(
+        sql,
+        pgtestdb_conn,
+        parameters=parameters,
+        row_factory=dict_row_factory,
+        transform=transform,
+        chunk_size=chunk_size,
+    )
 
 
 def test_execute_happy_path(pgtestdb_test_tables, pgtestdb_conn):
@@ -247,12 +302,15 @@ def test_execute_happy_path(pgtestdb_test_tables, pgtestdb_conn):
     execute(sql, pgtestdb_conn)
 
     # Assert
-    result = get_rows('SELECT * FROM src;', pgtestdb_conn)
+    result = get_rows("SELECT * FROM src;", pgtestdb_conn)
     assert result == []
 
 
-def test_execute_with_params(pgtestdb_test_tables, pgtestdb_conn,
-                             test_table_data):
+def test_execute_with_params(
+    pgtestdb_test_tables,
+    pgtestdb_conn,
+    test_table_data,
+):
     # Arrange
     sql = "DELETE FROM src WHERE id = %s;"
     params = [1]
@@ -262,7 +320,7 @@ def test_execute_with_params(pgtestdb_test_tables, pgtestdb_conn,
     execute(sql, pgtestdb_conn, parameters=params)
 
     # Assert
-    result = get_rows('SELECT * FROM src;', pgtestdb_conn)
+    result = get_rows("SELECT * FROM src;", pgtestdb_conn)
     assert result == expected
 
 
