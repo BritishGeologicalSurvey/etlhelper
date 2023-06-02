@@ -1,13 +1,16 @@
 """
 Functions for transferring data in and out of databases.
 """
-from collections import namedtuple
-from itertools import zip_longest, islice, chain
 import logging
 import re
 
+from collections import namedtuple
+from itertools import (
+    zip_longest,
+    chain,
+)
+
 from etlhelper.abort import raise_for_abort, clear_abort_event
-from etlhelper.row_factories import namedtuple_row_factory
 from etlhelper.db_helper_factory import DB_HELPER_FACTORY
 from etlhelper.exceptions import (
     ETLHelperBadIdentifierError,
@@ -15,6 +18,7 @@ from etlhelper.exceptions import (
     ETLHelperInsertError,
     ETLHelperQueryError,
 )
+from etlhelper.row_factories import namedtuple_row_factory
 
 logger = logging.getLogger('etlhelper')
 CHUNKSIZE = 5000
@@ -163,35 +167,6 @@ def fetchone(select_query, conn, parameters=(),
                                 chunk_size=chunk_size))
     except StopIteration:
         result = None
-    finally:
-        # Commit to close the transaction before the iterator has been exhausted
-        conn.commit()
-
-    return result
-
-
-def fetchmany(select_query, conn, size=1, parameters=(),
-              row_factory=namedtuple_row_factory, transform=None,
-              chunk_size=CHUNKSIZE):
-    """
-    Get first 'size' results of query as a list.  See iter_rows for details.
-    Note: iter_chunks is recommended for looping over rows in batches.
-
-    :param select_query: str, SQL query to execute
-    :param conn: dbapi connection
-    :param parameters: sequence or dict of bind variables to insert in the query
-    :param size: number of rows to return (defaults to 1)
-    :param row_factory: function that accepts a cursor and returns a function
-                        for parsing each row
-    :param transform: function that accepts an iterable (e.g. list) of rows and
-                      returns an iterable of rows (possibly of different shape)
-    :param chunk_size: int, size of chunks to group data by
-    """
-    try:
-        result = list(
-            islice(iter_rows(select_query, conn, row_factory=row_factory,
-                             parameters=parameters, transform=transform,
-                             chunk_size=chunk_size), size))
     finally:
         # Commit to close the transaction before the iterator has been exhausted
         conn.commit()

@@ -13,7 +13,6 @@ from etlhelper.etl import (
     execute,
     executemany,
     fetchone,
-    fetchmany,
     fetchall,
     generate_insert_sql,
     get_rows,
