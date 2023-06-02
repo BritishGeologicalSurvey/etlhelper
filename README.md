@@ -233,7 +233,7 @@ returns
 
 Data are accessible via index (`row[4]`) or name (`row.day`).
 
-Other functions are provided to select data.  `fetchone`, `fetchmany` and
+Other functions are provided to select data.  `fetchone` and
 `fetchall` are equivalent to the cursor methods specified in the DBAPI v2.0.
 
 

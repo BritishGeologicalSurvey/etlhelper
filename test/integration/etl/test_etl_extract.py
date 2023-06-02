@@ -3,20 +3,31 @@ function and those that call it.
 These are run against PostgreSQL."""
 # pylint: disable=unused-argument, missing-docstring
 import datetime
-import time
-from unittest.mock import Mock, sentinel
-
 import pytest
+import time
+
+from unittest.mock import (
+    Mock,
+    sentinel,
+)
 
 import etlhelper.etl as etlhelper_etl
-from etlhelper import (iter_chunks, iter_rows, get_rows, execute,
-                       fetchone, fetchmany, fetchall)
+
+from etlhelper import (
+    iter_chunks,
+    iter_rows,
+    get_rows,
+    execute,
+    fetchone,
+    fetchall,
+)
 from etlhelper.etl import ETLHelperExtractError, ETLHelperQueryError
 from etlhelper.row_factories import (
     dict_row_factory,
     list_row_factory,
     namedtuple_row_factory,
-    tuple_row_factory)
+    tuple_row_factory,
+)
 
 
 @pytest.mark.parametrize('chunk_size, slices', [
@@ -162,7 +173,7 @@ def test_fetchone_closes_transaction(pgtestdb_conn):
     assert time2.time > time1.time
 
 
-@pytest.mark.parametrize('fetch_func', [fetchall, fetchmany, get_rows])
+@pytest.mark.parametrize('fetch_func', [fetchall, get_rows])
 def test_fetch_funcs_close_transaction(pgtestdb_conn, fetch_func):
     sql = "SELECT now() AS time"
 
@@ -178,14 +189,6 @@ def test_fetch_funcs_close_transaction(pgtestdb_conn, fetch_func):
     assert time2.time > time1.time
 
 
-@pytest.mark.parametrize('size', [1, 3, 1000])
-def test_fetchmany_happy_path(pgtestdb_test_tables, pgtestdb_conn,
-                              test_table_data, size):
-    sql = "SELECT * FROM src"
-    result = fetchmany(sql, pgtestdb_conn, size)
-    assert result == test_table_data[:size]
-
-
 def test_fetchall_happy_path(pgtestdb_test_tables, pgtestdb_conn,
                              test_table_data):
     sql = "SELECT * FROM src"
@@ -194,7 +197,7 @@ def test_fetchall_happy_path(pgtestdb_test_tables, pgtestdb_conn,
 
 
 @pytest.mark.parametrize('fetchmethod',
-                         ['get_rows', 'fetchone', 'fetchmany',
+                         ['get_rows', 'fetchone',
                           'fetchall'])
 def test_arguments_passed_to_iter_rows(
         monkeypatch, fetchmethod, pgtestdb_test_tables, pgtestdb_conn):
