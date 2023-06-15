@@ -74,6 +74,10 @@ def iter_chunks(
     :param transform: function that accepts an iterable (e.g. list) of rows and
                       returns an iterable of rows (possibly of different shape)
     :param chunk_size: int, size of chunks to group data by
+    :return: None or a generator returning a list of objects which each
+             represent a row of data using the given row_factory
+    :rtype: None or Generator[list[etlhelper.row_factories.Row], None, None]
+    :raises ETLHelperExtractError: if SQL raises an error
     """
     logger.info("Fetching rows (chunk_size=%s)", chunk_size)
     logger.debug(f"Fetching:\n\n{select_query}\n\nwith parameters:\n\n"
@@ -152,6 +156,9 @@ def iter_rows(
     :param transform: function that accepts an iterable (e.g. list) of rows and
                       returns an iterable of rows (possibly of different shape)
     :param chunk_size: int, size of chunks to group data by
+    :return: A generator returning objects which each represent a row of data
+             using the given row_factory
+    :rtype: Generator[etlhelper.row_factories.Row, None, None]
     """
     for chunk in iter_chunks(select_query, conn, row_factory=row_factory,
                              parameters=parameters, transform=transform,
@@ -179,6 +186,10 @@ def fetchone(
                         for parsing each row
     :param transform: function that accepts an iterable (e.g. list) of rows and
                       returns an iterable of rows (possibly of different shape)
+    :param chunk_size: int, size of chunks to group data by
+    :return: None or a single object which represents a row of data using the given
+             row_factory
+    :rtype: None or etlhelper.row_factories.Row
     """
     try:
         result = next(iter_rows(select_query, conn, row_factory=row_factory,
@@ -203,6 +214,7 @@ def fetchall(
         ) -> Chunk:
     """
     Get all results of query as a list.  See iter_rows for details.
+
     :param select_query: str, SQL query to execute
     :param conn: dbapi connection
     :param parameters: sequence or dict of bind variables to insert in the query
@@ -210,6 +222,9 @@ def fetchall(
     :param transform: function that accepts an iterable (e.g. list) of rows and returns an iterable
                       of rows (possibly of different shape)
     :param chunk_size: int, size of chunks to group data by
+    :return: A list of objects which each represent a row of data using the
+             given row_factory
+    :rtype: list[etlhelper.row_factories.Row]
     """
     return list(iter_rows(select_query, conn, row_factory=row_factory,
                           parameters=parameters, transform=transform,
@@ -252,7 +267,9 @@ def executemany(
     :param on_error: Function to be applied to failed rows in each chunk
     :param commit_chunks: bool, commit after each chunk has been inserted/updated
     :param chunk_size: int, size of chunks to group data by
-    :return processed, failed: (int, int) number of rows processed, failed
+    :return: The number of rows processed and the number of rows failed
+    :rtype: tuple[int, int]
+    :raises ETLHelperInsertError: if SQL raises an error
     """
     logger.info("Executing many (chunk_size=%s)", chunk_size)
     logger.debug("Executing:\n\n%s\n\nagainst:\n\n%s", query, conn)
@@ -335,9 +352,10 @@ def _execute_by_row(
     (and other?)
 
     :param query: str, SQL command with placeholders for data
-    :param chunk: list, list of row parameters
     :param conn: open dbapi connection, used for transactions
-    :returns failed_rows: list of (row, exception) tuples
+    :param chunk: list, list of row parameters
+    :return: A list of objects which each represent a failed row of data
+    :rtype: list[etlhelper.row_factories.Row]
     """
     failed_rows: list[FailedRow] = []
 
@@ -394,7 +412,8 @@ def copy_rows(
     :param on_error: Function to be applied to failed rows in each chunk
     :param commit_chunks: bool, commit after each chunk (see executemany)
     :param chunk_size: int, size of chunks to group data by
-    :return processed, failed: (int, int) number of rows processed, failed
+    :return: The number of rows processed and the number of rows failed
+    :rtype: tuple[int, int]
     """
     rows_generator = iter_rows(select_query, source_conn,
                                parameters=parameters, row_factory=row_factory,
@@ -418,6 +437,8 @@ def execute(
     :param query: str, SQL query to execute
     :param conn: dbapi connection
     :param parameters: sequence or dict of bind variables to insert in the query
+    :rtype: None
+    :raises ETLHelperQueryError: if SQL raises an error
     """
     logger.info("Executing query")
     logger.debug(f"Executing:\n\n{query}\n\nwith parameters:\n\n"
@@ -465,6 +486,7 @@ def copy_table_rows(
     tuples.  on_error is a function that is called at the end of each chunk,
     with the list as the only argument.
 
+    :param table: name of table
     :param source_conn: open dbapi connection
     :param dest_conn: open dbapi connection
     :param target: name of target table, if different from source
@@ -475,9 +497,8 @@ def copy_table_rows(
     :param on_error: Function to be applied to failed rows in each chunk
     :param commit_chunks: bool, commit after each chunk (see executemany)
     :param chunk_size: int, size of chunks to group data by
-    :param select_sql_suffix: str, SQL clause(s) to append to select statement
-                              e.g. WHERE, ORDER BY, LIMIT
-    :return processed, failed: (int, int) number of rows processed, failed
+    :return: The number of rows processed and the number of rows failed
+    :rtype: tuple[int, int]
     """
     validate_identifier(table)
 
@@ -520,7 +541,8 @@ def load(
     :param on_error: Function to be applied to failed rows in each chunk
     :param commit_chunks: bool, commit after each chunk (see executemany)
     :param chunk_size: int, size of chunks to group data by
-    :return processed, failed: (int, int) number of rows processed, failed
+    :return: The number of rows processed and the number of rows failed
+    :rtype: tuple[int, int]
     """
     # Return early if rows is empty
     if not rows:
@@ -566,8 +588,20 @@ def generate_insert_sql(
         conn: Connection
         ) -> str:
     """Generate insert SQL for table, getting column names from row and the
+    Generate insert SQL for table, getting column names from row and the
     placeholder style from the connection.  `row` is either a namedtuple or
-    a dictionary."""
+    a dictionary.
+
+    :param table: name of table
+    :param row: Either a namedtuple or dictionary representing a single row of
+                data
+    :param conn: open dbapi connection
+    :return: An SQL statement used to insert data into the given table
+    :rtype: str
+    :raises ETLHelperInsertError: if 'row' is not a namedtuple or a dictionary,
+                                  or if the database connection encounters a
+                                  parameter error
+    """
     helper = DB_HELPER_FACTORY.from_conn(conn)
     paramstyles = {
         "qmark": "?",
@@ -621,7 +655,10 @@ def validate_identifier(identifier: str) -> None:
     Identifiers must comprise alpha-numeric characters, plus `_` or `$` and
     cannot start with `$`, or numbers.
 
-    :raises ETLHelperBadIdentifierError:
+    :param identifier: a database identifier
+    :rtype: None
+    :raises ETLHelperBadIdentifierError: if the 'identifier' contains invalid
+                                         characters
     """
     # Identifier rules are based on PostgreSQL specifications, defined here:
     # https://www.postgresql.org/docs/current/sql-syntax-lexical.html#SQL-SYNTAX-IDENTIFIERS
@@ -644,6 +681,13 @@ def _chunker(
         ) -> Iterator[tuple[Union[Row, None], ...]]:
     """Collect data into fixed-length chunks or blocks.
     Code from recipe at https://docs.python.org/3.6/library/itertools.html
+
+    :param iterable: an iterable object
+    :param n_chunks: the number of values in each chunk
+    :param fillvalue: value used to fill empty values in a chunk
+    :return: generator object returning 'iterable' objects of the length
+             'n_chunks' where empty values are filled using 'fillvalue'
+    :rtype: itertools.zip_longest
     """
     # _chunker('ABCDEFG', 3) --> ABC DEF G"
     args = [iter(iterable)] * n_chunks
