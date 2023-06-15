@@ -21,6 +21,9 @@ def namedtuple_row_factory(cursor):
     name (using dot notation, e.g. row.id).  They are immutable, so cannot be
     modified directly in transform functions.  Insert statements based on named
     tuples must use positional placeholders for parameters (e.g. ?, :1, %s).
+
+    :param cursor: database Cursor object
+    :return: row_factory function
     """
     column_names = [d[0] for d in cursor.description]
 
@@ -49,6 +52,9 @@ def dict_row_factory(cursor):
     row["id"].  They are mutable, so are convenient to modify directly in
     transform functions.  Insert statements based on dictionaries must use
     named placeholders for parameters (e.g. :id, %(id)s).
+
+    :param cursor: database Cursor object
+    :return: row_factory function
     """
     column_names = [d[0] for d in cursor.description]
 
@@ -72,6 +78,9 @@ def tuple_row_factory(cursor):
 
     As the DBAPI default is already to return rows as tuples, using the tuple
     row factory minimises processing overhead.
+
+    :param cursor: database Cursor object
+    :return: row_factory function
     """
     def create_row(row):
         return row
@@ -87,6 +96,9 @@ def list_row_factory(cursor):
     mutable, so are convient to modify directly in transform functions.  Insert
     statements based on lists must use positional placeholders for parameters
     (e.g. ?, :1, %s).
+
+    :param cursor: database Cursor object
+    :return: row_factory function
     """
     def create_row(row):
         return list(row)
@@ -95,6 +107,12 @@ def list_row_factory(cursor):
 
 
 def _find_renamed_columns(row_class, column_names):
+    """
+    Find which columns need to be renamed in the given row.
+
+    :param row_class: a namedtuple representing a single row of data
+    :param column_names: a list of the original column names
+    """
     regex = re.compile(r'^_\d+$')
 
     renamed_column_ids = [int(f.replace("_", "")) for f in row_class._fields if regex.match(f)]
