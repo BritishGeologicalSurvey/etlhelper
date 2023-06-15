@@ -19,11 +19,20 @@ class DbParams(dict):
     here: https://amir.rachum.com/blog/2016/10/05/python-dynamic-attributes/
     """
     def __init__(self, dbtype='dbtype not set', **kwargs):
+        """
+        :param dbtype: database type from 'MYSQL', 'ORACLE', 'PG', 'SQLITE'
+        :param kwargs: extra keyword arguments
+        """
         kwargs.update(dbtype=dbtype.upper())
         super().__init__(kwargs)
         self.validate_params()
 
     def __getattr__(self, item):
+        """
+        :param item: a hashable key value
+        :return: the corresponding value for the given key
+        :raises AttributeError: if the given key does not exist
+        """
         try:
             return self[item]
         except KeyError:
@@ -32,6 +41,12 @@ class DbParams(dict):
             raise AttributeError(f'No such attribute: {item}')
 
     def __setattr__(self, item, value):
+        """
+        :param item: a hashable key value
+        :param value: a corresponding value for the key
+        :raises ETLHelperDbParamsError: if the new given attribute does not pass
+                                        validation checks
+        """
         self[item] = value
 
         # Validate the updated parameter set, and remove bad item if failed
@@ -42,6 +57,9 @@ class DbParams(dict):
             raise
 
     def __dir__(self):
+        """
+        :return: a list of all attribute names
+        """
         return super().__dir__() + [str(k) for k in self.keys()]
 
     def validate_params(self):
@@ -51,7 +69,7 @@ class DbParams(dict):
         Should validate that a dbtype is a valid one and that the appropriate
         params have been passed for a particular db_type.
 
-        :raises ETLHelperParamsError: Error if params are invalid
+        :raises ETLHelperParamsError: if the object's current parameters are invalid
         """
         # Get a set of the attributes to compare against required attributes.
         given = set(self.keys())
@@ -80,7 +98,11 @@ class DbParams(dict):
         """
         Create DbParams object from parameters specified by environment
         variables e.g. ETLHelper_dbtype, ETLHelper_host, ETLHelper_port, etc.
+
         :param prefix: str, prefix to environment variable names
+        :return: DbParams object
+        :raises ETLHelperDbParamsError: if environment variables cause an
+                                        invalid DbParams object
         """
         dbparams_keys = [key for key in os.environ if key.startswith(prefix)]
         dbparams_from_env = {key.replace(prefix, '').lower(): os.environ[key]
@@ -105,7 +127,7 @@ class DbParams(dict):
         Test whether network allows opening of tcp/ip connection to database. No
         username or password are required.
 
-        :return bool:
+        :return: boolean indicating if the network is reachable
         """
         items = dict(self.items())
         if items['dbtype'] == 'SQLITE':
@@ -155,18 +177,28 @@ class DbParams(dict):
         """
         Return a shallow copy of DbParams object.
 
-        :return DbParams: DbParams object with same attributes as original.
+        :return: DbParams object with same attributes as original
         """
         return self.__class__(**self)
 
     @property
     def paramstyle(self):
-        """The DBAPI2 paramstyle attribute for database type"""
+        """
+        The DBAPI2 paramstyle attribute for database type.
+        
+        :return: DBAPI2 paramstyle attribute
+        """
         return DB_HELPER_FACTORY.from_dbtype(self.dbtype).paramstyle
 
     def __repr__(self):
+        """
+        :return: string representaion of DbParams
+        """
         key_val_str = ", ".join([f"{key}='{self[key]}'" for key in self.keys()])
         return f"DbParams({key_val_str})"
 
     def __str__(self):
+        """
+        :return: string representaion of DbParams
+        """
         return self.__repr__()
