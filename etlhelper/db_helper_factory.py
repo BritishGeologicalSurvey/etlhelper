@@ -23,13 +23,22 @@ class DbHelperFactory():
     def register_helper(self, dbtype, conn_type, db_helper):
         """
         Store db helper in internal list.
+
+        :param dbtype: database type from 'MYSQL', 'ORACLE', 'PG', 'SQLITE'
+        :param conn_type: connection type
+        :param db_helper: ETLHelper DbHelper class
         """
         self.helpers[dbtype] = db_helper
         self._conn_types[conn_type] = dbtype
 
     def from_db_params(self, db_params):
         """
-        Return initialised db_helper
+        Return initialised db_helper.
+
+        :param db_params: DbParams object
+        :return: corresponding ETLHelper DbHelper class
+        :raises ETLHelperHelperError: if 'db_params' does not have the attribute
+                                      'dbtype'
         """
         if not hasattr(db_params, 'dbtype'):
             msg = f"Expected DbParams-like object, got {type(db_params)}"
@@ -40,6 +49,10 @@ class DbHelperFactory():
     def from_conn(self, conn):
         """
         Return initialised db_helper based on connection.
+
+        :param conn: Connection object
+        :return: corresponding ETLHelper DbHelper class
+        :raises ETLHelperHelperError: if there is an error with the given 'conn'
         """
         if not hasattr(conn, 'cursor'):
             msg = f"Expected connection-like object, got {type(conn)}"
@@ -56,7 +69,11 @@ class DbHelperFactory():
     @lru_cache(maxsize=16)
     def from_dbtype(self, dbtype):
         """
-        Return initialised db helper based on type
+        Return initialised db helper based on type.
+
+        :param dbtype: database type from 'MYSQL', 'ORACLE', 'PG', 'SQLITE'
+        :return: corresponding ETLHelper DbHelper class
+        :raises ETLHelperHelperError: if an unsupported 'dbtype' is given
         """
         try:
             helper = self.helpers[dbtype]()
