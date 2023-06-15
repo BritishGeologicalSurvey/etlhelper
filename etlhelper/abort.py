@@ -18,11 +18,17 @@ def abort_etlhelper_threads():
 
 
 def clear_abort_event():
-    """Clear abort_event."""
+    """
+    Clear abort_event.
+    """
     abort_event.clear()
 
 
 def raise_for_abort(message):
-    """Raise EtlHelperAbort exception with message if abort_event is set."""
+    """
+    Raise EtlHelperAbort exception with message if abort_event is set.
+
+    :raises ETLHelperAbort: if abort_event is set
+    """
     if abort_event.is_set():
         raise ETLHelperAbort(message)
