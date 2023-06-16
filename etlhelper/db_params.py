@@ -185,7 +185,7 @@ class DbParams(dict):
     def paramstyle(self):
         """
         The DBAPI2 paramstyle attribute for database type.
-        
+
         :return: DBAPI2 paramstyle attribute
         """
         return DB_HELPER_FACTORY.from_dbtype(self.dbtype).paramstyle

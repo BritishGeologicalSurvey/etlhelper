@@ -17,7 +17,7 @@ def table_info(table, conn, schema=None):
     :param table: str, the table to describe
     :param conn: dbapi connection
     :param schema: str, optional name of schema for table
-    :returns: a list of columns, where each column is a tuple of 
+    :returns: a list of columns, where each column is a tuple of
               (name, type, not_null, has_default)
     :raises ETLHelperQueryError: if a table is not unique in the database
     """
