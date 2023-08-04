@@ -1,0 +1,51 @@
+[build-system]
+requires = ["setuptools>=61.0"]  # You can specify the build system used
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "etlhelper"
+version = "v?.?.?"  # TODO: Dynamic versioneer value
+cmdclass = "???"  # TODO: Dynamic versioneer value
+decsription = "etlhelper is Python ETL library to simplify data transfer into and out of databases."
+readme = "README.md"
+authors = [
+    {name = "BGS Informatics", email = "jostev@bgs.ac.uk"},
+]
+license = {text = "LGPL-3.0 license"}
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Information Technology",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: GNU Lesser General Public License v3 or later (LGPLv3+)",
+    "Natural Language :: English",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Topic :: Database",
+    "Topic :: Scientific/Engineering :: GIS",
+]
+requires-python = ">=3.6"
+dependencies = []
+
+[project.urls]
+"Source Code" = "https://github.com/BritishGeologicalSurvey/etlhelper"
+"Documentation" = "https://britishgeologicalsurvey.github.io/etlhelper/"
+
+[project.optional-dependencies]
+oracle = ["cx-oracle"]
+mssql = ["pyodbc"]
+postgres = ["psycopg2-binary"]
+dev = [
+    "flake8",
+    "ipdb",
+    "ipython",
+    "pytest",
+    "pytest-cov",
+    "versioneer",
+]
+
+[project.scripts]
+setup_oracle_client = "etlhelper.setup_oracle_client:main"
+
+[tools.setuptools.packages.find]
+where = ["etlhelper", "etlhelper.db_helpers"]
