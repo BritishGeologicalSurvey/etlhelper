@@ -35,6 +35,11 @@ dependencies = []
 oracle = ["cx-oracle"]
 mssql = ["pyodbc"]
 postgres = ["psycopg2-binary"]
+all = [
+    "cx-oracle",
+    "pyodbc",
+    "psycopg2-binary",
+]
 dev = [
     "flake8",
     "ipdb",
