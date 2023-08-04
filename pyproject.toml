@@ -24,7 +24,7 @@ classifiers = [
     "Topic :: Database",
     "Topic :: Scientific/Engineering :: GIS",
 ]
-requires-python = ">=3.6"
+requires-python = ">=3.9"
 dependencies = []
 
 [project.urls]
@@ -32,11 +32,12 @@ dependencies = []
 "Documentation" = "https://britishgeologicalsurvey.github.io/etlhelper/"
 
 [project.optional-dependencies]
-oracle = ["cx-oracle"]
+oracle = ["oracledb", "cffi"]
 mssql = ["pyodbc"]
 postgres = ["psycopg2-binary"]
 all = [
-    "cx-oracle",
+    "oracledb",
+    "cffi",
     "pyodbc",
     "psycopg2-binary",
 ]
@@ -48,9 +49,6 @@ dev = [
     "pytest-cov",
     "versioneer",
 ]
-
-[project.scripts]
-setup_oracle_client = "etlhelper.setup_oracle_client:main"
 
 [tools.setuptools.packages.find]
 where = ["etlhelper", "etlhelper.db_helpers"]
