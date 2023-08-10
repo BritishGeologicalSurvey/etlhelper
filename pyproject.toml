@@ -1,13 +1,11 @@
 [build-system]
-requires = ["setuptools>=61.0"]  # You can specify the build system used
+requires = ["setuptools", "setuptools_scm[toml]"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "etlhelper"
-version = "v?.?.?"  # TODO: Dynamic versioneer value
-cmdclass = "???"  # TODO: Dynamic versioneer value
 decsription = "etlhelper is Python ETL library to simplify data transfer into and out of databases."
-readme = "README.md"
+readme = {file = "README.md", content-type = "text/markdown"}
 authors = [
     {name = "BGS Informatics", email = "jostev@bgs.ac.uk"},
 ]
@@ -25,7 +23,7 @@ classifiers = [
     "Topic :: Scientific/Engineering :: GIS",
 ]
 requires-python = ">=3.9"
-dependencies = []
+dynamic = ["version"]
 
 [project.urls]
 "Source Code" = "https://github.com/BritishGeologicalSurvey/etlhelper"
@@ -47,8 +45,13 @@ dev = [
     "ipython",
     "pytest",
     "pytest-cov",
-    "versioneer",
 ]
+
+[tool.setuptools_scm]
+# This can be empty, it's presence indicates that the version should come from git
+# Errors can occur if new commits are made after the git release version
+# Therefore, it is best to make all commits, then release git version, then pull new tag, then run build
 
 [tools.setuptools.packages.find]
 where = ["etlhelper", "etlhelper.db_helpers"]
+namespaces = false
