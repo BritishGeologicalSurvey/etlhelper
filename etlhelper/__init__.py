@@ -2,7 +2,9 @@
 Library to simplify data transfer between databases
 """
 import logging
+import sys
 import warnings
+from os import devnull
 
 # Import helper functions here for more convenient access
 # flake8: noqa
@@ -46,22 +48,38 @@ warnings.warn(
     stacklevel=2,
 )
 
-# Prepare log handler.  See this StackOverflow answer for details:
-# https://stackoverflow.com/a/27835318/3508733
-class CleanDebugMessageFormatter(logging.Formatter):
-    default_fmt = logging.Formatter('%(asctime)s %(funcName)s: %(message)s')
-    debug_fmt = logging.Formatter('%(message)s')
-
-    def format(self, record):
-        if record.levelno < logging.INFO:
-            return self.debug_fmt.format(record)
-        else:
-            return self.default_fmt.format(record)
-
-handler = logging.StreamHandler()
-handler.setFormatter(CleanDebugMessageFormatter())
-
-# Configure logger
+# Set default logger to not output
+handler = logging.StreamHandler(open(devnull, "w"))
 logger = logging.getLogger('etlhelper')
 logger.addHandler(handler)
-logger.setLevel(level=logging.WARN)
+
+
+def log_to_console(level=logging.INFO, output=sys.stderr) -> logging.Logger:
+    """
+    Log ETLHelper messages to the given output.
+
+    :param level: logger level
+    :param output: the output location of the logger messages
+    :return: the configured logger
+    :rtype: logging.Logger
+    """
+    # Prepare log handler.  See this StackOverflow answer for details:
+    # https://stackoverflow.com/a/27835318/3508733
+    class CleanDebugMessageFormatter(logging.Formatter):
+        default_fmt = logging.Formatter('%(asctime)s %(funcName)s: %(message)s')
+        debug_fmt = logging.Formatter('%(message)s')
+
+        def format(self, record):
+            if record.levelno < logging.INFO:
+                return self.debug_fmt.format(record)
+            else:
+                return self.default_fmt.format(record)
+
+    handler = logging.StreamHandler(output)
+    handler.setFormatter(CleanDebugMessageFormatter())
+
+    # Configure logger
+    logger = logging.getLogger('etlhelper')
+    logger.addHandler(handler)
+    logger.setLevel(level=level)
+    return logger
