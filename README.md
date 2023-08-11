@@ -434,7 +434,10 @@ if errors:
 Errors can be logged to the `etlhelper` logger.
 
 ```python
-from etlhelper import logger
+import etlhelper
+
+logger = etlhelper.log_to_console()
+
 
 def log_errors(failed_rows):
     for row, exception in failed_rows:
@@ -673,15 +676,15 @@ The following recipes demonstrate how `etlhelper` can be used.
 
 ETL Helper provides a custom logging handler.
 Time-stamped messages indicating the number of rows processed can be enabled by
-setting the log level to INFO.
-Setting the level to DEBUG provides information on the query that was run,
+setting the log level to `INFO`.
+Setting the level to `DEBUG` provides information on the query that was run,
 example data and the database connection.
+To enable the logger, use:
 
 ```python
-import logging
-from etlhelper import logger
+import etlhelper
 
-logger.setLevel(logging.INFO)
+logger = etlhelper.log_to_console()
 ```
 
 Output from a call to `copy_rows` will look like:
