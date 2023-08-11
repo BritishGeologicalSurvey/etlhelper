@@ -4,7 +4,6 @@ Library to simplify data transfer between databases
 import logging
 import sys
 import warnings
-from os import devnull
 
 # Import helper functions here for more convenient access
 # flake8: noqa
@@ -47,11 +46,6 @@ warnings.warn(
     DeprecationWarning,
     stacklevel=2,
 )
-
-# Set default logger to not output
-handler = logging.StreamHandler(open(devnull, "w"))
-logger = logging.getLogger('etlhelper')
-logger.addHandler(handler)
 
 
 def log_to_console(level=logging.INFO, output=sys.stderr) -> logging.Logger:
