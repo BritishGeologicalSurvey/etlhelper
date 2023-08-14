@@ -46,6 +46,10 @@ dev = [
     "pytest",
     "pytest-cov",
 ]
+pkg = [
+    "build",
+    "twine",
+]
 
 [tool.setuptools_scm]
 # This can be empty, it's presence indicates that the version should come from git
