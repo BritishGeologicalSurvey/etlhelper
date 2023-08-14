@@ -7,7 +7,7 @@ name = "etlhelper"
 decsription = "etlhelper is Python ETL library to simplify data transfer into and out of databases."
 readme = {file = "README.md", content-type = "text/markdown"}
 authors = [
-    {name = "BGS Informatics", email = "jostev@bgs.ac.uk"},
+    {name = "BGS Informatics", email = "enquiries@bgs.ac.uk"},
 ]
 license = {text = "LGPL-3.0 license"}
 classifiers = [
