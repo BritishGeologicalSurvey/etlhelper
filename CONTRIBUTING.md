@@ -9,7 +9,7 @@ welcome, particularly in the following areas:
 + support for more database types (MySQL, Informix)
 + additional recipes / case studies
 + add type annotations
-+ run more integration tests in Travis CI (or port to GitHub Actions)
++ run more integration tests in GitHub Actions
 + performance optimisation
 + improved documentation
 
@@ -47,7 +47,7 @@ Pull requests and issues should be targeted at the GitHub repository.
 
 ### Prerequisites
 
-+ Python 3.6+ virtual environment
++ Python 3.9+ virtual environment
 + Git
 + Docker
 
@@ -64,13 +64,6 @@ pip install -e .
 
 Development files will be linked to the virtual environment/system folder
 hierarchy allowing changes to take effect directly.
-
-Proprietary Oracle Instant Client drivers are required.
-These can be installed with:
-
-```bash
-source $(setup_oracle_client)
-```
 
 ### Running tests
 
