@@ -6,7 +6,7 @@ from collections import namedtuple
 import os
 from textwrap import dedent
 
-import cx_Oracle
+import oracledb
 import pytest
 
 from etlhelper import (
@@ -36,7 +36,7 @@ if not ORADB.is_reachable():
 
 def test_connect():
     conn = connect(ORADB, 'TEST_ORACLE_PASSWORD')
-    assert isinstance(conn, cx_Oracle.Connection)
+    assert isinstance(conn, oracledb.Connection)
 
 
 def test_connect_wrong_password(monkeypatch):
@@ -347,7 +347,7 @@ def test_tables(test_table_data, testdb_conn):
         # src table
         try:
             cursor.execute(drop_src_sql)
-        except cx_Oracle.DatabaseError:
+        except oracledb.DatabaseError:
             pass
         cursor.execute(create_src_sql)
         cursor.executemany(INSERT_SQL.format(tablename='src'),
@@ -355,7 +355,7 @@ def test_tables(test_table_data, testdb_conn):
         # dest table
         try:
             cursor.execute(drop_dest_sql)
-        except cx_Oracle.DatabaseError:
+        except oracledb.DatabaseError:
             # Error if table doesn't exist
             pass
         cursor.execute(create_dest_sql)
