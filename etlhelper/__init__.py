@@ -3,6 +3,11 @@ Library to simplify data transfer between databases
 """
 import logging
 
+from importlib.metadata import (
+    PackageNotFoundError,
+    version,
+)
+
 # Import helper functions here for more convenient access
 # flake8: noqa
 from etlhelper.abort import abort_etlhelper_threads
@@ -31,8 +36,10 @@ from etlhelper.utils import (
     table_info,
 )
 
-from . import _version
-__version__ = _version.get_versions()['version']
+try:
+    __version__ = version(__name__)
+except PackageNotFoundError:
+    __version__ = "0.0.0"
 
 # Prepare log handler.  See this StackOverflow answer for details:
 # https://stackoverflow.com/a/27835318/3508733
