@@ -4,8 +4,7 @@ import logging
 import pytest
 import re
 
-from etlhelper import copy_rows, execute, logger
-
+from etlhelper import copy_rows, execute, log_to_console
 
 NO_OUTPUT = []
 INFO = [
@@ -51,6 +50,8 @@ INFO_AND_DEBUG = [
     '3 rows processed (0 failed)',
     '3 rows returned',
     '3 rows processed in total']
+
+logger = log_to_console()
 
 
 @pytest.mark.parametrize('level, expected', [
