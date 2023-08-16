@@ -1,2 +1,0 @@
-include versioneer.py
-include etlhelper/_version.py
