@@ -5,6 +5,11 @@ import logging
 import sys
 import warnings
 
+from importlib.metadata import (
+    PackageNotFoundError,
+    version,
+)
+
 # Import helper functions here for more convenient access
 # flake8: noqa
 from etlhelper.abort import abort_etlhelper_threads
@@ -34,8 +39,10 @@ from etlhelper import (
     row_factories,
 )
 
-from . import _version
-__version__ = _version.get_versions()['version']
+try:
+    __version__ = version(__name__)
+except PackageNotFoundError:
+    __version__ = "0.0.0"
 
 warnings.warn(
     (
