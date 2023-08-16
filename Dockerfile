@@ -1,4 +1,4 @@
-FROM python:3.6.9-slim
+FROM python:3.9-slim-bullseye
 
 # Install package dependencies
 RUN apt-get update -y && \
@@ -12,7 +12,7 @@ RUN apt-get update -y && \
 # Add repo for Microsoft ODBC driver for SQL Server
 RUN curl https://packages.microsoft.com/keys/microsoft.asc > microsoft.asc && \
     apt-key add microsoft.asc && \
-    curl https://packages.microsoft.com/config/debian/9/prod.list > /etc/apt/sources.list.d/mssql-release.list && \
+    curl https://packages.microsoft.com/config/debian/11/prod.list > /etc/apt/sources.list.d/mssql-release.list && \
     apt-get update -y && \
     ACCEPT_EULA=y apt-get install -y \
       msodbcsql17 \
@@ -38,8 +38,4 @@ COPY test/ $APP/test
 RUN find . -regextype posix-egrep -regex '.*/__pycache__.*' -delete
 
 # Set up Oracle Client
-ARG INSTANT_CLIENT_ZIP
 RUN python -m pip install .
-RUN setup_oracle_client -v
-# Have to hard-code oracle_lib_export as ENV can't use result of command
-ENV LD_LIBRARY_PATH=/app/etlhelper/oracle_instantclient
