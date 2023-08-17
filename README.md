@@ -991,9 +991,8 @@ def transform(rows: Iterable[dict]) -> Iterable[dict]:
 
 
 if __name__ == "__main__":
-    import logging
-    from etlhelper import logger
-    logger.setLevel(logging.INFO)
+    from etlhelper import log_to_console
+    log_to_console()
 
     db = DbParams(dbtype="SQLITE", filename="observations.sqlite")
     with db.connect() as conn:
