@@ -10,11 +10,12 @@ from pathlib import Path
 import socket
 from textwrap import dedent
 from zipfile import ZipFile
+import logging
 
 import pytest
 from psycopg2.extras import execute_batch
 
-from etlhelper import connect, DbParams
+from etlhelper import connect, log_to_console, DbParams
 
 PGTESTDB = DbParams(
     dbtype='PG',
@@ -22,6 +23,17 @@ PGTESTDB = DbParams(
     port=5432,
     dbname='etlhelper',
     user='etlhelper_user')
+
+
+@pytest.fixture(scope="function")
+def logger() -> logging.Logger:
+    """
+    Return an enabled etlhelper logger for tests.
+    The logger handler is set to NullHandler afterwards.
+    """
+    logger = log_to_console()
+    yield logger
+    logger.addHandler(logging.NullHandler())
 
 
 @pytest.fixture(scope='module')

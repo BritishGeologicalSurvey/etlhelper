@@ -4,7 +4,7 @@ import logging
 import pytest
 import re
 
-from etlhelper import copy_rows, execute, log_to_console
+from etlhelper import copy_rows, execute
 
 NO_OUTPUT = []
 INFO = [
@@ -51,8 +51,6 @@ INFO_AND_DEBUG = [
     '3 rows returned',
     '3 rows processed in total']
 
-logger = log_to_console()
-
 
 @pytest.mark.parametrize('level, expected', [
     (logging.DEBUG, INFO_AND_DEBUG),
@@ -61,7 +59,8 @@ logger = log_to_console()
 ])
 def test_logging_copy_rows(caplog, level, expected,
                            pgtestdb_conn, pgtestdb_test_tables,
-                           pgtestdb_insert_sql, test_table_data):
+                           pgtestdb_insert_sql, test_table_data,
+                           logger):
     # Arrange
     caplog.set_level(level, logger=logger.name)
     select_sql = "SELECT * FROM src"
@@ -107,7 +106,7 @@ INFO_AND_DEBUG_EXECUTE = [
     (logging.INFO, INFO_EXECUTE),
     (logging.WARNING, NO_OUTPUT),
 ])
-def test_logging_execute(caplog, level, expected, pgtestdb_conn):
+def test_logging_execute(caplog, level, expected, pgtestdb_conn, logger):
     # Arrange
     caplog.set_level(level, logger=logger.name)
     select_sql = "SELECT 1 AS result;"
