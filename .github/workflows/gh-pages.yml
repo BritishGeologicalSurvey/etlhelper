@@ -1,0 +1,24 @@
+name: Deploy Sphinx documentation to Pages
+
+on:
+  push:
+    branches: 
+      - for_v1
+    paths:
+      - 'docs/**'  
+
+jobs:
+  pages:
+    runs-on: ubuntu-20.04
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    permissions:
+      pages: write
+      id-token: write
+    steps:
+    - name: Install RTD Theme
+      run: |
+          pip install sphinx sphinx_rtd_theme
+    - id: deployment
+      uses: sphinx-notes/pages@v3
