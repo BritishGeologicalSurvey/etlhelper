@@ -25,19 +25,19 @@ class OracleDbHelper(DbHelper):
         super().__init__()
         self.required_params = {'host', 'port', 'dbname', 'user'}
         self.missing_driver_msg = (
-            "Could not import cx_Oracle module required for Oracle connections.  "
+            "Could not import oracledb module required for Oracle connections.  "
             "See https://github.com/BritishGeologicalSurvey/etlhelper for installation instructions")
         self.named_paramstyle = 'named'
         self.positional_paramstyle = 'numeric'
 
         try:
-            import cx_Oracle
-            self.sql_exceptions = (cx_Oracle.DatabaseError,
-                                   cx_Oracle.InterfaceError)
-            self.connect_exceptions = (cx_Oracle.DatabaseError,
-                                       cx_Oracle.InterfaceError)
-            self.paramstyle = cx_Oracle.paramstyle
-            self._connect_func = cx_Oracle.connect
+            import oracledb
+            self.sql_exceptions = (oracledb.DatabaseError,
+                                   oracledb.InterfaceError)
+            self.connect_exceptions = (oracledb.DatabaseError,
+                                       oracledb.InterfaceError)
+            self.paramstyle = oracledb.paramstyle
+            self._connect_func = oracledb.connect
         except ImportError:
             warnings.warn(self.missing_driver_msg)
 

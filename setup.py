@@ -42,7 +42,7 @@ setup(
         "Topic :: Database",
         "Topic :: Scientific/Engineering :: GIS",
     ],
-    python_requires='>=3.6',
+    python_requires='>=3.9',
     packages=["etlhelper", "etlhelper.db_helpers"],
     include_package_data=True,
     install_requires=[],
@@ -54,12 +54,8 @@ setup(
                 'pytest-cov',
                 'versioneer'
                 ],
-        'oracle': ['cx-oracle'],
+        'all': ['oracledb', 'cffi', 'pyodbc', 'psycopg2-binary'],
+        'oracle': ['oracledb', 'cffi'],
         'mssql': ['pyodbc'],
         'postgres': ['psycopg2-binary']},
-    entry_points={
-        "console_scripts": [
-            "setup_oracle_client=etlhelper.setup_oracle_client:main",
-        ]
-    },
 )
