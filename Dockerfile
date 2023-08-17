@@ -29,7 +29,7 @@ COPY requirements.txt $APP/
 RUN pip install -r requirements.txt
 
 # Copy app files to container
-COPY setup.py versioneer.py setup.cfg .flake8 .coveragerc README.md pytest.ini $APP/
+COPY pyproject.toml .flake8 README.md pytest.ini $APP/
 COPY etlhelper/ $APP/etlhelper
 COPY test/ $APP/test
 
