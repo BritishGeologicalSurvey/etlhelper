@@ -34,6 +34,10 @@ from etlhelper.utils import (
 from . import _version
 __version__ = _version.get_versions()['version']
 
+# Create a default null logger
+# This prevents a new logger from being created when running 'logging.getLogger("etlhelper")'
+logging.getLogger("etlhelper").addHandler(logging.NullHandler())
+
 
 def log_to_console(level=logging.INFO, output=sys.stderr) -> logging.Logger:
     """
