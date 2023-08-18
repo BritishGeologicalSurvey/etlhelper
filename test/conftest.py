@@ -31,9 +31,10 @@ def logger() -> logging.Logger:
     Return an enabled etlhelper logger for tests.
     The logger handler is set to NullHandler afterwards.
     """
-    logger = log_to_console()
+    log_to_console()
+    logger = logging.getLogger("etlhelper")
     yield logger
-    logger.addHandler(logging.NullHandler())
+    logger.handlers.clear()
 
 
 @pytest.fixture(scope='module')

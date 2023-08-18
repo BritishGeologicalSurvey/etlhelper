@@ -34,19 +34,18 @@ from etlhelper.utils import (
 from . import _version
 __version__ = _version.get_versions()['version']
 
-# Create a default null logger
+# Create etlhelper logger and clear the logger handlers
 # This prevents a new logger from being created when running 'logging.getLogger("etlhelper")'
-logging.getLogger("etlhelper").addHandler(logging.NullHandler())
+# with default handlers
+logging.getLogger("etlhelper").handlers.clear()
 
 
-def log_to_console(level=logging.INFO, output=sys.stderr) -> logging.Logger:
+def log_to_console(level=logging.INFO, output=sys.stderr) -> None:
     """
     Log ETLHelper messages to the given output.
 
     :param level: logger level
     :param output: the output location of the logger messages
-    :return: the configured logger
-    :rtype: logging.Logger
     """
     # Prepare log handler.  See this StackOverflow answer for details:
     # https://stackoverflow.com/a/27835318/3508733
@@ -67,4 +66,3 @@ def log_to_console(level=logging.INFO, output=sys.stderr) -> logging.Logger:
     logger = logging.getLogger('etlhelper')
     logger.addHandler(handler)
     logger.setLevel(level=level)
-    return logger
