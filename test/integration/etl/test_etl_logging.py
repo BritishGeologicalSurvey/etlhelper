@@ -25,7 +25,7 @@ INFO_AND_DEBUG = [
     '  (%s, %s, %s, %s, %s, %s)\n'
     '  ;\n'
     '\n'
-    'against\n'
+    'against:\n'
     '\n'
     "<connection object at ???; dsn: 'user=etlhelper_user password=xxx "
     "dbname=etlhelper host=??? port=???', closed: 0>",
@@ -38,7 +38,7 @@ INFO_AND_DEBUG = [
     '\n'
     '()\n'
     '\n'
-    'against\n'
+    'against:\n'
     '\n'
     "<connection object at ???; dsn: 'user=etlhelper_user password=xxx "
     "dbname=etlhelper host=??? port=???', closed: 0>",
@@ -95,7 +95,7 @@ INFO_AND_DEBUG_EXECUTE = [
     '\n'
     '()\n'
     '\n'
-    'against\n'
+    'against:\n'
     '\n'
     "<connection object at ???; dsn: 'user=etlhelper_user password=xxx "
     "dbname=etlhelper host=??? port=???', closed: 0>"]
