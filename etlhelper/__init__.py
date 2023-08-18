@@ -60,6 +60,10 @@ def log_to_console(level=logging.INFO, output=sys.stderr) -> None:
     :param level: logger level
     :param output: the output location of the logger messages
     """
+    logger = logging.getLogger('etlhelper')
+    # Clear all existing handlers to prevent duplicate output
+    logger.handlers.clear()
+
     # Prepare log handler.  See this StackOverflow answer for details:
     # https://stackoverflow.com/a/27835318/3508733
     class CleanDebugMessageFormatter(logging.Formatter):
@@ -76,6 +80,5 @@ def log_to_console(level=logging.INFO, output=sys.stderr) -> None:
     handler.setFormatter(CleanDebugMessageFormatter())
 
     # Configure logger
-    logger = logging.getLogger('etlhelper')
     logger.addHandler(handler)
     logger.setLevel(level=level)
