@@ -46,7 +46,7 @@ def iter_chunks(select_query, conn, parameters=(),
     """
     logger.info("Fetching rows (chunk_size=%s)", chunk_size)
     logger.debug(f"Fetching:\n\n{select_query}\n\nwith parameters:\n\n"
-                 f"{parameters}\n\nagainst\n\n{conn}")
+                 f"{parameters}\n\nagainst:\n\n{conn}")
     clear_abort_event()
 
     helper = DB_HELPER_FACTORY.from_conn(conn)
@@ -247,7 +247,7 @@ def executemany(query, conn, rows, on_error=None, commit_chunks=True,
     :return processed, failed: (int, int) number of rows processed, failed
     """
     logger.info("Executing many (chunk_size=%s)", chunk_size)
-    logger.debug("Executing:\n\n%s\n\nagainst\n\n%s", query, conn)
+    logger.debug("Executing:\n\n%s\n\nagainst:\n\n%s", query, conn)
     clear_abort_event()
 
     helper = DB_HELPER_FACTORY.from_conn(conn)
@@ -394,7 +394,7 @@ def execute(query, conn, parameters=()):
     """
     logger.info("Executing query")
     logger.debug(f"Executing:\n\n{query}\n\nwith parameters:\n\n"
-                 f"{parameters}\n\nagainst\n\n{conn}")
+                 f"{parameters}\n\nagainst:\n\n{conn}")
 
     helper = DB_HELPER_FACTORY.from_conn(conn)
     with helper.cursor(conn) as cursor:
