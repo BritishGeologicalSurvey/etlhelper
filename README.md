@@ -410,9 +410,12 @@ if errors:
 Errors can be logged to the `etlhelper` logger.
 
 ```python
+import logging
+
 import etlhelper
 
-logger = etlhelper.log_to_console()
+etlhelper.log_to_console()
+logger = logging.getLogger("etlhelper")
 
 
 def log_errors(failed_rows):
@@ -660,7 +663,7 @@ To enable the logger, use:
 ```python
 import etlhelper
 
-logger = etlhelper.log_to_console()
+etlhelper.log_to_console()
 ```
 
 Output from a call to `copy_rows` will look like:
@@ -674,8 +677,20 @@ Output from a call to `copy_rows` will look like:
 2019-10-07 15:06:22,420 executemany: 3 rows processed in total
 ```
 
-Note: errors on database connections output messages that include login
+Note: errors on database connections output messages may include login
 credentials in clear text.
+
+To use the etlhelper logger directly, access it via:
+
+```python
+import logging
+
+import etlhelper
+
+etlhelper.log_to_console()
+etl_logger = logging.getLogger("etlhelper")
+etl_logger.info("Hello world!")
+```
 
 
 ### Database to database copy ETL script template
