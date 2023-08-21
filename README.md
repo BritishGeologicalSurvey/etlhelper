@@ -326,7 +326,7 @@ give a slight increase in performance.
 Mutable rows are convenient when used with transform functions because they
 can be modified without need to create a whole new output row.
 
-When using `copy_rows`, it is necessary to use approriate parameter placeholder
+When using `copy_rows`, it is necessary to use appropriate parameter placeholder
 style for the chosen row factory in the INSERT query.
 Using the `dict_row_factory` requires a switch from named to positional
 parameter placeholders (e.g. `%(id)s` instead of `%s` for PostgreSQL, `:id`
@@ -342,7 +342,8 @@ either named tuples or dictionaries.
 The `transform` parameter allows passing of a function to transform the data
 before returning it.
 The function must take a list of rows and return a list of modified rows.
-See `copy_rows` for more details.
+Rows of mutable types (dict, list) can be modified in-place, while rows of immutable types (tuples, namedtuples) must be created as new objects from the input rows.
+See `transform` for more details.
 
 
 #### Chunk size
@@ -537,26 +538,30 @@ A tuple of rows processed and failed is returned.
 Data can be transformed in-flight by applying a transform function.  This is
 any Python callable (e.g. function) that takes an iterator (e.g. list) and returns
 another iterator.
-Transform functions are applied to data as they are read from the database and
-can be used with `get_rows`-type methods and with `copy_rows`.
+Transform functions are applied to data as they are read from the database in the case of data fetching functions and `copy_rows`, or before they are passed as query parameters to `executemany` or `load`.
+When used with `copy_rows`, the INSERT query must contain the correct placeholders for the
+transform result.
+
+Any Python code can be used within the function and extra data can result from a calculation,
+a call to a webservice or a query against another database.
+As a standalone function with known inputs and outputs, the transform functions are
+also easy to test.
 
 The following code demonstrates that the returned chunk can have a different number
 of rows, and be of different length, to the input.
-When used with `copy_rows`, the INSERT query must contain the correct placeholders for the
-transform result.
-Extra data can result from a calculation, a call to a webservice or another database.
 
 ```python
 import random
 
-def my_transform(chunk):
+def my_transform(chunk: list[tuple]) -> list[dict]:
     # Append random integer (1-10), filter if <5.
 
     new_chunk = []
-    for row in chunk:  # each row is a namedtuple
+    for row in chunk:  # each row is a namedtuple (immutable)
         extra_value = random.randrange(10)
         if extra_value >= 5:
-            new_chunk.append((*row, extra_value))
+            new_row = (*row, extra_value)
+            new_chunk.append(new_row)
 
     return new_chunk
 
@@ -565,22 +570,20 @@ copy_rows(select_sql, src_conn, insert_sql, dest_conn,
 ```
 
 It can be easier to modify individual columns when using the
-`dict_row_factory` (see above).
+`dict_row_factory` (see above) as dictionaries are mutable.
 
 ```python
 from etlhelper.row_factories import dict_row_factory
 
-def my_transform(chunk):
+def my_transform(chunk: list[dict]) -> list[dict]:
     # Add prefix to id, remove newlines, set lower case email addresses
 
-    new_chunk = []
-    for row in chunk:  # each row is a dictionary
+    for row in chunk:  # each row is a dictionary (mutable)
         row['id'] += 1000
         row['description'] = row['description'].replace('\n', ' ')
         row['email'] = row['email'].lower()
-        new_chunk.append(row)
 
-    return new_chunk
+    return chunk
 
 get_rows(select_sql, src_conn, row_factory=dict_row_factory,
          transform=my_transform)
@@ -992,12 +995,15 @@ def load_observations(csv_file, conn):
         load('observations', conn, reader, transform=transform, on_error=on_error)
 
 
-# A transform function that takes an iterable and returns an iterable
+# A transform function that takes an iterable of rows and returns an iterable
+# of rows.
 def transform(rows: Iterable[dict]) -> Iterable[dict]:
     """Rename time column and convert to Python datetime."""
-    for idx, row in enumerate(rows):
+    for row in rows:
+        # Dictionaries are mutable, so rows can be modified in place.
         time_value = row.pop('phenomenonTime')
-        rows[idx]['time'] = dt.datetime.strptime(time_value, "%Y-%m-%dT%H:%M:%S.%fZ")
+        row['time'] = dt.datetime.strptime(time_value, "%Y-%m-%dT%H:%M:%S.%fZ")
+
     return rows
 
 
