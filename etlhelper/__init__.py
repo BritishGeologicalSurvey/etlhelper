@@ -37,8 +37,8 @@ __version__ = _version.get_versions()['version']
 
 warnings.warn(
     (
-        "ETLHelper version 1.0.0 is coming soon and will contain deprecations. "
-        "Users should pin their versions and check GitHub issues for details."
+        "ETLHelper version 1.0.0 is coming soon and will contain many breaking changes. "
+        "Users should pin their versions '(etlhelper<1)' and check GitHub for release details."
     ),
     DeprecationWarning,
     stacklevel=2,
