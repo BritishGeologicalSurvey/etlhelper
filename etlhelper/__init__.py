@@ -2,6 +2,7 @@
 Library to simplify data transfer between databases
 """
 import logging
+import warnings
 
 # Import helper functions here for more convenient access
 # flake8: noqa
@@ -33,6 +34,15 @@ from etlhelper.utils import (
 
 from . import _version
 __version__ = _version.get_versions()['version']
+
+warnings.warn(
+    (
+        "ETLHelper version 1.0.0 is coming soon and will contain many breaking changes. "
+        "Users should pin their versions '(etlhelper<1)' and check GitHub for release details."
+    ),
+    DeprecationWarning,
+    stacklevel=2,
+)
 
 # Prepare log handler.  See this StackOverflow answer for details:
 # https://stackoverflow.com/a/27835318/3508733
