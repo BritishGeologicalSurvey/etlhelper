@@ -535,19 +535,22 @@ def load(
     # the generator was empty.
     try:
         rows = iter(rows)
-        first_row = deepcopy(next(rows))  # This line throws an exception if empty
+        first_row = next(rows)  # This line throws an exception if empty
         rows = chain([first_row], rows)
 
         if transform:
             # next(iter(var)) is equivalent to var[0] but also works for generators,
-            # which may be returned by the transform
-            first_row = next(iter(transform([first_row])))
+            # which may be returned by the transform.
+            # We need a deepcopy to stop the first row being transformed twice.
+            first_row_transformed = next(iter(transform([deepcopy(first_row)])))
+        else:
+            first_row_transformed = first_row
 
     except StopIteration:
         return 0, 0
 
     # Generate insert query
-    query = generate_insert_sql(table, first_row, conn)
+    query = generate_insert_sql(table, first_row_transformed, conn)
 
     # Insert data
     processed, failed = executemany(
