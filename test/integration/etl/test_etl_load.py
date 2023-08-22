@@ -157,8 +157,6 @@ def test_load_named_tuples_with_transform_generator(pgtestdb_conn, pgtestdb_test
     assert result == test_table_data
 
 
-
-
 @pytest.mark.parametrize('null_data', [
     None,
     [],
