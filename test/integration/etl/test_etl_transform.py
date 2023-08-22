@@ -91,6 +91,16 @@ def transform_return_list(rows):
     return [(row.id, row.value) for row in rows if row.id > 1]
 
 
+def transform_yield_new_rows(rows):
+    """
+    Simple transform function that changes size and number of rows.
+    """
+    for row in rows:
+        new_row = (row.id, row.value)
+        if row.id > 1:
+            yield new_row
+
+
 def transform_return_generator(rows):
     """
     Simple transform function that changes size and number of rows.
@@ -98,8 +108,23 @@ def transform_return_generator(rows):
     return ((row.id, row.value) for row in rows if row.id > 1)
 
 
+def transform_return_new_list(rows):
+    """
+    Simple transform function that changes size and number of rows
+    using traditional for loop syntax.
+    """
+    transformed = []
+    for row in rows:
+        if row.id > 1:
+            new_row = (row.id, row.value)
+            transformed.append(new_row)
+
+    return transformed
+
+
 @pytest.mark.parametrize('my_transform',
-                         [transform_return_list, transform_return_generator])
+                         [transform_return_list, transform_return_generator,
+                          transform_return_new_list, transform_yield_new_rows])
 def test_copy_rows_transform(pgtestdb_conn, pgtestdb_test_tables, my_transform):
     # Arrange
     select_sql = "SELECT * FROM src"
@@ -118,18 +143,14 @@ def test_copy_rows_transform(pgtestdb_conn, pgtestdb_test_tables, my_transform):
     assert list(result) == expected
 
 
-def transform_modify_dict(chunk):
+def transform_yield_modified_dict(chunk):
     """Add 1 thousand to id, replace text with UPPER CASE and replace newlines
     from utf8_text."""
-    new_chunk = []
-
     for row in chunk:
         row['id'] += 1000
         row['simple_text'] = row['simple_text'].upper()
         row['utf8_text'] = row['utf8_text'].replace('\n', ' ')
-        new_chunk.append(row)
-
-    return new_chunk
+        yield row
 
 
 def test_get_rows_with_modify_dict(pgtestdb_conn, pgtestdb_test_tables):
@@ -146,7 +167,7 @@ def test_get_rows_with_modify_dict(pgtestdb_conn, pgtestdb_test_tables):
 
     # Act
     result = get_rows(select_sql, pgtestdb_conn, row_factory=dict_row_factory,
-                      transform=transform_modify_dict)
+                      transform=transform_yield_modified_dict)
 
     # Assert
     assert result == expected
@@ -169,7 +190,7 @@ def test_copy_rows_with_dict_row_factory(pgtestdb_conn, pgtestdb_test_tables, pg
 
     # Act
     copy_rows(select_sql, pgtestdb_conn, insert_sql, pgtestdb_conn,
-              transform=transform_modify_dict, row_factory=dict_row_factory)
+              transform=transform_yield_modified_dict, row_factory=dict_row_factory)
 
     # Assert
     sql = "SELECT * FROM dest"
