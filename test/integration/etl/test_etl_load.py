@@ -140,6 +140,25 @@ def test_load_dicts(pgtestdb_conn, pgtestdb_test_tables, test_table_data):
     assert result == test_table_data
 
 
+def test_load_named_tuples_with_transform_generator(pgtestdb_conn, pgtestdb_test_tables, test_table_data):
+    # Act
+    def transform(chunk):
+        for row in chunk:
+            yield row
+
+    processed, failed = load('dest', pgtestdb_conn, test_table_data, transform=transform)
+
+    # Assert
+    assert processed == len(test_table_data)
+    assert failed == 0
+
+    sql = "SELECT * FROM dest"
+    result = get_rows(sql, pgtestdb_conn)
+    assert result == test_table_data
+
+
+
+
 @pytest.mark.parametrize('null_data', [
     None,
     [],

@@ -294,7 +294,8 @@ def executemany(
 
             # Apply transform
             if transform:
-                chunk = transform(chunk)
+                # Materialise chunk as list as `transform` can return generator
+                chunk = list(transform(chunk))
 
             # Show first row as example of data
             if processed == 0:
@@ -534,19 +535,19 @@ def load(
     # the generator was empty.
     try:
         rows = iter(rows)
-        first_row = next(rows)  # This line throws the exception if empty
+        first_row = deepcopy(next(rows))  # This line throws an exception if empty
         rows = chain([first_row], rows)
 
-        # Transform the first row for table columns
-        transform_first_row = deepcopy(first_row)
         if transform:
-            transform_first_row = transform([transform_first_row])[0]
+            # next(iter(var)) is equivalent to var[0] but also works for generators,
+            # which may be returned by the transform
+            first_row = next(iter(transform([first_row])))
 
     except StopIteration:
         return 0, 0
 
     # Generate insert query
-    query = generate_insert_sql(table, transform_first_row, conn)
+    query = generate_insert_sql(table, first_row, conn)
 
     # Insert data
     processed, failed = executemany(
