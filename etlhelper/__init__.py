@@ -13,7 +13,6 @@ from etlhelper.etl import (
     execute,
     executemany,
     fetchone,
-    fetchmany,
     fetchall,
     generate_insert_sql,
     get_rows,
@@ -29,6 +28,9 @@ from etlhelper.connect import (
 )
 from etlhelper.utils import (
     table_info,
+)
+from etlhelper import (
+    row_factories,
 )
 
 from . import _version
