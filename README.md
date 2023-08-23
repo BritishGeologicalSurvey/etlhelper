@@ -361,7 +361,9 @@ statements e.g. "CREATE TABLE ...".
 The `executemany` function is used to insert multiple rows of data.
 Large datasets are broken into chunks and inserted in batches to reduce the
 number of queries.
-A tuple with counts of rows processed and failed is returned.
+The INSERT query must container placeholders with an appropriate format for
+the input data e.g. positional for tuples, named for dictionaries.
+The number of rows that were processed and the number that failed is returned.
 
 ```python
 from etlhelper import executemany
@@ -475,6 +477,10 @@ with ORACLEDB.connect("ORA_PASSWORD") as src_conn:
 The `chunk_size`, `commit_chunks` and `on_error` parameters can all be set.
 A tuple with counts of rows processed and failed is returned.
 
+Note that the target table must already exist.
+If it doesn't, you can use `execute` with a `CREATE TABLE IF NOT EXISTS ...`
+statement to create it first.
+See the recipes for examples. 
 
 ### Combining `iter_rows` with `load`
 
@@ -1074,6 +1080,6 @@ Copyright: © BGS / UKRI 2019
 
 + [PEP249 DB API2](https://www.python.org/dev/peps/pep-0249/#cursor-objects)
 + [psycopg2](http://initd.org/psycopg/docs/cursor.html)
-+ [cx_Oracle](https://cx-oracle.readthedocs.io/en/latest/cursor.html)
++ [cx_Oracle](https://cx-oracle.readthedocs.io/en/latest/)
 + [pyodbc](https://pypi.org/project/pyodbc/)
 + [sqlite3](https://docs.python.org/3/library/sqlite3.html)
