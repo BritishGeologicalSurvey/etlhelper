@@ -1074,6 +1074,6 @@ Copyright: © BGS / UKRI 2019
 
 + [PEP249 DB API2](https://www.python.org/dev/peps/pep-0249/#cursor-objects)
 + [psycopg2](http://initd.org/psycopg/docs/cursor.html)
-+ [cx_Oracle](https://cx-oracle.readthedocs.io/en/latest/cursor.html)
++ [cx_Oracle](https://cx-oracle.readthedocs.io/en/latest/)
 + [pyodbc](https://pypi.org/project/pyodbc/)
 + [sqlite3](https://docs.python.org/3/library/sqlite3.html)
