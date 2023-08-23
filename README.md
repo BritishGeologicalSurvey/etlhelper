@@ -65,7 +65,7 @@ pip install etlhelper
 
 Database driver packages are not included by default and should be specified in
 square brackets.
-Options are `oracle` (installs cx_Oracle), `mssql` (installs pyodbc) and `postgres` (installs psycopg2).
+Options are `oracle` (installs oracledb), `mssql` (installs pyodbc) and `postgres` (installs psycopg2).
 Multiple values can be separated by commas.
 
 ```
@@ -80,33 +80,9 @@ The `sqlite3` driver is included within Python's Standard Library.
 Some database drivers have additional dependencies.
 On Linux, these can be installed via the system package manager.
 
-cx_Oracle (for Oracle):
-
-+ `sudo apt install libaio1` (Debian/Ubuntu) or `sudo dnf install libaio`
-  (CentOS, RHEL, Fedora)
-
 pyodbc (for MS SQL Server):
 
 + Follow instructions on [Microsoft SQL Docs website](https://docs.microsoft.com/en-us/sql/connect/odbc/linux-mac/installing-the-microsoft-odbc-driver-for-sql-server?view=sql-server-2017)
-
-
-### Oracle Instant Client
-
-Oracle Instant Client libraries are required to connect to Oracle databases.
-On Linux, `etlhelper` provides a script to download and unzip them from the [Oracle
-website](https://www.oracle.com/database/technologies/instant-client/linux-x86-64-downloads.html).
-Once the drivers are installed, their location must be added to LD_LIBRARY_PATH
-environment variable before they can be used.  `setup_oracle_client` writes
-a file that can then be "sourced" to do this for the current shell.  These two steps
-can be executed in a single command as:
-
-```bash
-source $(setup_oracle_client)
-```
-
-This command must be run in each new shell session.
-See `setup_oracle_client --help` for further command line flags, including
-specifying an alternative URL or filesystem path for the zipfile location.
 
 
 ## Connect to databases
@@ -171,7 +147,7 @@ conn3 = connect(ORACLEDB, 'ORACLE_PASSWORD')
 
 Both versions accept additional keyword arguments that are passed to the `connect`
 function of the underlying driver.  For example, the following sets the character
-encoding used by cx_Oracle to ensure that values are returned as UTF-8:
+encoding used by oracledb to ensure that values are returned as UTF-8:
 
 ```python
 conn4 = connect(ORACLEDB, 'ORACLE_PASSWORD', encoding="UTF-8", nencoding="UTF8")
@@ -257,8 +233,10 @@ returns
 
 Data are accessible via index (`row[4]`) or name (`row.day`).
 
-Other functions are provided to select data.  `fetchone`, `fetchmany` and
+Other functions are provided to select data.  `fetchone` and
 `fetchall` are equivalent to the cursor methods specified in the DBAPI v2.0.
+ETL Helper does not include a `fetchmany` function - instead use `iter_chunks`
+to loop over a result set in batches of multiple rows.
 
 
 #### iter_rows
@@ -432,7 +410,13 @@ if errors:
 Errors can be logged to the `etlhelper` logger.
 
 ```python
-from etlhelper import logger
+import logging
+
+import etlhelper
+
+etlhelper.log_to_console()
+logger = logging.getLogger("etlhelper")
+
 
 def log_errors(failed_rows):
     for row, exception in failed_rows:
@@ -667,15 +651,15 @@ The following recipes demonstrate how `etlhelper` can be used.
 
 ETL Helper provides a custom logging handler.
 Time-stamped messages indicating the number of rows processed can be enabled by
-setting the log level to INFO.
-Setting the level to DEBUG provides information on the query that was run,
+setting the log level to `INFO`.
+Setting the level to `DEBUG` provides information on the query that was run,
 example data and the database connection.
+To enable the logger, use:
 
 ```python
-import logging
-from etlhelper import logger
+import etlhelper
 
-logger.setLevel(logging.INFO)
+etlhelper.log_to_console()
 ```
 
 Output from a call to `copy_rows` will look like:
@@ -689,8 +673,20 @@ Output from a call to `copy_rows` will look like:
 2019-10-07 15:06:22,420 executemany: 3 rows processed in total
 ```
 
-Note: errors on database connections output messages that include login
+Note: errors on database connections output messages may include login
 credentials in clear text.
+
+To use the etlhelper logger directly, access it via:
+
+```python
+import logging
+
+import etlhelper
+
+etlhelper.log_to_console()
+etl_logger = logging.getLogger("etlhelper")
+etl_logger.info("Hello world!")
+```
 
 
 ### Database to database copy ETL script template
@@ -1026,9 +1022,8 @@ def on_error(failed_rows: List[Tuple[dict, Exception]]) -> None:
 
 
 if __name__ == "__main__":
-    import logging
-    from etlhelper import logger
-    logger.setLevel(logging.INFO)
+    from etlhelper import log_to_console
+    log_to_console()
 
     db = DbParams(dbtype="SQLITE", filename="observations.sqlite")
     with db.connect() as conn:
@@ -1087,6 +1082,6 @@ Copyright: © BGS / UKRI 2019
 
 + [PEP249 DB API2](https://www.python.org/dev/peps/pep-0249/#cursor-objects)
 + [psycopg2](http://initd.org/psycopg/docs/cursor.html)
-+ [cx_Oracle](https://cx-oracle.readthedocs.io/en/latest/cursor.html)
++ [oracledb](https://python-oracledb.readthedocs.io/en/latest/index.html)
 + [pyodbc](https://pypi.org/project/pyodbc/)
 + [sqlite3](https://docs.python.org/3/library/sqlite3.html)

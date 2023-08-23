@@ -1,7 +1,7 @@
 """Test for the helper factory"""
 from unittest.mock import MagicMock, Mock
 import pytest
-import cx_Oracle
+import oracledb
 import psycopg2
 import pyodbc
 
@@ -26,7 +26,7 @@ def test_from_dbparams(dbtype_keyword, expected_helper):
 
 
 @pytest.mark.parametrize("expected_helper, db_class",
-                         [(OracleDbHelper, cx_Oracle.Connection),
+                         [(OracleDbHelper, oracledb.Connection),
                           (PostgresDbHelper, psycopg2.extensions.connection),
                           (MSSQLDbHelper, pyodbc.Connection)])
 def test_from_conn(expected_helper, db_class):
@@ -34,7 +34,7 @@ def test_from_conn(expected_helper, db_class):
     Tests correct helper produced given a conn object
     """
     conn = Mock()
-    # conn.__class__ = cx_Oracle.Connection
+    # conn.__class__ = oracledb.Connection
     conn.__class__ = db_class
     helper = DB_HELPER_FACTORY.from_conn(conn)
     assert isinstance(helper, expected_helper)

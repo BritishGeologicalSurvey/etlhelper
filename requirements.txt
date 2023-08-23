@@ -1,4 +1,5 @@
-cx-oracle
+oracledb
+cffi
 flake8
 ipdb
 ipython
