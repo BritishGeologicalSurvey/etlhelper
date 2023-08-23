@@ -74,6 +74,15 @@ pip install etlhelper[oracle,postgres]
 
 The `sqlite3` driver is included within Python's Standard Library.
 
+### Docker
+
+etlhelper is available as a Docker image. The image is hosted on the GitHub Container Registery.
+
+Assuming you already have docker installed, you can get a etlhelper instance up and running by issuing the following command:
+
+```
+docker run ghcr.io/britishgeologicalsurvey/etlhelper:latest
+```
 
 ### Database driver dependencies
 
