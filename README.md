@@ -361,7 +361,9 @@ statements e.g. "CREATE TABLE ...".
 The `executemany` function is used to insert multiple rows of data.
 Large datasets are broken into chunks and inserted in batches to reduce the
 number of queries.
-A tuple with counts of rows processed and failed is returned.
+The INSERT query must container placeholders with an appropriate format for
+the input data e.g. positional for tuples, named for dictionaries.
+The number of rows that were processed and the number that failed is returned.
 
 ```python
 from etlhelper import executemany
