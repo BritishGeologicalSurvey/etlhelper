@@ -26,6 +26,7 @@ RUN mkdir etlhelper
 
 # Install requirements
 COPY requirements.txt $APP/
+RUN pip install --upgrade pip
 RUN pip install -r requirements.txt
 
 # Copy app files to container
