@@ -477,6 +477,10 @@ with ORACLEDB.connect("ORA_PASSWORD") as src_conn:
 The `chunk_size`, `commit_chunks` and `on_error` parameters can all be set.
 A tuple with counts of rows processed and failed is returned.
 
+Note that the target table must already exist.
+If it doesn't, you can use `execute` with a `CREATE TABLE IF NOT EXISTS ...`
+statement to create it first.
+See the recipes for examples. 
 
 ### Combining `iter_rows` with `load`
 
