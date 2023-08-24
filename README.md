@@ -414,9 +414,9 @@ Errors can be logged to the `etlhelper` logger.
 ```python
 import logging
 
-import etlhelper
+import etlhelper as etl
 
-etlhelper.log_to_console()
+etl.log_to_console()
 logger = logging.getLogger("etlhelper")
 
 
@@ -663,9 +663,9 @@ example data and the database connection.
 To enable the logger, use:
 
 ```python
-import etlhelper
+import etlhelper as etl
 
-etlhelper.log_to_console()
+etl.log_to_console()
 ```
 
 Output from a call to `copy_rows` will look like:
@@ -687,9 +687,9 @@ To use the etlhelper logger directly, access it via:
 ```python
 import logging
 
-import etlhelper
+import etlhelper as etl
 
-etlhelper.log_to_console()
+etl.log_to_console()
 etl_logger = logging.getLogger("etlhelper")
 etl_logger.info("Hello world!")
 ```
