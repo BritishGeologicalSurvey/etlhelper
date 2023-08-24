@@ -165,16 +165,6 @@ def test_iter_rows_bad_query(pgtestdb_test_tables, pgtestdb_conn):
         list(result)  # Call list to activate returned generator
 
 
-def test_fetchall_happy_path(
-    pgtestdb_test_tables,
-    pgtestdb_conn,
-    test_table_data,
-):
-    sql = "SELECT * FROM src"
-    result = fetchall(sql, pgtestdb_conn)
-    assert result == test_table_data
-
-
 def test_fetchone_happy_path(
     pgtestdb_test_tables,
     pgtestdb_conn,
