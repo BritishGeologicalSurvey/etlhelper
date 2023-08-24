@@ -20,7 +20,7 @@ database with Python.
 
 + `setup_oracle_client` script installs Oracle Instant Client on Linux systems
 + `DbParams` objects provide consistent way to connect to different database types (currently Oracle, PostgreSQL, SQLite and MS SQL Server)
-+ `get_rows`, `iter_rows`, `fetchone` and other functions for querying database
++ `fetchall`, `iter_rows`, `fetchone` and other functions for querying database
 + `execute`, `executemany`, and `load` functions to insert data
 + `copy_rows` and `copy_table_rows` to transfer data from one database to another
 + `on_error` function to process rows that fail to insert
@@ -202,19 +202,19 @@ No password is required for SQLite databases.
 
 ## Transfer data
 
-### Get rows
+### Fetch all
 
-The `get_rows` function returns a list of named tuples containing data as
+The `fetchall` function returns a list of named tuples containing data as
 native Python objects.
 
 ```python
 from my_databases import ORACLEDB
-from etlhelper import get_rows
+from etlhelper import fetchall
 
 sql = "SELECT * FROM src"
 
 with ORACLEDB.connect("ORA_PASSWORD") as conn:
-    get_rows(sql, conn)
+    fetchall(sql, conn)
 ```
 
 returns
@@ -266,7 +266,7 @@ placeholders.
 select_sql = "SELECT * FROM src WHERE id = :id"
 
 with ORACLEDB.connect("ORA_PASSWORD") as conn:
-    get_rows(sql, conn, parameters={'id': 1})
+    fetchall(sql, conn, parameters={'id': 1})
 ```
 
 #### Row factories
@@ -276,13 +276,13 @@ Row factories control the output format of returned rows.
 For example return each row as a dictionary, use the following:
 
 ```python
-from etlhelper import get_rows
+from etlhelper import fetchall
 from etlhelper.row_factories import dict_row_factory
 
 sql = "SELECT * FROM my_table"
 
 with ORACLEDB.connect('ORACLE_PASSWORD') as conn:
-    for row in get_rows(sql, conn, row_factory=dict_row_factory):
+    for row in fetchall(sql, conn, row_factory=dict_row_factory):
         print(row['id'])
 ```
 
@@ -558,7 +558,7 @@ def my_transform(chunk: Iterator[dict]) -> Iterator[dict]:
         yield row
 
 
-get_rows(select_sql, src_conn, row_factory=dict_row_factory,
+fetchall(select_sql, src_conn, row_factory=dict_row_factory,
          transform=my_transform)
 ```
 
@@ -586,7 +586,7 @@ def my_transform(chunk: Iterator[tuple]) -> list[tuple]:
 
     return new_chunk
 
-get_rows(select_sql, src_conn, row_factory=namedtuple_row_factory,
+fetchall(select_sql, src_conn, row_factory=namedtuple_row_factory,
          transform=my_transform)
 ```
 

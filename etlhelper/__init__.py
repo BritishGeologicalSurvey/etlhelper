@@ -21,7 +21,6 @@ from etlhelper.etl import (
     fetchone,
     fetchall,
     generate_insert_sql,
-    get_rows,
     iter_chunks,
     iter_rows,
     load,

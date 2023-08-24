@@ -15,7 +15,7 @@ from etlhelper import (
     copy_rows,
     copy_table_rows,
     execute,
-    get_rows,
+    fetchall,
     generate_insert_sql,
     load,
 )
@@ -72,7 +72,7 @@ def test_copy_rows_happy_path(test_tables, testdb_conn, test_table_data):
 
     # Assert
     sql = "SELECT * FROM dest"
-    result = get_rows(sql, testdb_conn)
+    result = fetchall(sql, testdb_conn)
 
     # Fix result date and datetime strings to native classes
     fixed_dates = []
@@ -92,7 +92,7 @@ def test_copy_table_rows_happy_path(test_tables, testdb_conn, test_table_data):
 
     # Assert
     sql = "SELECT * FROM dest"
-    result = get_rows(sql, testdb_conn)
+    result = fetchall(sql, testdb_conn)
 
     # Fix result date and datetime strings to native classes
     fixed_dates = []
@@ -123,7 +123,7 @@ def test_copy_table_rows_on_error(test_tables, testdb_conn, test_table_data):
 
     # Assert
     sql = "SELECT * FROM dest"
-    result = get_rows(sql, testdb_conn)
+    result = fetchall(sql, testdb_conn)
 
     # Check that first row was caught as error, noting that Oracle
     # changes the case of column names
@@ -144,13 +144,13 @@ def test_copy_table_rows_on_error(test_tables, testdb_conn, test_table_data):
     assert fixed_dates == test_table_data[1:]
 
 
-def test_get_rows_with_parameters(test_tables, testdb_conn,
+def test_fetchall_with_parameters(test_tables, testdb_conn,
                                   test_table_data):
     # parameters=None is tested by default in other tests
 
     # Bind by index
     sql = "SELECT * FROM src where ID = :1"
-    result = get_rows(sql, testdb_conn, parameters=(1,))
+    result = fetchall(sql, testdb_conn, parameters=(1,))
     assert len(result) == 1
     assert result[0].ID == 1
 
@@ -173,7 +173,7 @@ def test_load_named_tuples(testdb_conn, test_tables, test_table_data):
 
     # Assert
     sql = "SELECT * FROM dest"
-    result = get_rows(sql, testdb_conn)
+    result = fetchall(sql, testdb_conn)
 
     # Fix result date and datetime strings to native classes
     fixed_dates = []
@@ -200,7 +200,7 @@ def test_load_dicts(testdb_conn, test_tables, test_table_data):
 
     # Assert
     sql = "SELECT * FROM dest"
-    result = get_rows(sql, testdb_conn)
+    result = fetchall(sql, testdb_conn)
 
     # Fix result date and datetime strings to native classes
     fixed_dates = []
