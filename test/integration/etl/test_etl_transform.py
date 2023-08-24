@@ -1,10 +1,16 @@
 """Tests for etl copy functions.  This includes application of transforms.
 These are run against PostgreSQL."""
 # pylint: disable=unused-argument, missing-docstring
-import pytest
+from datetime import (
+    datetime,
+    date,
+)
+from typing import (
+    Iterable,
+    Any,
+)
 
-from datetime import datetime, date
-from typing import Any, Iterable
+import pytest
 
 from etlhelper import (
     copy_rows,

@@ -2,6 +2,7 @@
 Test db params
 """
 from unittest.mock import Mock
+
 import pytest
 
 from etlhelper.db_params import DbParams

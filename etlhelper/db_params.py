@@ -5,9 +5,16 @@ parameters.
 import os
 import socket
 
-from etlhelper.connect import connect, get_connection_string, get_sqlalchemy_connection_string
+from etlhelper.connect import (
+    connect,
+    get_connection_string,
+    get_sqlalchemy_connection_string,
+)
 from etlhelper.db_helper_factory import DB_HELPER_FACTORY
-from etlhelper.exceptions import ETLHelperDbParamsError, ETLHelperHelperError
+from etlhelper.exceptions import (
+    ETLHelperDbParamsError,
+    ETLHelperHelperError,
+)
 
 
 class DbParams(dict):

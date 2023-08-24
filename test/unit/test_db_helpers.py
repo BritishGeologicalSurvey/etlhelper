@@ -1,17 +1,20 @@
 """Unit tests for db_helpers module."""
 import builtins
-from unittest.mock import Mock
-import pytest
 import sqlite3
+from unittest.mock import Mock
 
 import oracledb
-import pyodbc
 import psycopg2
+import pyodbc
+import pytest
 
 from etlhelper import DbParams
 from etlhelper.db_helper_factory import DB_HELPER_FACTORY
 from etlhelper.db_helpers import (
-    OracleDbHelper, MSSQLDbHelper, PostgresDbHelper, SQLiteDbHelper
+    MSSQLDbHelper,
+    OracleDbHelper,
+    PostgresDbHelper,
+    SQLiteDbHelper
 )
 from etlhelper.exceptions import ETLHelperConnectionError
 

@@ -14,7 +14,10 @@ from typing import (
     Callable,
 )
 
-from etlhelper.abort import raise_for_abort, clear_abort_event
+from etlhelper.abort import (
+    raise_for_abort,
+    clear_abort_event,
+)
 from etlhelper.db_helper_factory import DB_HELPER_FACTORY
 from etlhelper.exceptions import (
     ETLHelperBadIdentifierError,

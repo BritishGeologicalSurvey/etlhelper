@@ -5,14 +5,12 @@ These are run against PostgreSQL."""
 import datetime
 import pytest
 import time
-
 from unittest.mock import (
     Mock,
     sentinel,
 )
 
 import etlhelper.etl as etlhelper_etl
-
 from etlhelper import (
     iter_chunks,
     iter_rows,
@@ -21,7 +19,10 @@ from etlhelper import (
     fetchone,
     fetchall,
 )
-from etlhelper.etl import ETLHelperExtractError, ETLHelperQueryError
+from etlhelper.etl import (
+    ETLHelperExtractError,
+    ETLHelperQueryError,
+)
 from etlhelper.row_factories import (
     dict_row_factory,
     list_row_factory,

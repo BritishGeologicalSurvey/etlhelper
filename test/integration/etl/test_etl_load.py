@@ -1,20 +1,25 @@
 """Test for etl load functions.  Data loading is carried out using
 the executemany call.  These are run against PostgreSQL."""
 # pylint: disable=unused-argument, missing-docstring
-from collections import namedtuple
 import re
-from unittest.mock import sentinel, Mock, ANY
+from collections import namedtuple
+from unittest.mock import (
+    Mock,
+    ANY,
+    sentinel,
+)
 
 import pytest
 
+import etlhelper.etl as etlhelper_etl
 from etlhelper import (
     executemany,
     generate_insert_sql,
     get_rows,
     iter_rows,
-    load)
+    load,
+)
 from etlhelper.etl import ETLHelperInsertError
-import etlhelper.etl as etlhelper_etl
 from etlhelper.exceptions import ETLHelperBadIdentifierError
 
 

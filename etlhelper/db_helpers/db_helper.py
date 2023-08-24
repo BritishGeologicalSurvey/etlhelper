@@ -1,9 +1,12 @@
 """
 Database helper classes using Factory Pattern
 """
-from abc import ABCMeta, abstractmethod
 import logging
 import os
+from abc import (
+    ABCMeta,
+    abstractmethod,
+)
 
 from etlhelper.exceptions import ETLHelperConnectionError
 

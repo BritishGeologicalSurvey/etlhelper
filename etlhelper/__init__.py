@@ -4,7 +4,6 @@ Library to simplify data transfer between databases
 import logging
 import sys
 import warnings
-
 from importlib.metadata import (
     PackageNotFoundError,
     version,

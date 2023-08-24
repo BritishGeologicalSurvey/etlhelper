@@ -4,7 +4,10 @@ import logging
 import pytest
 import re
 
-from etlhelper import copy_rows, execute
+from etlhelper import (
+    copy_rows,
+    execute,
+)
 
 NO_OUTPUT = []
 INFO = [

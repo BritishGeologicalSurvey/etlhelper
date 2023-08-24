@@ -1,9 +1,10 @@
 """
 Database helper for SQLite
 """
+import warnings
 from contextlib import contextmanager
 from textwrap import dedent
-import warnings
+
 from etlhelper.db_helpers.db_helper import DbHelper
 
 

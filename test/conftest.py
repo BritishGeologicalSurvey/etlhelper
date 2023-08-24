@@ -3,19 +3,23 @@ Fixtures for pytest.  Functions defined here can be passed as arguments to
 pytest tests.  scope parameter describes how often they are recreated e.g.
 once per module.
 """
-from collections import namedtuple
-import datetime as dt
+import logging
 import os
-from pathlib import Path
 import socket
+import datetime as dt
+from collections import namedtuple
+from pathlib import Path
 from textwrap import dedent
 from zipfile import ZipFile
-import logging
 
 import pytest
 from psycopg2.extras import execute_batch
 
-from etlhelper import connect, log_to_console, DbParams
+from etlhelper import (
+    connect,
+    log_to_console,
+    DbParams,
+)
 
 PGTESTDB = DbParams(
     dbtype='PG',

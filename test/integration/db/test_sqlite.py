@@ -2,10 +2,10 @@
 These currently run against internal BGS instance.
 """
 # pylint: disable=unused-argument, missing-docstring
-from collections import namedtuple
 import os
 import sqlite3
 import sys
+from collections import namedtuple
 from textwrap import dedent
 
 import pytest
@@ -20,7 +20,10 @@ from etlhelper import (
     generate_insert_sql,
     load,
 )
-from etlhelper.utils import table_info, Column
+from etlhelper.utils import (
+    table_info,
+    Column,
+)
 from etlhelper.exceptions import (
     ETLHelperConnectionError,
     ETLHelperInsertError,

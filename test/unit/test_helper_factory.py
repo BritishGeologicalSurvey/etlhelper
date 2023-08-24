@@ -1,9 +1,13 @@
 """Test for the helper factory"""
-from unittest.mock import MagicMock, Mock
-import pytest
+from unittest.mock import (
+    MagicMock,
+    Mock,
+)
+
 import oracledb
 import psycopg2
 import pyodbc
+import pytest
 
 from etlhelper import DbParams
 from etlhelper.db_helper_factory import DB_HELPER_FACTORY
