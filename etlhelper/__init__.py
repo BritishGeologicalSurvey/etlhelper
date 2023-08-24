@@ -3,7 +3,6 @@ Library to simplify data transfer between databases
 """
 import logging
 import sys
-import warnings
 from importlib.metadata import (
     PackageNotFoundError,
     version,
@@ -42,15 +41,6 @@ try:
     __version__ = version(__name__)
 except PackageNotFoundError:
     __version__ = "0.0.0"
-
-warnings.warn(
-    (
-        "ETLHelper version 1.0.0 is coming soon and will contain many breaking changes. "
-        "Users should pin their versions '(etlhelper<1)' and check GitHub for release details."
-    ),
-    DeprecationWarning,
-    stacklevel=2,
-)
 
 # Create etlhelper logger and clear the logger handlers
 # This prevents a new logger from being created when running 'logging.getLogger("etlhelper")'
