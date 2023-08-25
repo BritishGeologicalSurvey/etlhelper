@@ -20,42 +20,45 @@ from etlhelper import (
     iter_rows,
     load,
 )
-from etlhelper.row_factories import dict_row_factory
+from etlhelper.row_factories import (
+    dict_row_factory,
+    namedtuple_row_factory,
+)
 from etlhelper.exceptions import ETLHelperBadIdentifierError
 
 
 def test_copy_rows_happy_path(pgtestdb_conn, pgtestdb_test_tables,
-                              pgtestdb_insert_sql, test_table_data):
+                              pgtestdb_insert_sql, test_table_data_namedtuple):
     # Arrange and act
     select_sql = "SELECT * FROM src"
     insert_sql = pgtestdb_insert_sql.replace('src', 'dest')
-    processed, failed = copy_rows(select_sql, pgtestdb_conn, insert_sql, pgtestdb_conn)
+    processed, failed = copy_rows(select_sql, pgtestdb_conn, insert_sql, pgtestdb_conn,
+                                  row_factory=namedtuple_row_factory)
 
     # Assert
-    assert processed == len(test_table_data)
+    assert processed == len(test_table_data_namedtuple)
     assert failed == 0
 
     sql = "SELECT * FROM dest"
-    result = iter_rows(sql, pgtestdb_conn)
-    assert list(result) == test_table_data
+    result = iter_rows(sql, pgtestdb_conn, row_factory=namedtuple_row_factory)
+    assert list(result) == test_table_data_namedtuple
 
 
-def test_copy_table_rows_happy_path(pgtestdb_conn, pgtestdb_test_tables,
-                                    pgtestdb_insert_sql, test_table_data):
+def test_copy_table_rows_happy_path(pgtestdb_conn, pgtestdb_test_tables, test_table_data_dict):
     # Arrange and act
     processed, failed = copy_table_rows('src', pgtestdb_conn, pgtestdb_conn, target='dest')
 
     # Assert
-    assert processed == len(test_table_data)
+    assert processed == len(test_table_data_dict)
     assert failed == 0
 
     sql = "SELECT * FROM dest"
     result = fetchall(sql, pgtestdb_conn)
-    assert result == test_table_data
+    assert result == test_table_data_dict
 
 
 def test_copy_table_rows_on_error(pgtestdb_test_tables, pgtestdb_conn,
-                                  test_table_data):
+                                  test_table_data_dict):
     # Arrange
     duplicate_id_row_sql = """
        INSERT INTO dest (id, value)
@@ -68,7 +71,7 @@ def test_copy_table_rows_on_error(pgtestdb_test_tables, pgtestdb_conn,
                                         on_error=errors.extend)
 
     # Assert
-    assert processed == len(test_table_data)
+    assert processed == len(test_table_data_dict)
     assert failed == len(errors)
 
     sql = "SELECT * FROM dest"
@@ -76,15 +79,14 @@ def test_copy_table_rows_on_error(pgtestdb_test_tables, pgtestdb_conn,
 
     # Check that first row was caught as error
     row, exception = errors[0]
-    assert row.id == 1
+    assert row["id"] == 1
     assert "unique" in str(exception).lower()
 
     # Check that other rows were inserted correctly
-    assert result[1:] == test_table_data[1:]
+    assert result[1:] == test_table_data_dict[1:]
 
 
-def test_copy_table_rows_bad_table(pgtestdb_conn, pgtestdb_test_tables,
-                                   pgtestdb_insert_sql, test_table_data):
+def test_copy_table_rows_bad_table(pgtestdb_conn, pgtestdb_test_tables):
     # Arrange and act
     with pytest.raises(ETLHelperBadIdentifierError):
         copy_table_rows('bad; sql', pgtestdb_conn, pgtestdb_conn, target='dest')
@@ -141,11 +143,11 @@ def test_copy_rows_transform(pgtestdb_conn, pgtestdb_test_tables, my_transform):
 
     # Act
     copy_rows(select_sql, pgtestdb_conn, insert_sql, pgtestdb_conn,
-              transform=my_transform)
+              transform=my_transform, row_factory=namedtuple_row_factory)
 
     # Assert
     sql = "SELECT * FROM dest"
-    result = iter_rows(sql, pgtestdb_conn)
+    result = iter_rows(sql, pgtestdb_conn, row_factory=namedtuple_row_factory)
     assert list(result) == expected
 
 
@@ -179,7 +181,7 @@ def test_fetchall_with_modify_dict(pgtestdb_conn, pgtestdb_test_tables):
     assert result == expected
 
 
-def test_copy_rows_with_dict_row_factory(pgtestdb_conn, pgtestdb_test_tables, pgtestdb_insert_sql, test_table_data):
+def test_copy_rows_with_dict_row_factory(pgtestdb_conn, pgtestdb_test_tables):
     # Arrange
     select_sql = "SELECT * FROM src"
     insert_sql = """
@@ -196,11 +198,11 @@ def test_copy_rows_with_dict_row_factory(pgtestdb_conn, pgtestdb_test_tables, pg
 
     # Act
     copy_rows(select_sql, pgtestdb_conn, insert_sql, pgtestdb_conn,
-              transform=transform_yield_modified_dict, row_factory=dict_row_factory)
+              transform=transform_yield_modified_dict)
 
     # Assert
     sql = "SELECT * FROM dest"
-    result = fetchall(sql, pgtestdb_conn)
+    result = fetchall(sql, pgtestdb_conn, row_factory=namedtuple_row_factory)
     assert result == expected
 
 
@@ -273,25 +275,25 @@ def transform_dict(rows: list[dict[str, Any]]) -> Iterable[dict[str, Any]]:
 def test_load_transform(
     pgtestdb_conn,
     pgtestdb_test_tables,
-    test_table_data,
+    test_table_data_namedtuple,
     test_data_conversion,
     my_transform,
     expected,
 ):
     # Arrange
     if test_data_conversion:
-        test_table_data = test_data_conversion(test_table_data)
+        test_table_data_namedtuple = test_data_conversion(test_table_data_namedtuple)
 
     # Act
     processed, failed = load(
         table="src",
         conn=pgtestdb_conn,
-        rows=test_table_data,
+        rows=test_table_data_namedtuple,
         transform=my_transform,
     )
 
     sql = "SELECT * FROM src"
-    result = fetchall(sql, pgtestdb_conn)
+    result = fetchall(sql, pgtestdb_conn, row_factory=namedtuple_row_factory)
 
     # Assert
     for i, row in enumerate(result):
