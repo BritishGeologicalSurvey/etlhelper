@@ -55,7 +55,7 @@ def pgtestdb_insert_sql():
 
 
 @pytest.fixture(scope='function')
-def pgtestdb_test_tables(test_table_data_dict, pgtestdb_conn, pgtestdb_insert_sql):
+def pgtestdb_test_tables(test_table_data_namedtuple, pgtestdb_conn, pgtestdb_insert_sql):
     """
     Create a table and fill with test data.  Teardown after the yield drops it
     again.
@@ -81,7 +81,7 @@ def pgtestdb_test_tables(test_table_data_dict, pgtestdb_conn, pgtestdb_insert_sq
         cursor.execute(drop_dest_sql)
         cursor.execute(create_src_sql)
         cursor.execute(create_dest_sql)
-        execute_batch(cursor, pgtestdb_insert_sql, test_table_data_dict)
+        execute_batch(cursor, pgtestdb_insert_sql, test_table_data_namedtuple)
     pgtestdb_conn.commit()
 
     # Return control to calling function until end of test

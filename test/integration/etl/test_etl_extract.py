@@ -41,7 +41,7 @@ from etlhelper.row_factories import (
 def test_iter_chunks(
     pgtestdb_test_tables,
     pgtestdb_conn,
-    test_table_data,
+    test_table_data_namedtuple,
     chunk_size,
     slices,
 ):
@@ -51,46 +51,46 @@ def test_iter_chunks(
     # Act
     result = [
         list(chunk) for chunk in
-        iter_chunks(sql, pgtestdb_conn, chunk_size=chunk_size)
+        iter_chunks(sql, pgtestdb_conn, chunk_size=chunk_size, row_factory=namedtuple_row_factory)
     ]
 
     # Assert
-    expected = [test_table_data[s] for s in slices]
+    expected = [test_table_data_namedtuple[s] for s in slices]
     assert result == expected
 
 
 def test_iter_rows_happy_path(
     pgtestdb_test_tables,
     pgtestdb_conn,
-    test_table_data,
+    test_table_data_namedtuple,
 ):
     sql = "SELECT * FROM src"
-    result = iter_rows(sql, pgtestdb_conn)
-    assert list(result) == test_table_data
+    result = iter_rows(sql, pgtestdb_conn, row_factory=namedtuple_row_factory)
+    assert list(result) == test_table_data_namedtuple
 
 
 def test_iter_rows_with_parameters(
     pgtestdb_test_tables,
     pgtestdb_conn,
-    test_table_data,
+    test_table_data_namedtuple,
 ):
     # parameters=None is tested by default in other tests
 
     # Bind by index
     sql = "SELECT * FROM src where ID = %s"
-    result = iter_rows(sql, pgtestdb_conn, parameters=(1,))
-    assert list(result) == [test_table_data[0]]
+    result = iter_rows(sql, pgtestdb_conn, parameters=(1,), row_factory=namedtuple_row_factory)
+    assert list(result) == [test_table_data_namedtuple[0]]
 
     # Bind by name
     sql = "SELECT * FROM src where ID = %(identifier)s"
-    result = iter_rows(sql, pgtestdb_conn, parameters={"identifier": 1})
-    assert list(result) == [test_table_data[0]]
+    result = iter_rows(sql, pgtestdb_conn, parameters={"identifier": 1}, row_factory=namedtuple_row_factory)
+    assert list(result) == [test_table_data_namedtuple[0]]
 
 
 def test_iter_rows_transform(
     pgtestdb_test_tables,
     pgtestdb_conn,
-    test_table_data,
+    test_table_data_namedtuple,
 ):
     # Arrange
     sql = "SELECT * FROM src"
@@ -100,17 +100,17 @@ def test_iter_rows_transform(
         return [row.id for row in rows if row.id > 1]
 
     # Act
-    result = iter_rows(sql, pgtestdb_conn, transform=my_transform)
+    result = iter_rows(sql, pgtestdb_conn, transform=my_transform, row_factory=namedtuple_row_factory)
 
     # Assert
-    expected = [row[0] for row in test_table_data if row[0] > 1]
+    expected = [row[0] for row in test_table_data_namedtuple if row[0] > 1]
     assert list(result) == expected
 
 
 def test_iter_rows_namedtuple_factory(
     pgtestdb_test_tables,
     pgtestdb_conn,
-    test_table_data,
+    test_table_data_namedtuple,
 ):
     sql = "SELECT * FROM src"
     result = iter_rows(sql, pgtestdb_conn, row_factory=namedtuple_row_factory)
@@ -169,17 +169,17 @@ def test_iter_rows_bad_query(pgtestdb_test_tables, pgtestdb_conn):
 def test_fetchone_happy_path(
     pgtestdb_test_tables,
     pgtestdb_conn,
-    test_table_data,
+    test_table_data_dict,
 ):
     sql = "SELECT * FROM src"
     result = fetchone(sql, pgtestdb_conn)
-    assert result == test_table_data[0]
+    assert result == test_table_data_dict[0]
 
 
 def test_fetchone_none(
     pgtestdb_test_tables,
     pgtestdb_conn,
-    test_table_data,
+    test_table_data_namedtuple,
 ):
     sql = "SELECT * FROM src WHERE id=999"
     result = fetchone(sql, pgtestdb_conn)
@@ -198,7 +198,7 @@ def test_fetchone_closes_transaction(pgtestdb_conn):
 
     # If the connection was not closed and the same transaction was used
     # then the times would be the same
-    assert time2.time > time1.time
+    assert time2["time"] > time1["time"]
 
 
 @pytest.mark.parametrize(
@@ -217,17 +217,17 @@ def test_fetch_funcs_close_transaction(pgtestdb_conn, fetch_func):
 
     # If the connection was not closed and the same transaction was used
     # then the times would be the same
-    assert time2.time > time1.time
+    assert time2["time"] > time1["time"]
 
 
 def test_fetchall_happy_path(
     pgtestdb_test_tables,
     pgtestdb_conn,
-    test_table_data,
+    test_table_data_dict,
 ):
     sql = "SELECT * FROM src"
     result = fetchall(sql, pgtestdb_conn)
-    assert result == test_table_data
+    assert result == test_table_data_dict
 
 
 @pytest.mark.parametrize(
@@ -299,12 +299,12 @@ def test_execute_happy_path(pgtestdb_test_tables, pgtestdb_conn):
 def test_execute_with_params(
     pgtestdb_test_tables,
     pgtestdb_conn,
-    test_table_data,
+    test_table_data_dict,
 ):
     # Arrange
     sql = "DELETE FROM src WHERE id = %s;"
     params = [1]
-    expected = test_table_data[1:]
+    expected = test_table_data_dict[1:]
 
     # Act
     execute(sql, pgtestdb_conn, parameters=params)
