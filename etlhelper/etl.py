@@ -25,10 +25,7 @@ from etlhelper.exceptions import (
     ETLHelperInsertError,
     ETLHelperQueryError,
 )
-from etlhelper.row_factories import (
-    dict_row_factory,
-    tuple_row_factory,
-)
+from etlhelper.row_factories import dict_row_factory
 
 Chunk = Any
 
