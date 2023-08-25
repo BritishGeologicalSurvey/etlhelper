@@ -14,7 +14,6 @@ import etlhelper.etl as etlhelper_etl
 from etlhelper import (
     iter_chunks,
     iter_rows,
-    get_rows,
     execute,
     fetchone,
     fetchall,
@@ -167,16 +166,6 @@ def test_iter_rows_bad_query(pgtestdb_test_tables, pgtestdb_conn):
         list(result)  # Call list to activate returned generator
 
 
-def test_get_rows_happy_path(
-    pgtestdb_test_tables,
-    pgtestdb_conn,
-    test_table_data,
-):
-    sql = "SELECT * FROM src"
-    result = get_rows(sql, pgtestdb_conn)
-    assert result == test_table_data
-
-
 def test_fetchone_happy_path(
     pgtestdb_test_tables,
     pgtestdb_conn,
@@ -214,7 +203,7 @@ def test_fetchone_closes_transaction(pgtestdb_conn):
 
 @pytest.mark.parametrize(
     "fetch_func",
-    [fetchall, get_rows],
+    [fetchall],
 )
 def test_fetch_funcs_close_transaction(pgtestdb_conn, fetch_func):
     sql = "SELECT now() AS time"
@@ -243,7 +232,7 @@ def test_fetchall_happy_path(
 
 @pytest.mark.parametrize(
     "fetchmethod",
-    ["get_rows", "fetchone", "fetchall"],
+    ["fetchone", "fetchall"],
 )
 def test_arguments_passed_to_iter_rows(
     monkeypatch,
@@ -303,7 +292,7 @@ def test_execute_happy_path(pgtestdb_test_tables, pgtestdb_conn):
     execute(sql, pgtestdb_conn)
 
     # Assert
-    result = get_rows("SELECT * FROM src;", pgtestdb_conn)
+    result = fetchall("SELECT * FROM src;", pgtestdb_conn)
     assert result == []
 
 
@@ -321,7 +310,7 @@ def test_execute_with_params(
     execute(sql, pgtestdb_conn, parameters=params)
 
     # Assert
-    result = get_rows("SELECT * FROM src;", pgtestdb_conn)
+    result = fetchall("SELECT * FROM src;", pgtestdb_conn)
     assert result == expected
 
 

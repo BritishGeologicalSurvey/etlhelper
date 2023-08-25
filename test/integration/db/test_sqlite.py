@@ -16,7 +16,7 @@ from etlhelper import (
     copy_rows,
     copy_table_rows,
     execute,
-    get_rows,
+    fetchall,
     generate_insert_sql,
     load,
 )
@@ -78,7 +78,7 @@ def test_copy_rows_happy_path(test_tables, testdb_conn, test_table_data):
 
     # Assert
     sql = "SELECT * FROM dest"
-    result = get_rows(sql, testdb_conn)
+    result = fetchall(sql, testdb_conn)
 
     assert result == test_table_data
 
@@ -89,7 +89,7 @@ def test_copy_table_rows_happy_path(test_tables, testdb_conn, test_table_data):
 
     # Assert
     sql = "SELECT * FROM dest"
-    result = get_rows(sql, testdb_conn)
+    result = fetchall(sql, testdb_conn)
 
     assert result == test_table_data
 
@@ -111,7 +111,7 @@ def test_copy_table_rows_on_error(test_tables, testdb_conn, test_table_data):
 
     # Assert
     sql = "SELECT * FROM dest"
-    result = get_rows(sql, testdb_conn)
+    result = fetchall(sql, testdb_conn)
 
     # Check that first row was caught as error
     row, exception = errors[0]
@@ -122,13 +122,13 @@ def test_copy_table_rows_on_error(test_tables, testdb_conn, test_table_data):
     assert result[1:] == test_table_data[1:]
 
 
-def test_get_rows_with_parameters(test_tables, testdb_conn,
+def test_fetchall_with_parameters(test_tables, testdb_conn,
                                   test_table_data):
     # parameters=None is tested by default in other tests
 
     # Bind by index
     sql = "SELECT * FROM src where ID = ?"
-    result = get_rows(sql, testdb_conn, parameters=(1,))
+    result = fetchall(sql, testdb_conn, parameters=(1,))
     assert len(result) == 1
     assert result[0].id == 1
 
@@ -147,7 +147,7 @@ def test_load_named_tuples(testdb_conn, test_tables, test_table_data):
 
     # Assert
     sql = "SELECT * FROM dest"
-    result = get_rows(sql, testdb_conn)
+    result = fetchall(sql, testdb_conn)
 
     assert result == test_table_data
 
@@ -161,7 +161,7 @@ def test_load_dicts(testdb_conn, test_tables, test_table_data):
 
     # Assert
     sql = "SELECT * FROM dest"
-    result = get_rows(sql, testdb_conn)
+    result = fetchall(sql, testdb_conn)
 
     assert result == test_table_data
 

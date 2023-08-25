@@ -137,24 +137,6 @@ def iter_rows(select_query, conn, parameters=(),
             yield row
 
 
-def get_rows(select_query, conn, parameters=(),
-             row_factory=namedtuple_row_factory, transform=None,
-             chunk_size=CHUNKSIZE):
-    """
-    Get results of query as a list.  See iter_rows for details.
-    :param select_query: str, SQL query to execute
-    :param conn: dbapi connection
-    :param parameters: sequence or dict of bind variables to insert in the query
-    :param row_factory: function that accepts a cursor and returns a function for parsing each row
-    :param transform: function that accepts an iterable (e.g. list) of rows and returns an iterable
-                      of rows (possibly of different shape)
-    :param chunk_size: int, size of chunks to group data by
-    """
-    return list(iter_rows(select_query, conn, row_factory=row_factory,
-                          parameters=parameters, transform=transform,
-                          chunk_size=chunk_size))
-
-
 def fetchone(select_query, conn, parameters=(),
              row_factory=namedtuple_row_factory, transform=None,
              chunk_size=1):

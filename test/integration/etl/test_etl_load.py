@@ -15,7 +15,7 @@ import etlhelper.etl as etlhelper_etl
 from etlhelper import (
     executemany,
     generate_insert_sql,
-    get_rows,
+    fetchall,
     iter_rows,
     load,
 )
@@ -40,7 +40,7 @@ def test_insert_rows_happy_path(pgtestdb_conn, pgtestdb_test_tables,
     assert failed == 0
 
     sql = "SELECT * FROM dest"
-    result = get_rows(sql, pgtestdb_conn)
+    result = fetchall(sql, pgtestdb_conn)
     assert result == test_table_data
 
 
@@ -64,7 +64,7 @@ def test_insert_rows_on_error(pgtestdb_conn, pgtestdb_test_tables,
     assert failed == len(errors)
 
     sql = "SELECT * FROM dest"
-    result = get_rows(sql, pgtestdb_conn)
+    result = fetchall(sql, pgtestdb_conn)
     assert result == test_table_data
 
     # Assert full set of failed rows failing unique constraint
@@ -86,7 +86,7 @@ def test_insert_rows_chunked(pgtestdb_conn, pgtestdb_test_tables,
 
     # Assert
     sql = "SELECT * FROM dest"
-    result = get_rows(sql, pgtestdb_conn)
+    result = fetchall(sql, pgtestdb_conn)
     assert result == test_table_data
 
 
@@ -125,7 +125,7 @@ def test_load_named_tuples(pgtestdb_conn, pgtestdb_test_tables, test_table_data)
     assert failed == 0
 
     sql = "SELECT * FROM dest"
-    result = get_rows(sql, pgtestdb_conn)
+    result = fetchall(sql, pgtestdb_conn)
     assert result == test_table_data
 
 
@@ -141,7 +141,7 @@ def test_load_dicts(pgtestdb_conn, pgtestdb_test_tables, test_table_data):
     assert failed == 0
 
     sql = "SELECT * FROM dest"
-    result = get_rows(sql, pgtestdb_conn)
+    result = fetchall(sql, pgtestdb_conn)
     assert result == test_table_data
 
 
@@ -158,7 +158,7 @@ def test_load_named_tuples_with_transform_generator(pgtestdb_conn, pgtestdb_test
     assert failed == 0
 
     sql = "SELECT * FROM dest"
-    result = get_rows(sql, pgtestdb_conn)
+    result = fetchall(sql, pgtestdb_conn)
     assert result == test_table_data
 
 
@@ -185,7 +185,7 @@ def test_load_named_tuples_chunk_size(pgtestdb_conn, pgtestdb_test_tables,
 
     # Assert
     sql = "SELECT * FROM dest"
-    result = get_rows(sql, pgtestdb_conn)
+    result = fetchall(sql, pgtestdb_conn)
     assert result == test_table_data
 
 

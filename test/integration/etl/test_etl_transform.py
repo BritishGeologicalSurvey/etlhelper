@@ -16,7 +16,7 @@ from etlhelper import (
     copy_rows,
     copy_table_rows,
     execute,
-    get_rows,
+    fetchall,
     iter_rows,
     load,
 )
@@ -50,7 +50,7 @@ def test_copy_table_rows_happy_path(pgtestdb_conn, pgtestdb_test_tables,
     assert failed == 0
 
     sql = "SELECT * FROM dest"
-    result = get_rows(sql, pgtestdb_conn)
+    result = fetchall(sql, pgtestdb_conn)
     assert result == test_table_data
 
 
@@ -72,7 +72,7 @@ def test_copy_table_rows_on_error(pgtestdb_test_tables, pgtestdb_conn,
     assert failed == len(errors)
 
     sql = "SELECT * FROM dest"
-    result = get_rows(sql, pgtestdb_conn)
+    result = fetchall(sql, pgtestdb_conn)
 
     # Check that first row was caught as error
     row, exception = errors[0]
@@ -159,7 +159,7 @@ def transform_yield_modified_dict(chunk):
         yield row
 
 
-def test_get_rows_with_modify_dict(pgtestdb_conn, pgtestdb_test_tables):
+def test_fetchall_with_modify_dict(pgtestdb_conn, pgtestdb_test_tables):
     # Arrange
     select_sql = "SELECT * FROM src LIMIT 1"
     expected = [{
@@ -172,7 +172,7 @@ def test_get_rows_with_modify_dict(pgtestdb_conn, pgtestdb_test_tables):
     }]
 
     # Act
-    result = get_rows(select_sql, pgtestdb_conn, row_factory=dict_row_factory,
+    result = fetchall(select_sql, pgtestdb_conn, row_factory=dict_row_factory,
                       transform=transform_yield_modified_dict)
 
     # Assert
@@ -200,7 +200,7 @@ def test_copy_rows_with_dict_row_factory(pgtestdb_conn, pgtestdb_test_tables, pg
 
     # Assert
     sql = "SELECT * FROM dest"
-    result = get_rows(sql, pgtestdb_conn)
+    result = fetchall(sql, pgtestdb_conn)
     assert result == expected
 
 
@@ -291,7 +291,7 @@ def test_load_transform(
     )
 
     sql = "SELECT * FROM src"
-    result = get_rows(sql, pgtestdb_conn)
+    result = fetchall(sql, pgtestdb_conn)
 
     # Assert
     for i, row in enumerate(result):
