@@ -25,7 +25,10 @@ from etlhelper.exceptions import (
     ETLHelperInsertError,
     ETLHelperQueryError,
 )
-from etlhelper.row_factories import namedtuple_row_factory
+from etlhelper.row_factories import (
+    dict_row_factory,
+    tuple_row_factory,
+)
 
 Chunk = Any
 
@@ -36,7 +39,7 @@ CHUNKSIZE = 5000
 # iter_chunks is where data are retrieved from source database
 # All data extraction processes call this function.
 def iter_chunks(select_query, conn, parameters=(),
-                row_factory=namedtuple_row_factory,
+                row_factory=dict_row_factory,
                 transform=None, chunk_size=CHUNKSIZE):
     """
     Run SQL query against connection and return iterator object to loop over
@@ -115,7 +118,7 @@ def iter_chunks(select_query, conn, parameters=(),
 
 
 def iter_rows(select_query, conn, parameters=(),
-              row_factory=namedtuple_row_factory,
+              row_factory=dict_row_factory,
               transform=None, chunk_size=CHUNKSIZE):
     """
     Run SQL query against connection and return iterator object to loop over
@@ -138,7 +141,7 @@ def iter_rows(select_query, conn, parameters=(),
 
 
 def fetchone(select_query, conn, parameters=(),
-             row_factory=namedtuple_row_factory, transform=None,
+             row_factory=dict_row_factory, transform=None,
              chunk_size=1):
     """
     Get first result of query.  See iter_rows for details.  Note: iter_rows is
@@ -166,7 +169,7 @@ def fetchone(select_query, conn, parameters=(),
 
 
 def fetchall(select_query, conn, parameters=(),
-             row_factory=namedtuple_row_factory, transform=None,
+             row_factory=dict_row_factory, transform=None,
              chunk_size=CHUNKSIZE):
     """
     Get all results of query as a list.  See iter_rows for details.
@@ -315,10 +318,18 @@ def _execute_by_row(query, conn, chunk):
     return failed_rows
 
 
-def copy_rows(select_query, source_conn, insert_query, dest_conn,
-              parameters=(), row_factory=namedtuple_row_factory,
-              transform=None, on_error=None, commit_chunks=True,
-              chunk_size=CHUNKSIZE):
+def copy_rows(
+    select_query,
+    source_conn,
+    insert_query,
+    dest_conn,
+    parameters=(),
+    row_factory=dict_row_factory,
+    transform=None,
+    on_error=None,
+    commit_chunks=True,
+    chunk_size=CHUNKSIZE,
+) -> tuple[int, int]:
     """
     Copy rows from source_conn to dest_conn.  select_query and insert_query
     specify the data to be transferred.
@@ -391,7 +402,7 @@ def execute(query, conn, parameters=()):
 
 
 def copy_table_rows(table, source_conn, dest_conn, target=None,
-                    row_factory=namedtuple_row_factory,
+                    row_factory=dict_row_factory,
                     transform=None, on_error=None, commit_chunks=True,
                     chunk_size=CHUNKSIZE):
     """
