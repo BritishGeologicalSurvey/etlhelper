@@ -293,10 +293,10 @@ Four different row_factories are included, based in built-in Python types:
 
 |Row Factory|Attribute access|Mutable|Parameter placeholder|
 |---|---|---|---|
-|namedtuple_row_factory (default)| `row.id` or `row[0]` | No | Positional |
-|dict_row_factory| `row["id"]`| Yes | Named |
+|dict_row_factory (default)| `row["id"]`| Yes | Named |
 |tuple_row_factory| `row[0]`| No | Positional |
 |list_row_factory| `row[0]`| Yes | Positional |
+|namedtuple_row_factory| `row.id` or `row[0]` | No | Positional |
 
 The choice of row factory depends on the use case.  In general named tuples
 and dictionaries are best for readable code, while using tuples or lists can
