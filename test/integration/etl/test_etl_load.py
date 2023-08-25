@@ -117,7 +117,7 @@ def test_insert_rows_bad_query(pgtestdb_conn, test_table_data_namedtuple):
         executemany(insert_sql, pgtestdb_conn, test_table_data_namedtuple)
 
 
-def test_load_named_tuples(pgtestdb_conn, pgtestdb_test_tables, test_table_data_namedtuple):
+def test_load_namedtuples(pgtestdb_conn, pgtestdb_test_tables, test_table_data_namedtuple):
     # Act
     processed, failed = load('dest', pgtestdb_conn, test_table_data_namedtuple)
 
@@ -143,7 +143,7 @@ def test_load_dicts(pgtestdb_conn, pgtestdb_test_tables, test_table_data_dict):
     assert result == test_table_data_dict
 
 
-def test_load_named_tuples_with_transform_generator(pgtestdb_conn, pgtestdb_test_tables, test_table_data_namedtuple):
+def test_load_namedtuples_with_transform_generator(pgtestdb_conn, pgtestdb_test_tables, test_table_data_namedtuple):
     # Act
     def transform(chunk):
         for row in chunk:
@@ -176,8 +176,8 @@ def test_load_no_data(pgtestdb_conn, pgtestdb_test_tables, null_data):
 
 
 @pytest.mark.parametrize('chunk_size', [1, 2, 3, 4])
-def test_load_named_tuples_chunk_size(pgtestdb_conn, pgtestdb_test_tables,
-                                      test_table_data_namedtuple, chunk_size):
+def test_load_namedtuples_chunk_size(pgtestdb_conn, pgtestdb_test_tables,
+                                     test_table_data_namedtuple, chunk_size):
     # Act
     load('dest', pgtestdb_conn, test_table_data_namedtuple, chunk_size=chunk_size)
 
@@ -228,7 +228,7 @@ def test_generate_insert_sql_tuple(pgtestdb_conn):
         generate_insert_sql('my_table', data, pgtestdb_conn)
 
 
-def test_generate_insert_sql_named_tuple(pgtestdb_conn):
+def test_generate_insert_sql_namedtuple(pgtestdb_conn):
     # Arrange
     TwoColumnRow = namedtuple('TwoColumnRow', ('id', 'data'))
     data = TwoColumnRow(1, 'one')

@@ -141,7 +141,7 @@ def test_copy_rows_bad_param_style(test_tables, testdb_conn, test_table_data_nam
         copy_rows(select_sql, testdb_conn, insert_sql, testdb_conn)
 
 
-def test_load_named_tuples(testdb_conn, test_tables, test_table_data_namedtuple):
+def test_load_namedtuples(testdb_conn, test_tables, test_table_data_namedtuple):
     # Act
     load('dest', testdb_conn, test_table_data_namedtuple)
 
@@ -171,7 +171,7 @@ def test_generate_insert_sql_tuple(testdb_conn):
         generate_insert_sql('my_table', data, testdb_conn)
 
 
-def test_generate_insert_sql_named_tuple(testdb_conn):
+def test_generate_insert_sql_namedtuple(testdb_conn):
     # Arrange
     TwoColumnRow = namedtuple('TwoColumnRow', ('id', 'data'))
     data = TwoColumnRow(1, 'one')
