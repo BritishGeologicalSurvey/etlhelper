@@ -1,9 +1,17 @@
 name: Lint and test
 
+# Global environment variables for all jobs
+env:
+  POSTGRES_DB: etlhelper
+  POSTGRES_USER: etlhelper_user
+  POSTGRES_PASSWORD: etlhelper_pw
+  TEST_PG_PASSWORD: etlhelper_pw
+
 on:
   push:
     paths:
       - '**.py'
+      - '.github/workflows/test.yml'
 
 jobs:
   flake8_py3:
@@ -24,12 +32,27 @@ jobs:
 
   pytest:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        # Accessed directly from host at localhost, because tests are not
+        # running in a container
+        image: postgis/postgis:15-3.4
+        ports:
+          - 5432:5432
+        # Copy env vars from above - substitution didn't work
+        env:
+          POSTGRES_DB: etlhelper
+          POSTGRES_USER: etlhelper_user
+          POSTGRES_PASSWORD: etlhelper_pw
+        # Set health checks to wait until postgres has started
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     strategy:
       matrix:
-        include:
-          - python-version: 3.9
-          - python-version: '3.10'
-          - python-version: 3.11
+        python-version: [3.9, '3.10', 3.11]
     steps:
       - name: Checkout repo
         uses: actions/checkout@v3
@@ -40,4 +63,9 @@ jobs:
       - name: Install requirements
         run: pip install -r requirements-dev.txt
       - name: Run pytest
-        run: pytest -vvs test/unit/
+        run: >-
+          pytest -vvs
+            test/unit/
+            test/integration/etl/
+            test/integration/test_dbparams.py
+            test/integration/test_utils.py

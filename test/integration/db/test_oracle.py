@@ -31,6 +31,9 @@ from etlhelper.exceptions import (
 )
 
 # Skip these tests if database is unreachable
+if not os.getenv('TEST_ORACLE_HOST'):
+    pytest.skip('Oracle test database is not defined', allow_module_level=True)
+
 ORADB = DbParams.from_environment(prefix='TEST_ORACLE_')
 if not ORADB.is_reachable():
     pytest.skip('Oracle test database is unreachable', allow_module_level=True)
