@@ -34,6 +34,9 @@ from etlhelper.exceptions import (
 from etlhelper.row_factories import namedtuple_row_factory
 
 # Skip these tests if database is unreachable
+if not os.getenv('TEST_MSSQL_HOST'):
+    pytest.skip('MSSQL test database is not defined', allow_module_level=True)
+
 MSSQLDB = DbParams.from_environment(prefix='TEST_MSSQL_')
 if not MSSQLDB.is_reachable():
     pytest.skip('MSSQL test database is unreachable', allow_module_level=True)
