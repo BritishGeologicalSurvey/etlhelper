@@ -28,6 +28,7 @@ from etlhelper.exceptions import (
     ETLHelperInsertError,
     ETLHelperQueryError
 )
+from etlhelper.row_factories import namedtuple_row_factory
 
 # Skip these tests if database is unreachable
 MSSQLDB = DbParams.from_environment(prefix='TEST_MSSQL_')
@@ -74,7 +75,8 @@ def test_copy_rows_happy_path_fast_true(
     # Arrange and act
     select_sql = "SELECT * FROM src"
     insert_sql = INSERT_SQL.format(tablename='dest')
-    copy_rows(select_sql, testdb_conn, insert_sql, testdb_conn2)
+    copy_rows(select_sql, testdb_conn, insert_sql, testdb_conn2,
+              row_factory=namedtuple_row_factory)
 
     # Assert
     sql = "SELECT * FROM dest"
@@ -90,7 +92,8 @@ def test_copy_rows_happy_path_deprecated_tables_fast_true(
     select_sql = "SELECT * FROM src"
     insert_sql = INSERT_SQL.format(tablename='dest')
     with pytest.warns(UserWarning) as record:
-        copy_rows(select_sql, testdb_conn, insert_sql, testdb_conn2)
+        copy_rows(select_sql, testdb_conn, insert_sql, testdb_conn2,
+                  row_factory=namedtuple_row_factory)
 
     # Assert
     assert len(record) == 1
@@ -109,7 +112,8 @@ def test_copy_rows_happy_path_fast_false(
     # Arrange and act
     select_sql = "SELECT * FROM src"
     insert_sql = INSERT_SQL.format(tablename='dest')
-    copy_rows(select_sql, testdb_fast_false_conn, insert_sql, testdb_fast_false_conn2)
+    copy_rows(select_sql, testdb_fast_false_conn, insert_sql, testdb_fast_false_conn2,
+              row_factory=namedtuple_row_factory)
 
     # Assert
     sql = "SELECT * FROM dest"
@@ -118,13 +122,15 @@ def test_copy_rows_happy_path_fast_false(
 
 
 def test_copy_rows_happy_path_deprecated_tables_fast_false(
-        test_deprecated_tables, testdb_fast_false_conn, testdb_fast_false_conn2, test_table_data_dict):
+        test_deprecated_tables, testdb_fast_false_conn,
+        testdb_fast_false_conn2, test_table_data_dict):
     # Note: ODBC driver requires separate connections for source and destination,
     # even if they are the same database.
     # Arrange and act
     select_sql = "SELECT * FROM src"
     insert_sql = INSERT_SQL.format(tablename='dest')
-    copy_rows(select_sql, testdb_fast_false_conn, insert_sql, testdb_fast_false_conn2)
+    copy_rows(select_sql, testdb_fast_false_conn, insert_sql, testdb_fast_false_conn2,
+              row_factory=namedtuple_row_factory)
 
     # Assert
     sql = "SELECT * FROM dest"
@@ -137,7 +143,8 @@ def test_copy_table_rows_happy_path_fast_true(
     # Note: ODBC driver requires separate connections for source and destination,
     # even if they are the same database.
     # Arrange and act
-    copy_table_rows('src', testdb_conn, testdb_conn2, target='dest')
+    copy_table_rows('src', testdb_conn, testdb_conn2, target='dest',
+                    row_factory=namedtuple_row_factory)
 
     # Assert
     sql = "SELECT * FROM dest"
@@ -158,7 +165,7 @@ def test_copy_table_rows_on_error(test_tables, testdb_conn, test_table_data_dict
     # Act
     errors = []
     copy_table_rows('src', testdb_conn, testdb_conn, target='dest',
-                    on_error=errors.extend)
+                    on_error=errors.extend, row_factory=namedtuple_row_factory)
 
     # Assert
     sql = "SELECT * FROM dest"
@@ -188,7 +195,8 @@ def test_copy_rows_bad_param_style(test_tables, testdb_conn):
     select_sql = "SELECT * FROM src"
     insert_sql = BAD_PARAM_STYLE_SQL.format(tablename='dest')
     with pytest.raises(ETLHelperInsertError):
-        copy_rows(select_sql, testdb_conn, insert_sql, testdb_conn)
+        copy_rows(select_sql, testdb_conn, insert_sql, testdb_conn,
+                  row_factory=namedtuple_row_factory)
 
 
 def test_load_namedtuples(testdb_conn, test_tables, test_table_data_dict):
