@@ -58,7 +58,7 @@ Install locally for development by cloning repository and running the following
 in the root:
 
 ```bash
-pip install -r requirements.txt
+pip install -r requirements-dev.txt
 pip install -e .
 ```
 

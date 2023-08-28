@@ -25,9 +25,9 @@ WORKDIR $APP
 RUN mkdir etlhelper
 
 # Install requirements
-COPY requirements.txt $APP/
+COPY requirements-dev.txt $APP/
 RUN pip install --upgrade pip
-RUN pip install -r requirements.txt
+RUN pip install -r requirements-dev.txt
 
 # Copy files required to package for PyPI
 COPY .git/ $APP/.git
