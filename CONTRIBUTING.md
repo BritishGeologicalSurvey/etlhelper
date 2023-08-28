@@ -78,7 +78,7 @@ export TEST_PG_PORT=5432
 export TEST_PG_PASSWORD=etlhelper_pw
 docker run -e POSTGRES_USER=etlhelper_user -e POSTGRES_DB=etlhelper \
   -e POSTGRES_PASSWORD=$TEST_PG_PASSWORD --name etlhelper_postgis \
-  -d --rm -p $TEST_PG_PORT:5432 mdillon/postgis:11-alpine
+  -d --rm -p $TEST_PG_PORT:5432 postgis/postgis:15-3.4
 ```
 
 Tests are run with:
@@ -89,7 +89,6 @@ bash bin/run_tests_for_developer.sh
 
 The test-runner script will run tests within a dedicated container and provide
 HTML coverage output.  It can be viewed with `firefox htmlcov/index.html`.
-
 
 #### Running additional BGS integration tests
 
@@ -103,6 +102,18 @@ To run these:
 + Use "Reveal values" and copy the contents of TEST_ENV_VARS
 + Paste into the terminal to set environment variables
 + Run tests as before
+
+### Building documentation
+
+The documentation is created using Sphinx.
+To locally build the documentation, run the following:
+
+```bash
+sphinx-build docs docs/_build
+```
+
+The documentation can then be viewed at `docs/_build/index.html`
+
 
 ### Creating a new release
 
