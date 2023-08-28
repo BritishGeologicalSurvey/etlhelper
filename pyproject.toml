@@ -52,10 +52,10 @@ pkg = [
 ]
 
 [tool.setuptools_scm]
-# This can be empty, it's presence indicates that the version should come from git
+# This can be empty, it's presence indicates that the version comes from git
 # Errors can occur if new commits are made after the git release version
-# Therefore, it is best to make all commits, then release git version, then pull new tag, then run build
+# Therefore, it is best to make all commits, then release git version, then
+# pull new tag, then run build
 
-[tools.setuptools.packages.find]
-where = ["etlhelper", "etlhelper.db_helpers"]
-namespaces = false
+[tool.setuptools]
+packages = ["etlhelper"]
