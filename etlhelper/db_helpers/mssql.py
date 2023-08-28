@@ -5,6 +5,7 @@ import warnings
 from textwrap import dedent
 
 from etlhelper.db_helpers.db_helper import DbHelper
+from etlhelper.exceptions import ETLHelperInsertError
 
 
 class MSSQLDbHelper(DbHelper):
@@ -87,3 +88,7 @@ class MSSQLDbHelper(DbHelper):
             )
             cursor.fast_executemany = False
             cursor.executemany(query, chunk)
+        except TypeError:
+            msg = ("pyodbc driver for MS SQL only supports positional placeholders.  "
+                   "Try again with namedtuple, tuple or list row_factory.")
+            raise ETLHelperInsertError(msg)
