@@ -18,7 +18,6 @@ database with Python.
 
 ### Features
 
-+ `setup_oracle_client` script installs Oracle Instant Client on Linux systems
 + `DbParams` objects provide consistent way to connect to different database types (currently Oracle, PostgreSQL, SQLite and MS SQL Server)
 + `fetchall`, `iter_rows`, `fetchone` and other functions for querying database
 + `execute`, `executemany`, and `load` functions to insert data
