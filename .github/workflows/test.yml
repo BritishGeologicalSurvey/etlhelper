@@ -63,9 +63,4 @@ jobs:
       - name: Install requirements
         run: pip install -r requirements-dev.txt
       - name: Run pytest
-        run: >-
-          pytest -vvs
-            test/unit/
-            test/integration/etl/
-            test/integration/test_dbparams.py
-            test/integration/test_utils.py
+        run: pytest -vrsx --cov=etlhelper --cov-report term test/
