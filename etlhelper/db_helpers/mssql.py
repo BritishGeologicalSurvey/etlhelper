@@ -90,5 +90,5 @@ class MSSQLDbHelper(DbHelper):
             cursor.executemany(query, chunk)
         except TypeError:
             msg = ("pyodbc driver for MS SQL only supports positional placeholders.  "
-                   "Try again with namedtuple, tuple or list row_factory.")
+                   "Use namedtuple, tuple or list (via row_factory setting for copy_rows).")
             raise ETLHelperInsertError(msg)

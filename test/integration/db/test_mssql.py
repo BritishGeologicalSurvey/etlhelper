@@ -15,6 +15,7 @@ from etlhelper import (
     copy_rows,
     copy_table_rows,
     execute,
+    executemany,
     fetchall,
     generate_insert_sql,
     load,
@@ -197,6 +198,25 @@ def test_copy_rows_bad_param_style(test_tables, testdb_conn):
     with pytest.raises(ETLHelperInsertError):
         copy_rows(select_sql, testdb_conn, insert_sql, testdb_conn,
                   row_factory=namedtuple_row_factory)
+
+
+def test_executemany_dicts_raises_error(testdb_conn, test_tables, test_table_data_dict):
+    # Arrange
+    # Placeholder doesn't really matter as pydodbc doesn't support
+    # named placeholders
+    insert_sql = dedent("""
+        INSERT INTO dest (id, value, simple_text, utf8_text, day, date_time)
+        VALUES (:id, :value, :simple_text, :utf8_text, :day, :date_time)
+        ;""").strip()
+    expected_message = ("pyodbc driver for MS SQL only supports positional placeholders.  "
+                        "Use namedtuple, tuple or list (via row_factory setting for copy_rows).")
+
+    # Act and assert
+    # pyodbc doesn't support named parameters.
+    with pytest.raises(ETLHelperInsertError) as exc_info:
+        executemany(insert_sql, testdb_conn, test_table_data_dict)
+
+    assert str(exc_info.value) == expected_message
 
 
 def test_load_namedtuples(testdb_conn, test_tables, test_table_data_namedtuple):
