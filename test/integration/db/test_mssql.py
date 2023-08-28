@@ -5,6 +5,7 @@ These currently run against internal BGS instance.
 import os
 from collections import namedtuple
 from textwrap import dedent
+from unittest.mock import Mock
 
 import pyodbc
 import pytest
@@ -24,6 +25,7 @@ from etlhelper.utils import (
     table_info,
     Column,
 )
+from etlhelper.db_helper_factory import DB_HELPER_FACTORY
 from etlhelper.exceptions import (
     ETLHelperConnectionError,
     ETLHelperInsertError,
@@ -40,8 +42,29 @@ if not MSSQLDB.is_reachable():
 # -- Tests here --
 
 def test_connect():
-    conn = connect(MSSQLDB, 'TEST_MSSQL_PASSWORD')
+    conn = connect(MSSQLDB, 'TEST_MSSQL_PASSWORD',
+                   trust_server_certificate=True)
     assert isinstance(conn, pyodbc.Connection)
+
+
+@pytest.mark.parametrize('trust_server_certificate', [
+    True,
+    False
+])
+def test_connect_trust_server_certificate(monkeypatch, trust_server_certificate):
+    # Arrange
+    helper = DB_HELPER_FACTORY.from_db_params(MSSQLDB)
+    mock_connect = Mock()
+    monkeypatch.setattr(helper, '_connect_func', mock_connect)
+
+    # Act
+    helper.connect(MSSQLDB, 'TEST_MSSQL_PASSWORD',
+                   trust_server_certificate=trust_server_certificate)
+
+    # Assert
+    conn_str = mock_connect.call_args.args[0]
+    trusted = ';TrustServerCertificate=yes' in conn_str
+    assert trust_server_certificate is trusted
 
 
 def test_connect_wrong_password(monkeypatch):
@@ -339,28 +362,32 @@ BAD_PARAM_STYLE_SQL = dedent("""
 @pytest.fixture(scope='function')
 def testdb_conn():
     """Get connection to test MS SQL database."""
-    with connect(MSSQLDB, 'TEST_MSSQL_PASSWORD') as conn:
+    with connect(MSSQLDB, 'TEST_MSSQL_PASSWORD',
+                 trust_server_certificate=True) as conn:
         return conn
 
 
 @pytest.fixture(scope='function')
 def testdb_conn2():
     """Get connection to test MS SQL database."""
-    with connect(MSSQLDB, 'TEST_MSSQL_PASSWORD') as conn:
+    with connect(MSSQLDB, 'TEST_MSSQL_PASSWORD',
+                 trust_server_certificate=True) as conn:
         return conn
 
 
 @pytest.fixture(scope='function')
 def testdb_fast_false_conn():
     """Get connection to test MS SQL database."""
-    with connect(MSSQLDB, 'TEST_MSSQL_PASSWORD', fast_executemany=False) as conn:
+    with connect(MSSQLDB, 'TEST_MSSQL_PASSWORD', fast_executemany=False,
+                 trust_server_certificate=True) as conn:
         return conn
 
 
 @pytest.fixture(scope='function')
 def testdb_fast_false_conn2():
     """Get connection to test MS SQL database."""
-    with connect(MSSQLDB, 'TEST_MSSQL_PASSWORD', fast_executemany=False) as conn:
+    with connect(MSSQLDB, 'TEST_MSSQL_PASSWORD', fast_executemany=False,
+                 trust_server_certificate=True) as conn:
         return conn
 
 

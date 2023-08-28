@@ -175,11 +175,24 @@ If required, the `fast_executemany` attribute can be set to `False` via the
 `connect` function:
 
 ```python
-conn5 = connect(MSSQLDB, 'MSSQL_PASSWORD', fast_executemany=False)
+conn = connect(MSSQLDB, 'MSSQL_PASSWORD', fast_executemany=False)
 ```
 
 This keyword argument is used by `etlhelper`, any further keyword arguments are
 passed to the `connect` function of the underlying driver.
+
+#### Connecting to servers with self-signed certificates with SQL Server
+
+Since the ODBC Driver 18 for SQL Server, the default setting has been to fail
+certificate validation for servers with self-signed certificates.
+It is possible to override this setting within the connection string.
+
+ETLHelper provides an optional argument to the `connect` function to apply the
+override and trust the server's self-signed certificate.
+
+```python
+conn = connect(MSSQLDB, 'MSSQL_PASSWORD', trust_server_certificate=True)
+```
 
 ### Passwords
 
