@@ -65,12 +65,6 @@ pip install -e .
 Development files will be linked to the virtual environment/system folder
 hierarchy allowing changes to take effect directly.
 
-Proprietary Oracle Instant Client drivers are required.
-These can be installed with:
-
-```bash
-source $(setup_oracle_client)
-```
 
 ### Running tests
 
