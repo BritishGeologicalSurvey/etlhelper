@@ -173,7 +173,7 @@ def test_copy_table_rows_on_error(test_tables, testdb_conn, test_table_data_dict
 
     # Check that first row was caught as error
     row, exception = errors[0]
-    assert row["id"] == 1
+    assert row.id == 1
     assert "unique" in str(exception).lower()
 
     # Check that other rows were inserted correctly
@@ -199,14 +199,14 @@ def test_copy_rows_bad_param_style(test_tables, testdb_conn):
                   row_factory=namedtuple_row_factory)
 
 
-def test_load_namedtuples(testdb_conn, test_tables, test_table_data_dict):
+def test_load_namedtuples(testdb_conn, test_tables, test_table_data_namedtuple):
     # Act
-    load('dest', testdb_conn, test_table_data_dict)
+    load('dest', testdb_conn, test_table_data_namedtuple)
 
     # Assert
     sql = "SELECT * FROM dest"
-    result = fetchall(sql, testdb_conn)
-    assert result == test_table_data_dict
+    result = fetchall(sql, testdb_conn, row_factory=namedtuple_row_factory)
+    assert result == test_table_data_namedtuple
 
 
 def test_load_dicts(testdb_conn, test_tables, test_table_data_dict):
