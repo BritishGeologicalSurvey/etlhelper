@@ -8,6 +8,7 @@ from etlhelper import (
     copy_rows,
     execute,
 )
+from etlhelper.row_factories import namedtuple_row_factory
 
 NO_OUTPUT = []
 INFO = [
@@ -62,8 +63,7 @@ INFO_AND_DEBUG = [
 ])
 def test_logging_copy_rows(caplog, level, expected,
                            pgtestdb_conn, pgtestdb_test_tables,
-                           pgtestdb_insert_sql, test_table_data,
-                           logger):
+                           pgtestdb_insert_sql, logger):
     # Arrange
     caplog.set_level(level, logger=logger.name)
     select_sql = "SELECT * FROM src"
@@ -71,7 +71,7 @@ def test_logging_copy_rows(caplog, level, expected,
 
     # Act
     copy_rows(select_sql, pgtestdb_conn, insert_sql, pgtestdb_conn,
-              chunk_size=1)
+              chunk_size=1, row_factory=namedtuple_row_factory)
 
     # ID for connection object and hostname vary between tests
     # and test environments

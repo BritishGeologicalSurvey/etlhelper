@@ -43,7 +43,7 @@ class DbHelper(metaclass=ABCMeta):
         Return a connection (as appropriate), configured for
         the database with the password obtained from environment variable.  These
         connection classes provide Python's dbapi interface (see PEP 249).  The
-        dbapi interface interacts with data row-by-row and is usroed for low-level
+        dbapi interface interacts with data row-by-row and is used for low-level
         functions.
 
         :param db_params: DbParams object or similar with appropriate attributes

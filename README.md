@@ -18,7 +18,6 @@ database with Python.
 
 ### Features
 
-+ `setup_oracle_client` script installs Oracle Instant Client on Linux systems
 + `DbParams` objects provide consistent way to connect to different database types (currently Oracle, PostgreSQL, SQLite and MS SQL Server)
 + `fetchall`, `iter_rows`, `fetchone` and other functions for querying database
 + `execute`, `executemany`, and `load` functions to insert data
@@ -175,11 +174,24 @@ If required, the `fast_executemany` attribute can be set to `False` via the
 `connect` function:
 
 ```python
-conn5 = connect(MSSQLDB, 'MSSQL_PASSWORD', fast_executemany=False)
+conn = connect(MSSQLDB, 'MSSQL_PASSWORD', fast_executemany=False)
 ```
 
 This keyword argument is used by `etlhelper`, any further keyword arguments are
 passed to the `connect` function of the underlying driver.
+
+#### Connecting to servers with self-signed certificates with SQL Server
+
+Since the ODBC Driver 18 for SQL Server, the default setting has been to fail
+certificate validation for servers with self-signed certificates.
+It is possible to override this setting within the connection string.
+
+ETLHelper provides an optional argument to the `connect` function to apply the
+override and trust the server's self-signed certificate.
+
+```python
+conn = connect(MSSQLDB, 'MSSQL_PASSWORD', trust_server_certificate=True)
+```
 
 ### Passwords
 
@@ -293,10 +305,10 @@ Four different row_factories are included, based in built-in Python types:
 
 |Row Factory|Attribute access|Mutable|Parameter placeholder|
 |---|---|---|---|
-|namedtuple_row_factory (default)| `row.id` or `row[0]` | No | Positional |
-|dict_row_factory| `row["id"]`| Yes | Named |
+|dict_row_factory (default)| `row["id"]`| Yes | Named |
 |tuple_row_factory| `row[0]`| No | Positional |
 |list_row_factory| `row[0]`| Yes | Positional |
+|namedtuple_row_factory| `row.id` or `row[0]` | No | Positional |
 
 The choice of row factory depends on the use case.  In general named tuples
 and dictionaries are best for readable code, while using tuples or lists can

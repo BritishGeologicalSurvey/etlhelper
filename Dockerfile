@@ -25,17 +25,23 @@ WORKDIR $APP
 RUN mkdir etlhelper
 
 # Install requirements
-COPY requirements.txt $APP/
+COPY requirements-dev.txt $APP/
 RUN pip install --upgrade pip
-RUN pip install -r requirements.txt
+RUN pip install -r requirements-dev.txt
+
+# Copy files required to package for PyPI
+COPY .git/ $APP/.git
+COPY pyproject.toml README.md $APP/
+
+# Copy files required for testing
+COPY .flake8 pytest.ini $APP/
+COPY test/ $APP/test
 
 # Copy app files to container
-COPY pyproject.toml .flake8 README.md pytest.ini $APP/
 COPY etlhelper/ $APP/etlhelper
-COPY test/ $APP/test
 
 # Clear old caches, if present
 RUN find . -regextype posix-egrep -regex '.*/__pycache__.*' -delete
 
-# Set up Oracle Client
+# Install ETLHelper
 RUN python -m pip install .
