@@ -286,6 +286,48 @@ def test_table_info_bad_table_name_with_schema(testdb_conn, test_tables):
         table_info('bad_table', testdb_conn, schema='etlhelper')
 
 
+@pytest.mark.parametrize('fetch_lobs', (
+        True,  # default for oracledb
+        False  # default for etlhelper
+    ))
+def test_lob_io(testdb_conn, test_blob_table, fetch_lobs):
+    """
+    These tests confirm that:
+      + Changing the fetch_lobs parameter before creating a cursor affects
+        the returned data type for the subsequent query
+      + It is not necessary to change the setting prior to connecting
+      + CLOBs longer than 4000 characters are returned in full
+    """
+
+    insert_sql = dedent("""
+        INSERT INTO blob_src (id, my_clob, my_blob)
+        VALUES (:1, :2, :3)
+        """).strip()
+    big_text = "abcd" * 10000
+    big_bytes = big_text.encode('utf8')
+
+    oracledb.defaults.fetch_lobs = fetch_lobs
+
+    # populate table with data
+    with testdb_conn.cursor() as cursor:
+        cursor.execute(insert_sql, (1, big_text, big_bytes))
+    testdb_conn.commit()
+
+    # fetch data
+    with testdb_conn.cursor() as cursor:
+        cursor.execute("SELECT my_clob, my_blob FROM blob_src")
+        big_text_returned, big_bytes_returned = cursor.fetchone()
+
+        if fetch_lobs:
+            assert isinstance(big_text_returned, oracledb.LOB)
+            assert isinstance(big_bytes_returned, oracledb.LOB)
+        else:
+            assert isinstance(big_text_returned, str)
+            assert big_text_returned == big_text
+            assert isinstance(big_bytes_returned, bytes)
+            assert big_bytes_returned == big_bytes
+
+
 # -- Fixtures here --
 
 INSERT_SQL = dedent("""
@@ -359,4 +401,40 @@ def test_tables(test_table_data_namedtuple, testdb_conn):
     with testdb_conn.cursor() as cursor:
         cursor.execute(drop_src_sql)
         cursor.execute(drop_dest_sql)
+    testdb_conn.commit()
+
+
+@pytest.fixture(scope='function')
+def test_blob_table(testdb_conn):
+    """
+    Create a blob table and fill with test data.  Teardown after the yield drops it
+    again.
+    """
+    # Define SQL queries
+    create_src_sql = dedent("""
+        CREATE TABLE blob_src
+          (
+            id NUMBER UNIQUE,
+            my_clob CLOB,
+            my_blob BLOB
+          )
+          """).strip()
+    drop_src_sql = "DROP TABLE blob_src"
+
+    # Create table
+    with testdb_conn.cursor() as cursor:
+        # src table
+        try:
+            cursor.execute(drop_src_sql)
+        except oracledb.DatabaseError:
+            pass
+        cursor.execute(create_src_sql)
+    testdb_conn.commit()
+
+    # Return control to calling function until end of test
+    yield
+
+    # Tear down the table after test completes
+    with testdb_conn.cursor() as cursor:
+        cursor.execute(drop_src_sql)
     testdb_conn.commit()

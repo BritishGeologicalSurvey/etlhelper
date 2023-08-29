@@ -154,6 +154,37 @@ conn4 = connect(ORACLEDB, 'ORACLE_PASSWORD', encoding="UTF-8", nencoding="UTF8")
 
 The above is a solution when special characters are scrambled in the returned data.
 
+#### Handling of LOBs for Oracle connections
+
+Oracle databases have special column types for Character Large Object (CLOB) and
+Binary Large Object (BLOB).
+In ETLHelper, the `oracledb` driver has been configured to return these as native
+Python `str` and `bytes` objects respectively.
+This is comparable to the behaviour of other database drivers e.g. SQLite,
+PostgreSQL and avoids the user having to take the extra step of reading the LOB
+and results in faster data transfer.
+However, it is not suitable for LOBs larger than 1 Gb.
+
+To return CLOB and BLOB columns as LOBs, configure the driver as follows:
+
+```python
+import etlhelper as etl
+import oracledb
+
+select_sql = "SELECT my_clob, my_blob FROM my_table"
+
+with ORACLEDB.connect("ORA_PASSWORD") as conn:
+    # By default, ETL Helper returns native types
+    result_as_native = etl.fetchall(select_sql, conn)
+
+    # Update oracledb settings to return LOBs
+    oracledb.defaults.fetch_lobs = True
+    result_as_lobs = etl.fetchall(select_sql, conn)
+```
+
+See the [oracledb docs](https://python-oracledb.readthedocs.io/en/latest/user_guide/lob_data.html#fetching-lobs-as-strings-and-bytes) for more information.
+
+
 #### Disabling fast_executemany for SQL Server and other pyODBC connections
 
 By default an `etlhelper` pyODBC connection uses a cursor with its

@@ -39,6 +39,13 @@ class OracleDbHelper(DbHelper):
                                        oracledb.InterfaceError)
             self.paramstyle = oracledb.paramstyle
             self._connect_func = oracledb.connect
+
+            # Fetch large objects as Python strings/bytes instead of LOBs
+            # The oracledb default is LOB, but native types are faster to
+            # transfer and are in line with return types of other databases
+            # e.g. SQLite or PostgreSQL.
+            # https://python-oracledb.readthedocs.io/en/latest/user_guide/lob_data.html#fetching-lobs-as-strings-and-bytes
+            oracledb.defaults.fetch_lobs = False
         except ImportError:
             warnings.warn(self.missing_driver_msg)
 
