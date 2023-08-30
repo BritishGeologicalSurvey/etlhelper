@@ -7,7 +7,10 @@ Welcome to ETLHelper's documentation!
 
 **etlhelper** is a Python ETL library to simplify data transfer into and out of databases.
 
-.. note::  Note: This is documentation is a work in progress and is intended for ETLHelper version 1.0.0. This new version will contain deprecations. Users should pin their versions and check GitHub issues for details.
+.. note::  There are a number of breaking changes planned for
+   ``etlhelper`` version 1.0. Please pin the version number in your
+   dependency list to avoid disruption and watch the project on GitHub
+   for notification of new releases (in Custom section).
 
 .. toctree::
    :maxdepth: 3
@@ -28,12 +31,10 @@ query a relational database with Python.
 Features
 ~~~~~~~~
 
--  ``setup_oracle_client`` script installs Oracle Instant Client on
-   Linux systems
 -  ``DbParams`` objects provide consistent way to connect to different
    database types (currently Oracle, PostgreSQL, SQLite and MS SQL
    Server)
--  ``get_rows``, ``iter_rows``, ``fetchone`` and other functions for
+-  ``fetchall``, ``iter_rows``, ``fetchone`` and other functions for
    querying database
 -  ``execute``, ``executemany``, and ``load`` functions to insert data
 -  ``copy_rows`` and ``copy_table_rows`` to transfer data from one
@@ -69,6 +70,17 @@ presentation *Open Source Spatial ETL with Python and Apache Airflow*:
 `video <https://www.youtube.com/watch?v=12rzUW4ps74&feature=youtu.be&t=6238>`__
 (20 mins), `slides <https://volcan01010.github.io/FOSS4G2019-talk>`__.
 
+Documentation
+~~~~~~~~~~~~~
+
+-  `Installation <#installation>`__
+-  `Connect to databases <#connect-to-databases>`__
+-  `Transfer data <#transfer-data>`__
+-  `Utilities <#utilities>`__
+-  `Recipes <#recipes>`__
+-  `Development <#development>`__
+-  `References <#references>`__
+
 Installation
 ------------
 
@@ -81,7 +93,7 @@ Python packages
 
 Database driver packages are not included by default and should be
 specified in square brackets. Options are ``oracle`` (installs
-cx_Oracle), ``mssql`` (installs pyodbc) and ``postgres`` (installs
+oracledb), ``mssql`` (installs pyodbc) and ``postgres`` (installs
 psycopg2). Multiple values can be separated by commas.
 
 ::
@@ -96,37 +108,10 @@ Database driver dependencies
 Some database drivers have additional dependencies. On Linux, these can
 be installed via the system package manager.
 
-cx_Oracle (for Oracle):
-
--  ``sudo apt install libaio1`` (Debian/Ubuntu) or
-   ``sudo dnf install libaio`` (CentOS, RHEL, Fedora)
-
 pyodbc (for MS SQL Server):
 
 -  Follow instructions on `Microsoft SQL Docs
    website <https://docs.microsoft.com/en-us/sql/connect/odbc/linux-mac/installing-the-microsoft-odbc-driver-for-sql-server?view=sql-server-2017>`__
-
-Oracle Instant Client
-~~~~~~~~~~~~~~~~~~~~~
-
-Oracle Instant Client libraries are required to connect to Oracle
-databases. On Linux, ``etlhelper`` provides a script to download and
-unzip them from the `Oracle
-website <https://www.oracle.com/database/technologies/instant-client/linux-x86-64-downloads.html>`__.
-Once the drivers are installed, their location must be added to
-LD_LIBRARY_PATH environment variable before they can be used.
-``setup_oracle_client`` writes a file that can then be “sourced” to do
-this for the current shell. These two steps can be executed in a single
-command as:
-
-.. code:: bash
-
-   source $(setup_oracle_client)
-
-This command must be run in each new shell session. See
-``setup_oracle_client --help`` for further command line flags, including
-specifying an alternative URL or filesystem path for the zipfile
-location.
 
 Connect to databases
 --------------------
@@ -192,7 +177,7 @@ previous releases of ``etlhelper``:
 
 Both versions accept additional keyword arguments that are passed to the
 ``connect`` function of the underlying driver. For example, the
-following sets the character encoding used by cx_Oracle to ensure that
+following sets the character encoding used by oracledb to ensure that
 values are returned as UTF-8:
 
 .. code:: python
@@ -201,6 +186,39 @@ values are returned as UTF-8:
 
 The above is a solution when special characters are scrambled in the
 returned data.
+
+Handling of LOBs for Oracle connections
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Oracle databases have special column types for Character Large Object
+(CLOB) and Binary Large Object (BLOB). In ETLHelper, the ``oracledb``
+driver has been configured to return these as native Python ``str`` and
+``bytes`` objects respectively. This is comparable to the behaviour of
+other database drivers e.g. SQLite, PostgreSQL and avoids the user
+having to take the extra step of reading the LOB and results in faster
+data transfer. However, it is not suitable for LOBs larger than 1 Gb.
+
+To return CLOB and BLOB columns as LOBs, configure the driver as
+follows:
+
+.. code:: python
+
+   import etlhelper as etl
+   import oracledb
+
+   select_sql = "SELECT my_clob, my_blob FROM my_table"
+
+   with ORACLEDB.connect("ORA_PASSWORD") as conn:
+       # By default, ETL Helper returns native types
+       result_as_native = etl.fetchall(select_sql, conn)
+
+       # Update oracledb settings to return LOBs
+       oracledb.defaults.fetch_lobs = True
+       result_as_lobs = etl.fetchall(select_sql, conn)
+
+See the `oracledb
+docs <https://python-oracledb.readthedocs.io/en/latest/user_guide/lob_data.html#fetching-lobs-as-strings-and-bytes>`__
+for more information.
 
 Disabling fast_executemany for SQL Server and other pyODBC connections
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -226,11 +244,25 @@ via the ``connect`` function:
 
 .. code:: python
 
-   conn5 = connect(MSSQLDB, 'MSSQL_PASSWORD', fast_executemany=False)
+   conn = connect(MSSQLDB, 'MSSQL_PASSWORD', fast_executemany=False)
 
 This keyword argument is used by ``etlhelper``, any further keyword
 arguments are passed to the ``connect`` function of the underlying
 driver.
+
+Connecting to servers with self-signed certificates with SQL Server
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Since the ODBC Driver 18 for SQL Server, the default setting has been to
+fail certificate validation for servers with self-signed certificates.
+It is possible to override this setting within the connection string.
+
+ETLHelper provides an optional argument to the ``connect`` function to
+apply the override and trust the server’s self-signed certificate.
+
+.. code:: python
+
+   conn = connect(MSSQLDB, 'MSSQL_PASSWORD', trust_server_certificate=True)
 
 Passwords
 ~~~~~~~~~
@@ -254,21 +286,21 @@ No password is required for SQLite databases.
 Transfer data
 -------------
 
-Get rows
-~~~~~~~~
+Fetch all
+~~~~~~~~~
 
-The ``get_rows`` function returns a list of named tuples containing data
+The ``fetchall`` function returns a list of named tuples containing data
 as native Python objects.
 
 .. code:: python
 
    from my_databases import ORACLEDB
-   from etlhelper import get_rows
+   from etlhelper import fetchall
 
    sql = "SELECT * FROM src"
 
    with ORACLEDB.connect("ORA_PASSWORD") as conn:
-       get_rows(sql, conn)
+       fetchall(sql, conn)
 
 returns
 
@@ -287,9 +319,9 @@ returns
 Data are accessible via index (``row[4]``) or name (``row.day``).
 
 Other functions are provided to select data. ``fetchone`` and
-``fetchall`` are equivalent to the cursor methods specified in the
-DBAPI v2.0. ``dump_rows`` passes each row to a function (default is
-``print``).
+``fetchall`` are equivalent to the cursor methods specified in the DBAPI
+v2.0. ETL Helper does not include a ``fetchmany`` function - instead use
+``iter_chunks`` to loop over a result set in batches of multiple rows.
 
 iter_rows
 ^^^^^^^^^
@@ -319,7 +351,7 @@ placeholders, or a dictionary for named placeholders.
    select_sql = "SELECT * FROM src WHERE id = :id"
 
    with ORACLEDB.connect("ORA_PASSWORD") as conn:
-       get_rows(sql, conn, parameters={'id': 1})
+       fetchall(sql, conn, parameters={'id': 1})
 
 Row factories
 ^^^^^^^^^^^^^
@@ -330,13 +362,13 @@ For example return each row as a dictionary, use the following:
 
 .. code:: python
 
-   from etlhelper import get_rows
+   from etlhelper import fetchall
    from etlhelper.row_factories import dict_row_factory
 
    sql = "SELECT * FROM my_table"
 
    with ORACLEDB.connect('ORACLE_PASSWORD') as conn:
-       for row in get_rows(sql, conn, row_factory=dict_row_factory):
+       for row in fetchall(sql, conn, row_factory=dict_row_factory):
            print(row['id'])
 
 The ``dict_row_factory`` is useful when data are to be serialised to
@@ -345,17 +377,21 @@ JSON/YAML, as those formats use dictionaries as input.
 Four different row_factories are included, based in built-in Python
 types:
 
-================================ ======================== =======
-=====================
-Row Factory                      Attribute access         Mutable Parameter placeholder
-================================ ======================== =======
-=====================
-namedtuple_row_factory (default) ``row.id`` or ``row[0]`` No      Positional
-dict_row_factory                 ``row["id"]``            Yes     Named
-tuple_row_factory                ``row[0]``               No      Positional
-list_row_factory                 ``row[0]``               Yes     Positional
-================================ ======================== =======
-=====================
++------------------+------------------+---------+------------------+
+| Row Factory      | Attribute access | Mutable | Parameter        |
+|                  |                  |         | placeholder      |
++==================+==================+=========+==================+
+| dict_row_factory | ``row["id"]``    | Yes     | Named            |
+| (default)        |                  |         |                  |
++------------------+------------------+---------+------------------+
+| t                | ``row[0]``       | No      | Positional       |
+| uple_row_factory |                  |         |                  |
++------------------+------------------+---------+------------------+
+| list_row_factory | ``row[0]``       | Yes     | Positional       |
++------------------+------------------+---------+------------------+
+| namedt           | ``row.id`` or    | No      | Positional       |
+| uple_row_factory | ``row[0]``       |         |                  |
++------------------+------------------+---------+------------------+
 
 The choice of row factory depends on the use case. In general named
 tuples and dictionaries are best for readable code, while using tuples
@@ -363,7 +399,7 @@ or lists can give a slight increase in performance. Mutable rows are
 convenient when used with transform functions because they can be
 modified without need to create a whole new output row.
 
-When using ``copy_rows``, it is necessary to use approriate parameter
+When using ``copy_rows``, it is necessary to use appropriate parameter
 placeholder style for the chosen row factory in the INSERT query. Using
 the ``dict_row_factory`` requires a switch from named to positional
 parameter placeholders (e.g. ``%(id)s`` instead of ``%s`` for
@@ -378,7 +414,10 @@ Transform
 
 The ``transform`` parameter allows passing of a function to transform
 the data before returning it. The function must take a list of rows and
-return a list of modified rows. See ``copy_rows`` for more details.
+return a list of modified rows. Rows of mutable types (dict, list) can
+be modified in-place, while rows of immutable types (tuples,
+namedtuples) must be created as new objects from the input rows. See
+``transform`` for more details.
 
 Chunk size
 ^^^^^^^^^^
@@ -394,8 +433,11 @@ Insert rows
 ``execute`` can be used to insert a single row or to execute other
 single statements e.g. “CREATE TABLE …”. The ``executemany`` function is
 used to insert multiple rows of data. Large datasets are broken into
-chunks and inserted in batches to reduce the number of queries. A tuple
-with counts of rows processed and failed is returned.
+chunks and inserted in batches to reduce the number of queries. The
+INSERT query must container placeholders with an appropriate format for
+the input data e.g. positional for tuples, named for dictionaries. The
+number of rows that were processed and the number that failed is
+returned.
 
 .. code:: python
 
@@ -434,6 +476,11 @@ query for simple cases. By calling this function manually, users can
 create a base insert query that can be extended with clauses such as
 ``ON CONFLICT DO NOTHING``.
 
+NOTE: the ``load`` function uses the first row of data to generate the
+list of column for the insert query. If later items in the data contain
+extra columns, those columns will not be inserted and no error will be
+raised.
+
 As ``generate_insert_query`` creates SQL statements from user-provided
 input, it checks the table and column names to ensure that they only
 contain valid characters.
@@ -463,7 +510,13 @@ Errors can be logged to the ``etlhelper`` logger.
 
 .. code:: python
 
-   from etlhelper import logger
+   import logging
+
+   import etlhelper as etl
+
+   etl.log_to_console()
+   logger = logging.getLogger("etlhelper")
+
 
    def log_errors(failed_rows):
        for row, exception in failed_rows:
@@ -506,6 +559,10 @@ required.
 The ``chunk_size``, ``commit_chunks`` and ``on_error`` parameters can
 all be set. A tuple with counts of rows processed and failed is
 returned.
+
+Note that the target table must already exist. If it doesn’t, you can
+use ``execute`` with a ``CREATE TABLE IF NOT EXISTS ...`` statement to
+create it first. See the recipes for examples.
 
 Combining ``iter_rows`` with ``load``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -571,63 +628,77 @@ Transform
 ~~~~~~~~~
 
 Data can be transformed in-flight by applying a transform function. This
-is any Python callable (e.g. function) that takes an iterator
-(e.g. list) and returns another iterator. Transform functions are
-applied to data as they are read from the database and can be used with
-``get_rows``-type methods and with ``copy_rows``.
+is any Python callable (e.g. function or class) that takes an iterator
+and returns another iterator (e.g. list or generator via the ``yield``
+statement). Transform functions are applied to data as they are read
+from the database (in the case of data fetching functions and
+``copy_rows``), or before they are passed as query parameters (to
+``executemany`` or ``load``). When used with ``copy_rows`` or
+``executemany`` the INSERT query must contain the correct placeholders
+for the transform result.
 
-The following code demonstrates that the returned chunk can have a
-different number of rows, and be of different length, to the input. When
-used with ``copy_rows``, the INSERT query must contain the correct
-placeholders for the transform result. Extra data can result from a
-calculation, a call to a webservice or another database.
+The ``iter_chunks`` and ``iter_rows`` functions that are used internally
+return generators. Each chunk or row of data is only accessed when it is
+required. This allows data transformation to be performed via
+`memory-efficient
+iterator-chains <https://dbader.org/blog/python-iterator-chains>`__.
+
+The simplest transform functions modify data returned mutable row
+factories e.g., ``dict_row_factory`` in-place. The ``yield`` keyword
+makes ``my_transform`` a generator function that returns an ``Iterator``
+that can loop over the rows.
+
+.. code:: python
+
+   from typing import Iterator
+   from etlhelper.row_factories import dict_row_factory
+
+
+   def my_transform(chunk: Iterator[dict]) -> Iterator[dict]:
+       # Add prefix to id, remove newlines, set lower case email addresses
+
+       for row in chunk:  # each row is a dictionary (mutable)
+           row['id'] += 1000
+           row['description'] = row['description'].replace('\n', ' ')
+           row['email'] = row['email'].lower()
+           yield row
+
+
+   fetchall(select_sql, src_conn, row_factory=dict_row_factory,
+            transform=my_transform)
+
+It is also possible to assemble the complete transformed chunk and
+return it. This code demonstrates that the returned chunk can have a
+different number of rows, and be of different length, to the input.
+Because ``namedtuple``\ s are immutable, we have to create a ``new_row``
+from each input ``row``.
 
 .. code:: python
 
    import random
+   from typing import Iterator
+   from etlhelper.row_factories import namedtuple_row_factory
 
-   def my_transform(chunk):
+
+   def my_transform(chunk: Iterator[tuple]) -> list[tuple]:
        # Append random integer (1-10), filter if <5.
 
        new_chunk = []
-       for row in chunk:  # each row is a namedtuple
+       for row in chunk:  # each row is a namedtuple (immutable)
            extra_value = random.randrange(10)
-           if extra_value >= 5:
-               new_chunk.append((*row, extra_value))
+           if extra_value >= 5:  # some rows are dropped
+               new_row = (*row, extra_value)  # new rows have extra column
+               new_chunk.append(new_row)
 
        return new_chunk
 
-   copy_rows(select_sql, src_conn, insert_sql, dest_conn,
-             transform=my_transform)
-
-It can be easier to modify individual columns when using the
-``dict_row_factory`` (see above).
-
-.. code:: python
-
-   from etlhelper.row_factories import dict_row_factory
-
-   def my_transform(chunk):
-       # Add prefix to id, remove newlines, set lower case email addresses
-
-       new_chunk = []
-       for row in chunk:  # each row is a dictionary
-           row['id'] += 1000
-           row['description'] = row['description'].replace('\n', ' ')
-           row['email'] = row['email'].lower()
-           new_chunk.append(row)
-
-       return new_chunk
-
-   get_rows(select_sql, src_conn, row_factory=dict_row_factory,
+   fetchall(select_sql, src_conn, row_factory=namedtuple_row_factory,
             transform=my_transform)
 
-The ``iter_chunks`` and ``iter_rows`` functions that are used internally
-return generators. Each chunk or row of data is only accessed when it is
-required. The transform function can also be written to return a
-generator instead of a list. Data transformation can then be performed
-via `memory-efficient
-iterator-chains <https://dbader.org/blog/python-iterator-chains>`__.
+Any Python code can be used within the function and extra data can
+result from a calculation, a call to a webservice or a query against
+another database. As a standalone function with known inputs and
+outputs, the transform functions are also easy to test.
 
 Aborting running jobs
 ~~~~~~~~~~~~~~~~~~~~~
@@ -641,7 +712,7 @@ within the thread.
 
 The state of the data when the job is cancelled (or crashes) depends on
 the arguments passed to ``executemany`` (or the functions that call it
-e.g. \ ``load``, ``copy_rows``).
+e.g. ``load``, ``copy_rows``).
 
 -  If ``commit_chunks`` is ``True`` (default), all chunks up to the one
    where the error occured are committed.
@@ -695,15 +766,15 @@ Debug SQL and monitor progress with logging
 
 ETL Helper provides a custom logging handler. Time-stamped messages
 indicating the number of rows processed can be enabled by setting the
-log level to INFO. Setting the level to DEBUG provides information on
-the query that was run, example data and the database connection.
+log level to ``INFO``. Setting the level to ``DEBUG`` provides
+information on the query that was run, example data and the database
+connection. To enable the logger, use:
 
 .. code:: python
 
-   import logging
-   from etlhelper import logger
+   import etlhelper as etl
 
-   logger.setLevel(logging.INFO)
+   etl.log_to_console()
 
 Output from a call to ``copy_rows`` will look like:
 
@@ -716,8 +787,20 @@ Output from a call to ``copy_rows`` will look like:
    2019-10-07 15:06:22,420 iter_chunks: 3 rows returned
    2019-10-07 15:06:22,420 executemany: 3 rows processed in total
 
-Note: errors on database connections output messages that include login
+Note: errors on database connections output messages may include login
 credentials in clear text.
+
+To use the etlhelper logger directly, access it via:
+
+.. code:: python
+
+   import logging
+
+   import etlhelper as etl
+
+   etl.log_to_console()
+   etl_logger = logging.getLogger("etlhelper")
+   etl_logger.info("Hello world!")
 
 Database to database copy ETL script template
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -993,7 +1076,7 @@ import data from a CSV file into a database. It shows how a
 ``transform`` function can perform common parsing tasks such as renaming
 columns and converting timestamps into datetime objects. The database
 has a ``CHECK`` constraint that rejects any rows with an ID divisible by
-1.    An example ``on_error`` function prints the IDs of rows that fail
+1000. An example ``on_error`` function prints the IDs of rows that fail
 to insert.
 
 .. code:: python
@@ -1032,7 +1115,19 @@ to insert.
        # Load data
        with open(csv_file, 'rt') as f:
            reader = csv.DictReader(f)
-           load('observations', conn, transform(reader), on_error=on_error)
+           load('observations', conn, reader, transform=transform, on_error=on_error)
+
+
+   # A transform function that takes an iterable of rows and returns an iterable
+   # of rows.
+   def transform(rows: Iterable[dict]) -> Iterable[dict]:
+       """Rename time column and convert to Python datetime."""
+       for row in rows:
+           # Dictionaries are mutable, so rows can be modified in place.
+           time_value = row.pop('phenomenonTime')
+           row['time'] = dt.datetime.strptime(time_value, "%Y-%m-%dT%H:%M:%S.%fZ")
+
+       return rows
 
 
    # The on_error function is called after each chunk with all the failed rows
@@ -1043,21 +1138,9 @@ to insert.
        print(f"Failed IDs: {failed_ids}")
 
 
-   # A transform function that takes an iterable and yields one row at a time
-   # returns a "generator".  The generator is also iterable, and records are
-   # processed as they are read so the whole file is never held in memory.
-   def transform(rows: Iterable[dict]) -> Iterable[dict]:
-       """Rename time column and convert to Python datetime."""
-       for row in rows:
-           row['time'] = row.pop('phenomenonTime')
-           row['time'] = dt.datetime.strptime(row['time'], "%Y-%m-%dT%H:%M:%S.%fZ")
-           yield row
-
-
    if __name__ == "__main__":
-       import logging
-       from etlhelper import logger
-       logger.setLevel(logging.INFO)
+       from etlhelper import log_to_console
+       log_to_console()
 
        db = DbParams(dbtype="SQLITE", filename="observations.sqlite")
        with db.connect() as conn:
@@ -1121,7 +1204,7 @@ References
 -  `PEP249 DB
    API2 <https://www.python.org/dev/peps/pep-0249/#cursor-objects>`__
 -  `psycopg2 <http://initd.org/psycopg/docs/cursor.html>`__
--  `cx_Oracle <https://cx-oracle.readthedocs.io/en/latest/cursor.html>`__
+-  `oracledb <https://python-oracledb.readthedocs.io/en/latest/index.html>`__
 -  `pyodbc <https://pypi.org/project/pyodbc/>`__
 -  `sqlite3 <https://docs.python.org/3/library/sqlite3.html>`__
 
