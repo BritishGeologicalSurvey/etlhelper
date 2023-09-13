@@ -504,7 +504,7 @@ def copy_table_rows(
 def load(
         table: str,
         conn: Connection,
-        rows: list,
+        rows: Iterator,
         transform: Optional[Callable[[Chunk], Chunk]] = None,
         on_error: Optional[Callable] = None,
         commit_chunks: bool = True,
