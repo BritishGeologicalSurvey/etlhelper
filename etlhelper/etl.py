@@ -17,6 +17,7 @@ from typing import (
     NamedTuple,
     Optional,
     Protocol,
+    Sequence,
     Union,
 )
 
@@ -337,7 +338,7 @@ def _execute_by_row(
         query: str,
         conn: Connection,
         chunk: Chunk
-        ) -> Iterable[NamedTuple]:
+        ) -> Sequence[NamedTuple]:
     """
     Retry execution of rows individually and return failed rows along with
     their errors.  Successful inserts are committed.  This is because
