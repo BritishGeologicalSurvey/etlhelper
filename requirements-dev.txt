@@ -1,6 +1,7 @@
 oracledb
 cffi
 flake8
+flake8-annotations
 ipdb
 ipython
 psycopg2-binary
