@@ -45,7 +45,7 @@ class Connection(Protocol):
     def rollback(self) -> None:
         ...
 
-    def cursor(self):
+    def cursor(self):  # noqa Cursor Protocol not defined
         ...
 
 
