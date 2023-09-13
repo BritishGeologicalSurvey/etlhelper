@@ -13,6 +13,8 @@ from typing import (
     Any,
     Callable,
     Iterable,
+    Iterator,
+    Optional,
     Protocol,
 )
 
@@ -44,7 +46,8 @@ class Connection(Protocol):
         ...
 
 
-Chunk = Any
+Row = Iterable[Any]
+Chunk = list[Row]
 
 logger = logging.getLogger('etlhelper')
 CHUNKSIZE = 5000
@@ -57,9 +60,9 @@ def iter_chunks(
         conn: Connection,
         parameters: tuple = (),
         row_factory: Callable = dict_row_factory,
-        transform: Callable[[Chunk], Chunk] = None,
+        transform: Callable[[Chunk], Chunk] = Optional,
         chunk_size: int = CHUNKSIZE
-        ):
+        ) -> Chunk:
     """
     Run SQL query against connection and return iterator object to loop over
     results in batches of chunksize (default 5000).
@@ -141,9 +144,9 @@ def iter_rows(
         conn: Connection,
         parameters: tuple = (),
         row_factory: Callable = dict_row_factory,
-        transform: Callable[[Chunk], Chunk] = None,
+        transform: Callable[[Chunk], Chunk] = Optional,
         chunk_size: int = CHUNKSIZE
-        ):
+        ) -> Iterator[Row]:
     """
     Run SQL query against connection and return iterator object to loop over
     results, row-by-row.
@@ -169,9 +172,9 @@ def fetchone(
         conn: Connection,
         parameters: tuple = (),
         row_factory: Callable = dict_row_factory,
-        transform: Callable[[Chunk], Chunk] = None,
+        transform: Callable[[Chunk], Chunk] = Optional,
         chunk_size: int = 1
-        ):
+        ) -> Row:
     """
     Get first result of query.  See iter_rows for details.  Note: iter_rows is
     recommended for looping over rows individually.
@@ -202,9 +205,9 @@ def fetchall(
         conn: Connection,
         parameters: tuple = (),
         row_factory: Callable = dict_row_factory,
-        transform: Callable[[Chunk], Chunk] = None,
+        transform: Callable[[Chunk], Chunk] = Optional,
         chunk_size: int = CHUNKSIZE
-        ):
+        ) -> Chunk:
     """
     Get all results of query as a list.  See iter_rows for details.
     :param select_query: str, SQL query to execute
@@ -224,8 +227,8 @@ def executemany(
         query: str,
         conn: Connection,
         rows: list[tuple[Any]],
-        transform: Callable[[Chunk], Chunk] = None,
-        on_error: Callable = None,
+        transform: Callable[[Chunk], Chunk] = Optional,
+        on_error: Callable = Optional,
         commit_chunks: bool = True,
         chunk_size: int = CHUNKSIZE,
         ) -> tuple[int, int]:
@@ -332,7 +335,7 @@ def _execute_by_row(
         query: str,
         conn: Connection,
         chunk: Chunk
-        ):
+        ) -> Iterable[namedtuple]:
     """
     Retry execution of rows individually and return failed rows along with
     their errors.  Successful inserts are committed.  This is because
@@ -363,8 +366,8 @@ def copy_rows(
         dest_conn: Connection,
         parameters: tuple = (),
         row_factory: Callable = dict_row_factory,
-        transform: Callable[[Chunk], Chunk] = None,
-        on_error: Callable = None,
+        transform: Callable[[Chunk], Chunk] = Optional,
+        on_error: Callable = Optional,
         commit_chunks: bool = True,
         chunk_size: int = CHUNKSIZE,
         ) -> tuple[int, int]:
@@ -416,7 +419,7 @@ def execute(
         query: str,
         conn: Connection,
         parameters: tuple = ()
-        ):
+        ) -> None:
     """
     Run SQL query against connection.
 
@@ -447,13 +450,13 @@ def copy_table_rows(
         table: str,
         source_conn: Connection,
         dest_conn: Connection,
-        target: str = None,
+        target: str = Optional,
         row_factory: Callable = dict_row_factory,
-        transform: Callable[[Chunk], Chunk] = None,
-        on_error: Callable = None,
+        transform: Callable[[Chunk], Chunk] = Optional,
+        on_error: Callable = Optional,
         commit_chunks: bool = True,
         chunk_size: int = CHUNKSIZE
-        ):
+        ) -> tuple[int, int]:
     """
     Copy rows from 'table' in source_conn to same or target table in dest_conn.
     This is a simple copy of all columns and rows using `load` to insert data.
@@ -501,11 +504,11 @@ def load(
         table: str,
         conn: Connection,
         rows: list,
-        transform: Callable = None,
-        on_error: Callable = None,
+        transform: Callable = Optional,
+        on_error: Callable = Optional,
         commit_chunks: bool = True,
         chunk_size: int = CHUNKSIZE,
-        ):
+        ) -> tuple[int, int]:
     """
     Load data from iterable of named tuples or dictionaries into pre-existing
     table in database on conn.
@@ -567,9 +570,9 @@ def load(
 
 def generate_insert_sql(
         table: str,
-        row: tuple[Any],
+        row: Row,
         conn: Connection
-        ):
+        ) -> str:
     """Generate insert SQL for table, getting column names from row and the
     placeholder style from the connection.  `row` is either a namedtuple or
     a dictionary."""
@@ -621,7 +624,7 @@ def generate_insert_sql(
     return sql
 
 
-def validate_identifier(identifier: str):
+def validate_identifier(identifier: str) -> None:
     """
     Validate characters used in identifier e.g. table or column name.
     Identifiers must comprise alpha-numeric characters, plus `_` or `$` and
@@ -647,8 +650,8 @@ def validate_identifier(identifier: str):
 def _chunker(
         iterable: Iterable,
         n_chunks: int,
-        fillvalue: Any = None
-        ):
+        fillvalue: Any = Optional
+        ) -> Iterator[Any]:
     """Collect data into fixed-length chunks or blocks.
     Code from recipe at https://docs.python.org/3.6/library/itertools.html
     """
