@@ -16,7 +16,6 @@ from typing import (
     Iterator,
     NamedTuple,
     Optional,
-    Protocol,
     Sequence,
     Union,
 )
@@ -33,24 +32,11 @@ from etlhelper.exceptions import (
     ETLHelperQueryError,
 )
 from etlhelper.row_factories import dict_row_factory
-
-
-class Connection(Protocol):
-    def close(self) -> None:
-        ...
-
-    def commit(self) -> None:
-        ...
-
-    def rollback(self) -> None:
-        ...
-
-    def cursor(self):  # noqa Cursor Protocol not defined
-        ...
-
-
-Row = Sequence[Any]
-Chunk = list[Row]
+from etlhelper.types import (
+    Connection,
+    Row,
+    Chunk,
+)
 
 logger = logging.getLogger('etlhelper')
 CHUNKSIZE = 5000
