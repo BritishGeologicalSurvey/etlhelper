@@ -175,7 +175,7 @@ def fetchone(
         row_factory: Callable = dict_row_factory,
         transform: Optional[Callable[[Chunk], Chunk]] = None,
         chunk_size: int = 1
-        ) -> Row:
+        ) -> Optional[Row]:
     """
     Get first result of query.  See iter_rows for details.  Note: iter_rows is
     recommended for looping over rows individually.
