@@ -12,6 +12,7 @@ from itertools import (
 from typing import (
     Any,
     Callable,
+    Iterable,
     Protocol,
 )
 from abc import abstractmethod
@@ -56,9 +57,13 @@ CHUNKSIZE = 5000
 
 # iter_chunks is where data are retrieved from source database
 # All data extraction processes call this function.
-def iter_chunks(select_query, conn: Connection, parameters=(),
-                row_factory=dict_row_factory,
-                transform=None, chunk_size=CHUNKSIZE):
+def iter_chunks(
+        select_query: str,
+        conn: Connection,
+        parameters: tuple = (),
+        row_factory: Callable = dict_row_factory,
+        transform: Callable[[Chunk], Chunk] = None,
+        chunk_size: int = CHUNKSIZE):
     """
     Run SQL query against connection and return iterator object to loop over
     results in batches of chunksize (default 5000).
@@ -135,9 +140,13 @@ def iter_chunks(select_query, conn: Connection, parameters=(),
             first_pass = False
 
 
-def iter_rows(select_query, conn: Connection, parameters=(),
-              row_factory=dict_row_factory,
-              transform=None, chunk_size=CHUNKSIZE):
+def iter_rows(
+        select_query: str,
+        conn: Connection,
+        parameters: tuple = (),
+        row_factory: Callable = dict_row_factory,
+        transform: Callable[[Chunk], Chunk] = None,
+        chunk_size: int = CHUNKSIZE):
     """
     Run SQL query against connection and return iterator object to loop over
     results, row-by-row.
@@ -158,9 +167,14 @@ def iter_rows(select_query, conn: Connection, parameters=(),
             yield row
 
 
-def fetchone(select_query, conn: Connection, parameters=(),
-             row_factory=dict_row_factory, transform=None,
-             chunk_size=1):
+def fetchone(
+        select_query: str,
+        conn: Connection,
+        parameters: tuple = (),
+        row_factory: Callable = dict_row_factory,
+        transform: Callable[[Chunk], Chunk] = None,
+        chunk_size: int = 1):
+
     """
     Get first result of query.  See iter_rows for details.  Note: iter_rows is
     recommended for looping over rows individually.
@@ -186,9 +200,13 @@ def fetchone(select_query, conn: Connection, parameters=(),
     return result
 
 
-def fetchall(select_query, conn: Connection, parameters=(),
-             row_factory=dict_row_factory, transform=None,
-             chunk_size=CHUNKSIZE):
+def fetchall(
+        select_query: str,
+        conn: Connection,
+        parameters: tuple = (),
+        row_factory: Callable = dict_row_factory,
+        transform: Callable[[Chunk], Chunk] = None,
+        chunk_size: int = CHUNKSIZE):
     """
     Get all results of query as a list.  See iter_rows for details.
     :param select_query: str, SQL query to execute
@@ -312,7 +330,10 @@ def executemany(
     return processed, failed
 
 
-def _execute_by_row(query, conn: Connection, chunk):
+def _execute_by_row(
+        query: str,
+        conn: Connection,
+        chunk: Chunk):
     """
     Retry execution of rows individually and return failed rows along with
     their errors.  Successful inserts are committed.  This is because
@@ -337,16 +358,16 @@ def _execute_by_row(query, conn: Connection, chunk):
 
 
 def copy_rows(
-    select_query,
+    select_query: str,
     source_conn: Connection,
-    insert_query,
+    insert_query: str,
     dest_conn: Connection,
-    parameters=(),
-    row_factory=dict_row_factory,
-    transform=None,
-    on_error=None,
-    commit_chunks=True,
-    chunk_size=CHUNKSIZE,
+    parameters: tuple = (),
+    row_factory: Callable = dict_row_factory,
+    transform: Callable[[Chunk], Chunk] = None,
+    on_error: Callable = None,
+    commit_chunks: bool = True,
+    chunk_size: int = CHUNKSIZE,
 ) -> tuple[int, int]:
     """
     Copy rows from source_conn to dest_conn.  select_query and insert_query
@@ -392,7 +413,10 @@ def copy_rows(
     return processed, failed
 
 
-def execute(query, conn: Connection, parameters=()):
+def execute(
+        query: str,
+        conn: Connection,
+        parameters: tuple = ()):
     """
     Run SQL query against connection.
 
@@ -419,10 +443,16 @@ def execute(query, conn: Connection, parameters=()):
             raise ETLHelperQueryError(msg)
 
 
-def copy_table_rows(table, source_conn: Connection, dest_conn: Connection, target=None,
-                    row_factory=dict_row_factory,
-                    transform=None, on_error=None, commit_chunks=True,
-                    chunk_size=CHUNKSIZE):
+def copy_table_rows(
+        table: str,
+        source_conn: Connection,
+        dest_conn: Connection,
+        target: str = None,
+        row_factory: Callable = dict_row_factory,
+        transform: Callable[[Chunk], Chunk] = None,
+        on_error: Callable = None,
+        commit_chunks: bool = True,
+        chunk_size: int = CHUNKSIZE):
     """
     Copy rows from 'table' in source_conn to same or target table in dest_conn.
     This is a simple copy of all columns and rows using `load` to insert data.
@@ -534,7 +564,10 @@ def load(
     return processed, failed
 
 
-def generate_insert_sql(table, row, conn):
+def generate_insert_sql(
+        table: str,
+        row: tuple[Any],
+        conn: Connection):
     """Generate insert SQL for table, getting column names from row and the
     placeholder style from the connection.  `row` is either a namedtuple or
     a dictionary."""
@@ -586,7 +619,7 @@ def generate_insert_sql(table, row, conn):
     return sql
 
 
-def validate_identifier(identifier):
+def validate_identifier(identifier: str):
     """
     Validate characters used in identifier e.g. table or column name.
     Identifiers must comprise alpha-numeric characters, plus `_` or `$` and
@@ -609,7 +642,10 @@ def validate_identifier(identifier):
         raise ETLHelperBadIdentifierError(msg)
 
 
-def _chunker(iterable, n_chunks, fillvalue=None):
+def _chunker(
+        iterable: Iterable,
+        n_chunks: int,
+        fillvalue: Any = None):
     """Collect data into fixed-length chunks or blocks.
     Code from recipe at https://docs.python.org/3.6/library/itertools.html
     """
