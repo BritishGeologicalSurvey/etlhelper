@@ -17,6 +17,7 @@ from typing import (
     NamedTuple,
     Optional,
     Protocol,
+    Union,
 )
 
 from etlhelper.abort import (
@@ -571,7 +572,7 @@ def load(
 
 def generate_insert_sql(
         table: str,
-        row: Row,
+        row: Union[NamedTuple, dict],
         conn: Connection
         ) -> str:
     """Generate insert SQL for table, getting column names from row and the
