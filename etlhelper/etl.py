@@ -421,7 +421,7 @@ def copy_rows(
 def execute(
         query: str,
         conn: Connection,
-        parameters: tuple = ()
+        parameters: Union[tuple, dict] = ()
         ) -> None:
     """
     Run SQL query against connection.
