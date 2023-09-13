@@ -12,7 +12,9 @@ from itertools import (
 from typing import (
     Any,
     Callable,
+    Protocol,
 )
+from abc import abstractmethod
 
 from etlhelper.abort import (
     raise_for_abort,
@@ -27,6 +29,25 @@ from etlhelper.exceptions import (
 )
 from etlhelper.row_factories import dict_row_factory
 
+
+class Connection(Protocol):
+    @abstractmethod
+    def close(self) -> None:
+        raise NotImplementedError
+
+    @abstractmethod
+    def commit(self) -> None:
+        raise NotImplementedError
+
+    @abstractmethod
+    def rollback(self) -> None:
+        raise NotImplementedError
+
+    @abstractmethod
+    def cursor(self):
+        raise NotImplementedError
+
+
 Chunk = Any
 
 logger = logging.getLogger('etlhelper')
@@ -35,7 +56,7 @@ CHUNKSIZE = 5000
 
 # iter_chunks is where data are retrieved from source database
 # All data extraction processes call this function.
-def iter_chunks(select_query, conn, parameters=(),
+def iter_chunks(select_query, conn: Connection, parameters=(),
                 row_factory=dict_row_factory,
                 transform=None, chunk_size=CHUNKSIZE):
     """
@@ -114,7 +135,7 @@ def iter_chunks(select_query, conn, parameters=(),
             first_pass = False
 
 
-def iter_rows(select_query, conn, parameters=(),
+def iter_rows(select_query, conn: Connection, parameters=(),
               row_factory=dict_row_factory,
               transform=None, chunk_size=CHUNKSIZE):
     """
@@ -137,7 +158,7 @@ def iter_rows(select_query, conn, parameters=(),
             yield row
 
 
-def fetchone(select_query, conn, parameters=(),
+def fetchone(select_query, conn: Connection, parameters=(),
              row_factory=dict_row_factory, transform=None,
              chunk_size=1):
     """
@@ -165,7 +186,7 @@ def fetchone(select_query, conn, parameters=(),
     return result
 
 
-def fetchall(select_query, conn, parameters=(),
+def fetchall(select_query, conn: Connection, parameters=(),
              row_factory=dict_row_factory, transform=None,
              chunk_size=CHUNKSIZE):
     """
@@ -185,7 +206,7 @@ def fetchall(select_query, conn, parameters=(),
 
 def executemany(
     query: str,
-    conn,
+    conn: Connection,
     rows: list[tuple[Any]],
     transform: Callable[[Chunk], Chunk] = None,
     on_error: Callable = None,
@@ -291,7 +312,7 @@ def executemany(
     return processed, failed
 
 
-def _execute_by_row(query, conn, chunk):
+def _execute_by_row(query, conn: Connection, chunk):
     """
     Retry execution of rows individually and return failed rows along with
     their errors.  Successful inserts are committed.  This is because
@@ -317,9 +338,9 @@ def _execute_by_row(query, conn, chunk):
 
 def copy_rows(
     select_query,
-    source_conn,
+    source_conn: Connection,
     insert_query,
-    dest_conn,
+    dest_conn: Connection,
     parameters=(),
     row_factory=dict_row_factory,
     transform=None,
@@ -371,7 +392,7 @@ def copy_rows(
     return processed, failed
 
 
-def execute(query, conn, parameters=()):
+def execute(query, conn: Connection, parameters=()):
     """
     Run SQL query against connection.
 
@@ -398,7 +419,7 @@ def execute(query, conn, parameters=()):
             raise ETLHelperQueryError(msg)
 
 
-def copy_table_rows(table, source_conn, dest_conn, target=None,
+def copy_table_rows(table, source_conn: Connection, dest_conn: Connection, target=None,
                     row_factory=dict_row_factory,
                     transform=None, on_error=None, commit_chunks=True,
                     chunk_size=CHUNKSIZE):
@@ -447,7 +468,7 @@ def copy_table_rows(table, source_conn, dest_conn, target=None,
 
 def load(
     table: str,
-    conn,
+    conn: Connection,
     rows: list,
     transform: Callable = None,
     on_error: Callable = None,
