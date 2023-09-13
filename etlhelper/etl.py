@@ -14,6 +14,7 @@ from typing import (
     Callable,
     Iterable,
     Iterator,
+    NamedTuple,
     Optional,
     Protocol,
 )
@@ -62,7 +63,7 @@ def iter_chunks(
         row_factory: Callable = dict_row_factory,
         transform: Callable[[Chunk], Chunk] = Optional,
         chunk_size: int = CHUNKSIZE
-        ) -> Chunk:
+        ) -> Iterator[Chunk]:
     """
     Run SQL query against connection and return iterator object to loop over
     results in batches of chunksize (default 5000).
@@ -335,7 +336,7 @@ def _execute_by_row(
         query: str,
         conn: Connection,
         chunk: Chunk
-        ) -> Iterable[namedtuple]:
+        ) -> Iterable[NamedTuple]:
     """
     Retry execution of rows individually and return failed rows along with
     their errors.  Successful inserts are committed.  This is because
