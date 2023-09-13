@@ -63,7 +63,8 @@ def iter_chunks(
         parameters: tuple = (),
         row_factory: Callable = dict_row_factory,
         transform: Callable[[Chunk], Chunk] = None,
-        chunk_size: int = CHUNKSIZE):
+        chunk_size: int = CHUNKSIZE
+        ):
     """
     Run SQL query against connection and return iterator object to loop over
     results in batches of chunksize (default 5000).
@@ -146,7 +147,8 @@ def iter_rows(
         parameters: tuple = (),
         row_factory: Callable = dict_row_factory,
         transform: Callable[[Chunk], Chunk] = None,
-        chunk_size: int = CHUNKSIZE):
+        chunk_size: int = CHUNKSIZE
+        ):
     """
     Run SQL query against connection and return iterator object to loop over
     results, row-by-row.
@@ -173,8 +175,8 @@ def fetchone(
         parameters: tuple = (),
         row_factory: Callable = dict_row_factory,
         transform: Callable[[Chunk], Chunk] = None,
-        chunk_size: int = 1):
-
+        chunk_size: int = 1
+        ):
     """
     Get first result of query.  See iter_rows for details.  Note: iter_rows is
     recommended for looping over rows individually.
@@ -206,7 +208,8 @@ def fetchall(
         parameters: tuple = (),
         row_factory: Callable = dict_row_factory,
         transform: Callable[[Chunk], Chunk] = None,
-        chunk_size: int = CHUNKSIZE):
+        chunk_size: int = CHUNKSIZE
+        ):
     """
     Get all results of query as a list.  See iter_rows for details.
     :param select_query: str, SQL query to execute
@@ -223,14 +226,14 @@ def fetchall(
 
 
 def executemany(
-    query: str,
-    conn: Connection,
-    rows: list[tuple[Any]],
-    transform: Callable[[Chunk], Chunk] = None,
-    on_error: Callable = None,
-    commit_chunks: bool = True,
-    chunk_size: int = CHUNKSIZE,
-) -> tuple[int, int]:
+        query: str,
+        conn: Connection,
+        rows: list[tuple[Any]],
+        transform: Callable[[Chunk], Chunk] = None,
+        on_error: Callable = None,
+        commit_chunks: bool = True,
+        chunk_size: int = CHUNKSIZE,
+        ) -> tuple[int, int]:
     """
     Use query to insert/update data from rows to database at conn.  This
     method uses the executemany or execute_batch (PostgreSQL) commands to
@@ -333,7 +336,8 @@ def executemany(
 def _execute_by_row(
         query: str,
         conn: Connection,
-        chunk: Chunk):
+        chunk: Chunk
+        ):
     """
     Retry execution of rows individually and return failed rows along with
     their errors.  Successful inserts are committed.  This is because
@@ -358,17 +362,17 @@ def _execute_by_row(
 
 
 def copy_rows(
-    select_query: str,
-    source_conn: Connection,
-    insert_query: str,
-    dest_conn: Connection,
-    parameters: tuple = (),
-    row_factory: Callable = dict_row_factory,
-    transform: Callable[[Chunk], Chunk] = None,
-    on_error: Callable = None,
-    commit_chunks: bool = True,
-    chunk_size: int = CHUNKSIZE,
-) -> tuple[int, int]:
+        select_query: str,
+        source_conn: Connection,
+        insert_query: str,
+        dest_conn: Connection,
+        parameters: tuple = (),
+        row_factory: Callable = dict_row_factory,
+        transform: Callable[[Chunk], Chunk] = None,
+        on_error: Callable = None,
+        commit_chunks: bool = True,
+        chunk_size: int = CHUNKSIZE,
+        ) -> tuple[int, int]:
     """
     Copy rows from source_conn to dest_conn.  select_query and insert_query
     specify the data to be transferred.
@@ -416,7 +420,8 @@ def copy_rows(
 def execute(
         query: str,
         conn: Connection,
-        parameters: tuple = ()):
+        parameters: tuple = ()
+        ):
     """
     Run SQL query against connection.
 
@@ -452,7 +457,8 @@ def copy_table_rows(
         transform: Callable[[Chunk], Chunk] = None,
         on_error: Callable = None,
         commit_chunks: bool = True,
-        chunk_size: int = CHUNKSIZE):
+        chunk_size: int = CHUNKSIZE
+        ):
     """
     Copy rows from 'table' in source_conn to same or target table in dest_conn.
     This is a simple copy of all columns and rows using `load` to insert data.
@@ -497,14 +503,14 @@ def copy_table_rows(
 
 
 def load(
-    table: str,
-    conn: Connection,
-    rows: list,
-    transform: Callable = None,
-    on_error: Callable = None,
-    commit_chunks: bool = True,
-    chunk_size: int = CHUNKSIZE,
-):
+        table: str,
+        conn: Connection,
+        rows: list,
+        transform: Callable = None,
+        on_error: Callable = None,
+        commit_chunks: bool = True,
+        chunk_size: int = CHUNKSIZE,
+        ):
     """
     Load data from iterable of named tuples or dictionaries into pre-existing
     table in database on conn.
@@ -567,7 +573,8 @@ def load(
 def generate_insert_sql(
         table: str,
         row: tuple[Any],
-        conn: Connection):
+        conn: Connection
+        ):
     """Generate insert SQL for table, getting column names from row and the
     placeholder style from the connection.  `row` is either a namedtuple or
     a dictionary."""
@@ -645,7 +652,8 @@ def validate_identifier(identifier: str):
 def _chunker(
         iterable: Iterable,
         n_chunks: int,
-        fillvalue: Any = None):
+        fillvalue: Any = None
+        ):
     """Collect data into fixed-length chunks or blocks.
     Code from recipe at https://docs.python.org/3.6/library/itertools.html
     """
