@@ -61,7 +61,7 @@ def iter_chunks(
         conn: Connection,
         parameters: tuple = (),
         row_factory: Callable = dict_row_factory,
-        transform: Callable[[Chunk], Chunk] = Optional,
+        transform: Optional[Callable[[Chunk], Chunk]] = None,
         chunk_size: int = CHUNKSIZE
         ) -> Iterator[Chunk]:
     """
@@ -145,7 +145,7 @@ def iter_rows(
         conn: Connection,
         parameters: tuple = (),
         row_factory: Callable = dict_row_factory,
-        transform: Callable[[Chunk], Chunk] = Optional,
+        transform: Optional[Callable[[Chunk], Chunk]] = None,
         chunk_size: int = CHUNKSIZE
         ) -> Iterator[Row]:
     """
@@ -173,7 +173,7 @@ def fetchone(
         conn: Connection,
         parameters: tuple = (),
         row_factory: Callable = dict_row_factory,
-        transform: Callable[[Chunk], Chunk] = Optional,
+        transform: Optional[Callable[[Chunk], Chunk]] = None,
         chunk_size: int = 1
         ) -> Row:
     """
@@ -206,7 +206,7 @@ def fetchall(
         conn: Connection,
         parameters: tuple = (),
         row_factory: Callable = dict_row_factory,
-        transform: Callable[[Chunk], Chunk] = Optional,
+        transform: Optional[Callable[[Chunk], Chunk]] = None,
         chunk_size: int = CHUNKSIZE
         ) -> Chunk:
     """
@@ -228,8 +228,8 @@ def executemany(
         query: str,
         conn: Connection,
         rows: list[tuple[Any]],
-        transform: Callable[[Chunk], Chunk] = Optional,
-        on_error: Callable = Optional,
+        transform: Optional[Callable[[Chunk], Chunk]] = None,
+        on_error: Optional[Callable] = None,
         commit_chunks: bool = True,
         chunk_size: int = CHUNKSIZE,
         ) -> tuple[int, int]:
@@ -367,8 +367,8 @@ def copy_rows(
         dest_conn: Connection,
         parameters: tuple = (),
         row_factory: Callable = dict_row_factory,
-        transform: Callable[[Chunk], Chunk] = Optional,
-        on_error: Callable = Optional,
+        transform: Optional[Callable[[Chunk], Chunk]] = None,
+        on_error: Optional[Callable] = None,
         commit_chunks: bool = True,
         chunk_size: int = CHUNKSIZE,
         ) -> tuple[int, int]:
@@ -451,10 +451,10 @@ def copy_table_rows(
         table: str,
         source_conn: Connection,
         dest_conn: Connection,
-        target: str = Optional,
+        target: Optional[str] = None,
         row_factory: Callable = dict_row_factory,
-        transform: Callable[[Chunk], Chunk] = Optional,
-        on_error: Callable = Optional,
+        transform: Optional[Callable[[Chunk], Chunk]] = None,
+        on_error: Optional[Callable] = None,
         commit_chunks: bool = True,
         chunk_size: int = CHUNKSIZE
         ) -> tuple[int, int]:
@@ -505,8 +505,8 @@ def load(
         table: str,
         conn: Connection,
         rows: list,
-        transform: Callable = Optional,
-        on_error: Callable = Optional,
+        transform: Optional[Callable[[Chunk], Chunk]] = None,
+        on_error: Optional[Callable] = None,
         commit_chunks: bool = True,
         chunk_size: int = CHUNKSIZE,
         ) -> tuple[int, int]:
@@ -651,7 +651,7 @@ def validate_identifier(identifier: str) -> None:
 def _chunker(
         iterable: Iterable,
         n_chunks: int,
-        fillvalue: Any = Optional
+        fillvalue: Optional[Any] = None
         ) -> Iterator[Any]:
     """Collect data into fixed-length chunks or blocks.
     Code from recipe at https://docs.python.org/3.6/library/itertools.html
