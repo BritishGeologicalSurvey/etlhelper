@@ -15,7 +15,6 @@ from typing import (
     Iterable,
     Protocol,
 )
-from abc import abstractmethod
 
 from etlhelper.abort import (
     raise_for_abort,
@@ -32,21 +31,17 @@ from etlhelper.row_factories import dict_row_factory
 
 
 class Connection(Protocol):
-    @abstractmethod
     def close(self) -> None:
-        raise NotImplementedError
+        ...
 
-    @abstractmethod
     def commit(self) -> None:
-        raise NotImplementedError
+        ...
 
-    @abstractmethod
     def rollback(self) -> None:
-        raise NotImplementedError
+        ...
 
-    @abstractmethod
     def cursor(self):
-        raise NotImplementedError
+        ...
 
 
 Chunk = Any
