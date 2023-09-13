@@ -1,2 +1,6 @@
 [flake8]
 max-line-length = 120
+extend-ignore =
+    # Do not require self and cls to have type hints
+    # See: https://github.com/sco1/flake8-annotations/issues/75
+    ANN101, ANN102
