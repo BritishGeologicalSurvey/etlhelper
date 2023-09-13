@@ -49,7 +49,7 @@ class Connection(Protocol):
         ...
 
 
-Row = Iterable[Any]
+Row = Sequence[Any]
 Chunk = list[Row]
 
 logger = logging.getLogger('etlhelper')
@@ -229,7 +229,7 @@ def fetchall(
 def executemany(
         query: str,
         conn: Connection,
-        rows: list[tuple[Any]],
+        rows: Iterator[Row],
         transform: Optional[Callable[[Chunk], Chunk]] = None,
         on_error: Optional[Callable] = None,
         commit_chunks: bool = True,
