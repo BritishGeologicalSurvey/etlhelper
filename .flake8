@@ -1,2 +1,15 @@
 [flake8]
 max-line-length = 120
+extend-ignore =
+    # Do not require self and cls to have type hints
+    # See: https://github.com/sco1/flake8-annotations/issues/75
+    ANN101, ANN102
+per-file-ignores =
+    # Do not check annotations in these files
+    abort.py: A,
+    connect.py: A,
+    db_helper_factory.py: A,
+    db_params.py: A,
+    row_factories.py: A
+    utils.py: A,
+    etlhelper/db_helpers/*: A,
