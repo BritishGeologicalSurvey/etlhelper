@@ -262,11 +262,11 @@ def executemany(
     failed = 0
 
     with helper.cursor(conn) as cursor:
-        for chunk in _chunker(rows, chunk_size):
+        for chunk_with_nones in _chunker(rows, chunk_size):
             raise_for_abort("abort_etlhelper_threads() called during executemany")
 
             # Chunker pads to whole chunk with None; remove these
-            chunk = [row for row in chunk if row is not None]
+            chunk = [row for row in chunk_with_nones if row is not None]
 
             # Apply transform
             if transform:
@@ -638,13 +638,12 @@ def validate_identifier(identifier: str) -> None:
 
 
 def _chunker(
-        iterable: Iterable,
+        iterable: Iterable[Row],
         n_chunks: int,
-        fillvalue: Optional[Any] = None
-        ) -> Iterator[Any]:
+        ) -> Iterator[tuple[Row | None, ...]]:
     """Collect data into fixed-length chunks or blocks.
     Code from recipe at https://docs.python.org/3.6/library/itertools.html
     """
-    # _chunker('ABCDEFG', 3, 'x') --> ABC DEF Gxx"
+    # _chunker('ABCDEFG', 3) --> ABC DEF G"
     args = [iter(iterable)] * n_chunks
-    return zip_longest(*args, fillvalue=fillvalue)
+    return zip_longest(*args, fillvalue=None)
