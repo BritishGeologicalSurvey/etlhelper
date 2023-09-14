@@ -16,6 +16,7 @@ from typing import (
     Iterator,
     NamedTuple,
     Optional,
+    Union,
 )
 
 from etlhelper.abort import (
@@ -640,7 +641,7 @@ def validate_identifier(identifier: str) -> None:
 def _chunker(
         iterable: Iterable[Row],
         n_chunks: int,
-        ) -> Iterator[tuple[Row | None, ...]]:
+        ) -> Iterator[tuple[Union[Row, None], ...]]:
     """Collect data into fixed-length chunks or blocks.
     Code from recipe at https://docs.python.org/3.6/library/itertools.html
     """
