@@ -1,7 +1,7 @@
 from typing import (
     Any,
+    Collection,
     Protocol,
-    Sequence,
 )
 
 
@@ -19,5 +19,5 @@ class Connection(Protocol):
         ...
 
 
-Row = Sequence[Any]
+Row = Collection[Any]
 Chunk = list[Row]
