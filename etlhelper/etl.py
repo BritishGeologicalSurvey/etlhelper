@@ -12,11 +12,11 @@ from itertools import (
 from typing import (
     Any,
     Callable,
+    Collection,
     Iterable,
     Iterator,
     NamedTuple,
     Optional,
-    Union,
 )
 
 from etlhelper.abort import (
@@ -335,7 +335,7 @@ def _execute_by_row(
     :returns failed_rows: list of (row, exception) tuples
     """
     FailedRow = namedtuple('FailedRow', 'row, exception')
-    failed_rows = []
+    failed_rows: list[NamedTuple] = []
 
     for row in chunk:
         try:
@@ -406,7 +406,7 @@ def copy_rows(
 def execute(
         query: str,
         conn: Connection,
-        parameters: Union[tuple, dict] = ()
+        parameters: Collection[Any] = ()
         ) -> None:
     """
     Run SQL query against connection.
@@ -491,7 +491,7 @@ def copy_table_rows(
 def load(
         table: str,
         conn: Connection,
-        rows: Iterator,
+        rows: Iterable[Row],
         transform: Optional[Callable[[Chunk], Chunk]] = None,
         on_error: Optional[Callable] = None,
         commit_chunks: bool = True,
@@ -558,7 +558,7 @@ def load(
 
 def generate_insert_sql(
         table: str,
-        row: Union[NamedTuple, dict],
+        row: Row,
         conn: Connection
         ) -> str:
     """Generate insert SQL for table, getting column names from row and the
