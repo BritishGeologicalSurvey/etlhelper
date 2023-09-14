@@ -574,17 +574,12 @@ def generate_insert_sql(
     }
 
     # Namedtuples use a query with positional placeholders
-    if not hasattr(row, 'keys'):
+    if hasattr(row, '_asdict'):
         paramstyle = helper.positional_paramstyle
 
         # Convert namedtuple to dictionary to easily access keys
-        try:
-            row = row._asdict()
-        except AttributeError:
-            msg = f"Row is not a dictionary or namedtuple ({type(row)})"
-            raise ETLHelperInsertError(msg)
-
-        columns = row.keys()
+        row_dict = row._asdict()
+        columns = row_dict.keys()
         if paramstyle == "numeric":
             placeholders = [paramstyles[paramstyle].format(number=i + 1)
                             for i in range(len(columns))]
@@ -592,7 +587,7 @@ def generate_insert_sql(
             placeholders = [paramstyles[paramstyle]] * len(columns)
 
     # Dictionaries use a query with named placeholders
-    else:
+    elif hasattr(row, 'keys'):
         paramstyle = helper.named_paramstyle
         if not paramstyle:
             msg = (f"Database connection ({str(conn.__class__)}) doesn't support named parameters.  "
@@ -601,6 +596,10 @@ def generate_insert_sql(
 
         columns = row.keys()
         placeholders = [paramstyles[paramstyle].format(name=c) for c in columns]
+
+    else:
+        msg = f"Row is not a dictionary or namedtuple ({type(row)})"
+        raise ETLHelperInsertError(msg)
 
     # Validate identifiers to prevent malicious code injection
     for identifier in (table, *columns):
