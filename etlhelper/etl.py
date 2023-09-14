@@ -3,7 +3,6 @@ Functions for transferring data in and out of databases.
 """
 import logging
 import re
-from collections import namedtuple
 from copy import deepcopy
 from itertools import (
     zip_longest,
@@ -39,6 +38,11 @@ from etlhelper.types import (
 
 logger = logging.getLogger('etlhelper')
 CHUNKSIZE = 5000
+
+
+class FailedRow(NamedTuple):
+    row: Row
+    exception: Exception
 
 
 # iter_chunks is where data are retrieved from source database
@@ -214,9 +218,9 @@ def fetchall(
 def executemany(
         query: str,
         conn: Connection,
-        rows: Iterator[Row],
+        rows: Iterable[Row],
         transform: Optional[Callable[[Chunk], Chunk]] = None,
-        on_error: Optional[Callable] = None,
+        on_error: Optional[Callable[[list[FailedRow]], Any]] = None,
         commit_chunks: bool = True,
         chunk_size: int = CHUNKSIZE,
         ) -> tuple[int, int]:
@@ -323,7 +327,7 @@ def _execute_by_row(
         query: str,
         conn: Connection,
         chunk: Chunk
-        ) -> list[NamedTuple]:
+        ) -> list[FailedRow]:
     """
     Retry execution of rows individually and return failed rows along with
     their errors.  Successful inserts are committed.  This is because
@@ -334,8 +338,7 @@ def _execute_by_row(
     :param conn: open dbapi connection, used for transactions
     :returns failed_rows: list of (row, exception) tuples
     """
-    FailedRow = namedtuple('FailedRow', 'row, exception')
-    failed_rows: list[NamedTuple] = []
+    failed_rows: list[FailedRow] = []
 
     for row in chunk:
         try:
