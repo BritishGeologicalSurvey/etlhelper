@@ -1111,6 +1111,7 @@ ETL Helper was created by and is maintained by British Geological Survey Informa
 + Declan Valters ([dvalters](https://github.com/dvalters))
 + Colin Blackburn ([ximenesuk](https://github.com/ximenesuk))
 + Daniel Sutton ([kerberpolis](https://github.com/kerberpolis))
++ Leo Rudczenko ([leorudczenko](https://github.com/leorudczenko))
 
 ### Development status
 
