@@ -5,12 +5,12 @@ Welcome to ETLHelper's documentation!
    :target: https://pypi.org/project/etlhelper
 .. image:: https://img.shields.io/pypi/dm/etlhelper?label=Downloads%20pypi
 
-**etlhelper** is a Python ETL library to simplify data transfer into and out of databases.
+ETLHelper is a Python ETL library to simplify data transfer into and out of databases.
 
 .. note::  There are a number of breaking changes planned for
    ``etlhelper`` version 1.0. Please pin the version number in your
    dependency list to avoid disruption and watch the project on GitHub
-   for notification of new releases (in Custom section).
+   for notification of new releases.
 
 .. toctree::
    :maxdepth: 3
@@ -21,65 +21,33 @@ Welcome to ETLHelper's documentation!
 Overview
 --------
 
-``etlhelper`` makes it easy to run a SQL query via Python and return the
-results. It is built upon the `DBAPI2
-specification <https://www.python.org/dev/peps/pep-0249/>`__ and takes
-care of importing drivers, formatting connection strings and cursor
-management. This reduces the amount of boilerplate code required to
-query a relational database with Python.
+``etlhelper`` makes it easy to run SQL queries via Python and return the
+results.
+It is built upon the `DBAPI2 specification <https://www.python.org/dev/peps/pep-0249/>`__ and takes care of cursor management, importing drivers and formatting connection strings, while providing memory-efficient functions to read, write and transform data.
+This reduces the amount of boilerplate code required to manipulate data within relational databases with Python.
 
-Features
-~~~~~~~~
+**Features**
 
+-  ``fetchall``, ``iter_rows``, ``fetchone`` functions for
+   querying databases
+-  ``execute``, ``executemany``, and ``load`` functions to insert data
+-  ``copy_rows`` and ``copy_table_rows`` to transfer data between databases
+-  Data transfer uses memory-efficient generators (``iter_chunks`` and ``iter_rows``)
+-  User-defined transform functions transform data in-flight
 -  ``DbParams`` objects provide consistent way to connect to different
    database types (currently Oracle, PostgreSQL, SQLite and MS SQL
    Server)
--  ``fetchall``, ``iter_rows``, ``fetchone`` and other functions for
-   querying database
--  ``execute``, ``executemany``, and ``load`` functions to insert data
--  ``copy_rows`` and ``copy_table_rows`` to transfer data from one
-   database to another
--  ``on_error`` function to process rows that fail to insert
--  Support for parameterised queries and in-flight transformation of
-   data
--  Output results as namedtuple or dictionary
 -  Timestamped log messages for tracking long-running data transfers
 -  Helpful error messages display the failed query SQL
+-  ``on_error`` function to process rows that fail to insert
 
 These tools can create easy-to-understand, lightweight, versionable and
-testable Extract-Transform-Load (ETL) workflows. ``etlhelper`` is not a
-tool for coordinating ETL jobs (use `Apache
-Airflow <https://airflow.apache.org>`__), for converting GIS data
-formats (use `ogr2ogr <https://gdal.org/programs/ogr2ogr.html>`__ or
-`fiona <https://pypi.org/project/Fiona/>`__), for translating between
-SQL dialects or providing Object Relation Mapping (use
-`SQLAlchemy <https://www.sqlalchemy.org/>`__). However, it can be used
-in conjunction with each of these.
-
-.. figure:: https://github.com/BritishGeologicalSurvey/etlhelper/blob/main/docs/media/screencast.gif?raw=true
-   :alt: screencast
-
-   screencast
+testable Extract-Transform-Load (ETL) workflows.
 
 The documentation below explains how the main features are used. See the
 individual function docstrings for full details of parameters and
 options.
 
-For a high level introduction to ``etlhelper``, see the FOSS4GUK 2019
-presentation *Open Source Spatial ETL with Python and Apache Airflow*:
-`video <https://www.youtube.com/watch?v=12rzUW4ps74&feature=youtu.be&t=6238>`__
-(20 mins), `slides <https://volcan01010.github.io/FOSS4G2019-talk>`__.
-
-Documentation
-~~~~~~~~~~~~~
-
--  `Installation <#installation>`__
--  `Connect to databases <#connect-to-databases>`__
--  `Transfer data <#transfer-data>`__
--  `Utilities <#utilities>`__
--  `Recipes <#recipes>`__
--  `Development <#development>`__
--  `References <#references>`__
 
 Installation
 ------------
@@ -102,16 +70,6 @@ psycopg2). Multiple values can be separated by commas.
 
 The ``sqlite3`` driver is included within Python’s Standard Library.
 
-Database driver dependencies
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Some database drivers have additional dependencies. On Linux, these can
-be installed via the system package manager.
-
-pyodbc (for MS SQL Server):
-
--  Follow instructions on `Microsoft SQL Docs
-   website <https://docs.microsoft.com/en-us/sql/connect/odbc/linux-mac/installing-the-microsoft-odbc-driver-for-sql-server?view=sql-server-2017>`__
 
 Connect to databases
 --------------------
@@ -186,83 +144,6 @@ values are returned as UTF-8:
 
 The above is a solution when special characters are scrambled in the
 returned data.
-
-Handling of LOBs for Oracle connections
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Oracle databases have special column types for Character Large Object
-(CLOB) and Binary Large Object (BLOB). In ETLHelper, the ``oracledb``
-driver has been configured to return these as native Python ``str`` and
-``bytes`` objects respectively. This is comparable to the behaviour of
-other database drivers e.g. SQLite, PostgreSQL and avoids the user
-having to take the extra step of reading the LOB and results in faster
-data transfer. However, it is not suitable for LOBs larger than 1 Gb.
-
-To return CLOB and BLOB columns as LOBs, configure the driver as
-follows:
-
-.. code:: python
-
-   import etlhelper as etl
-   import oracledb
-
-   select_sql = "SELECT my_clob, my_blob FROM my_table"
-
-   with ORACLEDB.connect("ORA_PASSWORD") as conn:
-       # By default, ETL Helper returns native types
-       result_as_native = etl.fetchall(select_sql, conn)
-
-       # Update oracledb settings to return LOBs
-       oracledb.defaults.fetch_lobs = True
-       result_as_lobs = etl.fetchall(select_sql, conn)
-
-See the `oracledb
-docs <https://python-oracledb.readthedocs.io/en/latest/user_guide/lob_data.html#fetching-lobs-as-strings-and-bytes>`__
-for more information.
-
-Disabling fast_executemany for SQL Server and other pyODBC connections
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-By default an ``etlhelper`` pyODBC connection uses a cursor with its
-``fast_executemany`` attribute set to ``True``. This setting improves
-the performance of the ``executemany`` when performing bulk inserts to a
-SQL Server database. However, this overides the default behaviour of
-pyODBC and there are some limitations in doing this. Importantly, it is
-only recommended for applications that use Microsoft’s ODBC Driver for
-SQL Server. See `pyODBC
-fast_executemany <https://github.com/mkleehammer/pyodbc/wiki/Features-beyond-the-DB-API#fast_executemany>`__.
-
-Using ``fast_executemany`` may raise a ``MemoryError`` if query involves
-columns of types ``TEXT`` and ``NTEXT``, which are now deprecated. Under
-these circumstances, ``etlhelper`` falls back on ``fast_executemany``
-being set to ``False`` and produces a warning output. See `Inserting
-into SQL server with fast_executemany results in
-MemoryError <https://github.com/mkleehammer/pyodbc/issues/547>`__.
-
-If required, the ``fast_executemany`` attribute can be set to ``False``
-via the ``connect`` function:
-
-.. code:: python
-
-   conn = connect(MSSQLDB, 'MSSQL_PASSWORD', fast_executemany=False)
-
-This keyword argument is used by ``etlhelper``, any further keyword
-arguments are passed to the ``connect`` function of the underlying
-driver.
-
-Connecting to servers with self-signed certificates with SQL Server
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Since the ODBC Driver 18 for SQL Server, the default setting has been to
-fail certificate validation for servers with self-signed certificates.
-It is possible to override this setting within the connection string.
-
-ETLHelper provides an optional argument to the ``connect`` function to
-apply the override and trust the server’s self-signed certificate.
-
-.. code:: python
-
-   conn = connect(MSSQLDB, 'MSSQL_PASSWORD', trust_server_certificate=True)
 
 Passwords
 ~~~~~~~~~
@@ -628,8 +509,8 @@ Transform
 ~~~~~~~~~
 
 Data can be transformed in-flight by applying a transform function. This
-is any Python callable (e.g. function or class) that takes an iterator
-and returns another iterator (e.g. list or generator via the ``yield``
+is any Python callable (e.g. function or class) that takes an iterator
+and returns another iterator (e.g. list or generator via the ``yield``
 statement). Transform functions are applied to data as they are read
 from the database (in the case of data fetching functions and
 ``copy_rows``), or before they are passed as query parameters (to
@@ -756,8 +637,104 @@ the ID column is of type NUMBER and has a NOT NULL constraint but not a
 DEFAULT value, while the VALUE column is of type VARCHAR2, can be NULL
 but does have a DEFAULT value.
 
+Database-specific configuration
+===============================
+
+Oracle
+------
+
+Handling of LOBs for Oracle connections
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Oracle databases have special column types for Character Large Object
+(CLOB) and Binary Large Object (BLOB). In ETLHelper, the ``oracledb``
+driver has been configured to return these as native Python ``str`` and
+``bytes`` objects respectively. This is comparable to the behaviour of
+other database drivers e.g. SQLite, PostgreSQL and avoids the user
+having to take the extra step of reading the LOB and results in faster
+data transfer. However, it is not suitable for LOBs larger than 1 Gb.
+
+To return CLOB and BLOB columns as LOBs, configure the driver as
+follows:
+
+.. code:: python
+
+   import etlhelper as etl
+   import oracledb
+
+   select_sql = "SELECT my_clob, my_blob FROM my_table"
+
+   with ORACLEDB.connect("ORA_PASSWORD") as conn:
+       # By default, ETL Helper returns native types
+       result_as_native = etl.fetchall(select_sql, conn)
+
+       # Update oracledb settings to return LOBs
+       oracledb.defaults.fetch_lobs = True
+       result_as_lobs = etl.fetchall(select_sql, conn)
+
+See the `oracledb
+docs <https://python-oracledb.readthedocs.io/en/latest/user_guide/lob_data.html#fetching-lobs-as-strings-and-bytes>`__
+for more information.
+
+MS SQL Server
+-------------
+
+Installing Microsoft ODBC drivers
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The `pyodbc driver <https://pypi.org/project/pyodbc/>`__ for MS SQL Server requires ODBC drivers provided by Microsoft.
+On Linux, these can be installed via the system package manager.
+Follow instructions on `Microsoft SQL Docs website <https://docs.microsoft.com/en-us/sql/connect/odbc/linux-mac/installing-the-microsoft-odbc-driver-for-sql-server?view=sql-server-2017>`__,
+or see a working example in our Dockerfile.
+
+Disabling fast_executemany for SQL Server and other pyODBC connections
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+By default an ``etlhelper`` pyODBC connection uses a cursor with its
+``fast_executemany`` attribute set to ``True``. This setting improves
+the performance of the ``executemany`` when performing bulk inserts to a
+SQL Server database. However, this overides the default behaviour of
+pyODBC and there are some limitations in doing this. Importantly, it is
+only recommended for applications that use Microsoft’s ODBC Driver for
+SQL Server. See `pyODBC
+fast_executemany <https://github.com/mkleehammer/pyodbc/wiki/Features-beyond-the-DB-API#fast_executemany>`__.
+
+Using ``fast_executemany`` may raise a ``MemoryError`` if query involves
+columns of types ``TEXT`` and ``NTEXT``, which are now deprecated. Under
+these circumstances, ``etlhelper`` falls back on ``fast_executemany``
+being set to ``False`` and produces a warning output. See `Inserting
+into SQL server with fast_executemany results in
+MemoryError <https://github.com/mkleehammer/pyodbc/issues/547>`__.
+
+If required, the ``fast_executemany`` attribute can be set to ``False``
+via the ``connect`` function:
+
+.. code:: python
+
+   conn = connect(MSSQLDB, 'MSSQL_PASSWORD', fast_executemany=False)
+
+This keyword argument is used by ``etlhelper``, any further keyword
+arguments are passed to the ``connect`` function of the underlying
+driver.
+
+Connecting to servers with self-signed certificates with SQL Server
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Since the ODBC Driver 18 for SQL Server, the default setting has been to
+fail certificate validation for servers with self-signed certificates.
+It is possible to override this setting within the connection string.
+
+ETLHelper provides an optional argument to the ``connect`` function to
+apply the override and trust the server’s self-signed certificate.
+
+.. code:: python
+
+   conn = connect(MSSQLDB, 'MSSQL_PASSWORD', trust_server_certificate=True)
+
+
+
 Recipes
--------
+=======
 
 The following recipes demonstrate how ``etlhelper`` can be used.
 
@@ -1168,49 +1145,21 @@ SQL Alchemy connection.
    df = pd.read_sql(sql, engine)
    df.to_csv('my_data.csv', header=True, index=False, float_format='%.3f')
 
-Development
------------
+Presentations
+=============
 
-Maintainers
-~~~~~~~~~~~
-
-ETL Helper was created by and is maintained by British Geological Survey
-Informatics.
-
--  John A Stevenson (`volcan01010 <https://github.com/volcan01010>`__)
--  Jo Walsh (`metazool <https://github.com/metazool>`__)
--  Declan Valters (`dvalters <https://github.com/dvalters>`__)
--  Colin Blackburn (`ximenesuk <https://github.com/ximenesuk>`__)
--  Daniel Sutton (`kerberpolis <https://github.com/kerberpolis>`__)
-
-Development status
-~~~~~~~~~~~~~~~~~~
-
-The code is still under active development and breaking changes are
-possible. Users should pin the version in their dependency lists and
-`watch <https://docs.github.com/en/github/managing-subscriptions-and-notifications-on-github/viewing-your-subscriptions#configuring-your-watch-settings-for-an-individual-repository>`__
-the repository for new releases. See
-`CONTRIBUTING.md <CONTRIBUTING.md>`__ for details on how to contribute.
+For a high level introduction to ``etlhelper``, see the FOSS4GUK 2019
+presentation *Open Source Spatial ETL with Python and Apache Airflow*:
+`video <https://www.youtube.com/watch?v=12rzUW4ps74&feature=youtu.be&t=6238>`__
+(20 mins), `slides <https://volcan01010.github.io/FOSS4G2019-talk>`__.
 
 Licence
-~~~~~~~
+=======
 
 ETL Helper is distributed under the `LGPL v3.0 licence <LICENSE>`__.
 Copyright: © BGS / UKRI 2019
 
-References
-----------
-
--  `PEP249 DB
-   API2 <https://www.python.org/dev/peps/pep-0249/#cursor-objects>`__
--  `psycopg2 <http://initd.org/psycopg/docs/cursor.html>`__
--  `oracledb <https://python-oracledb.readthedocs.io/en/latest/index.html>`__
--  `pyodbc <https://pypi.org/project/pyodbc/>`__
--  `sqlite3 <https://docs.python.org/3/library/sqlite3.html>`__
-
-LICENSE: `GNU LGPLv3 <https://www.gnu.org/licenses/lgpl-3.0.html>`_
- 
-etlhelper packages
+API documentation
 ======================
 
 etlhelper module
