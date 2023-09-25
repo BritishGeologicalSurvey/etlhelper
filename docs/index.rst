@@ -16,8 +16,6 @@ ETLHelper is a Python ETL library to simplify data transfer into and out of data
    :maxdepth: 3
    :caption: Contents:
 
-   index
-
 Overview
 --------
 
@@ -65,13 +63,11 @@ In normal use, users do not interact with the DbHelper classes.
 
 
 Installation
-------------
+============
 
+**Python packages**
 
-Python packages
-~~~~~~~~~~~~~~~
-
-.. code:: bash
+.. code:: console
 
    pip install etlhelper
 
@@ -80,117 +76,23 @@ specified in square brackets. Options are ``oracle`` (installs
 oracledb), ``mssql`` (installs pyodbc) and ``postgres`` (installs
 psycopg2). Multiple values can be separated by commas.
 
-::
+.. code:: bash
 
    pip install etlhelper[oracle,postgres]
 
-The ``sqlite3`` driver is included within Python’s Standard Library.
+The ``sqlite3`` driver is included within Python's Standard Library.
 
 
-Operating system level drivers
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+**Operating system level drivers**
 
 Some database drivers require additional libraries to be installed on the host operating system.
 See the :ref:`Database-specific configuration <Database-specific configuration>` section for details.
 
-Database connections and DbParams
----------------------------------
+ETL functions
+=============
 
-DbParams
-~~~~~~~~
-
-Database connection details are defined by ``DbParams`` objects.
-Connections are made via their ``connect`` functions (see below).
-``DbParams`` objects are created as follows or from environment
-variables using the ``from_environment()`` function. The class
-initialisation function checks that the correct attributes have been
-provided for a given ``dbtype``.
-
-.. code:: python
-
-   from etlhelper import DbParams
-
-   ORACLEDB = DbParams(dbtype='ORACLE', host="localhost", port=1521,
-                       dbname="mydata", user="oracle_user")
-
-   POSTGRESDB = DbParams(dbtype='PG', host="localhost", port=5432,
-                         dbname="mydata", user="postgres_user")
-
-   SQLITEDB = DbParams(dbtype='SQLITE', filename='/path/to/file.db')
-
-   MSSQLDB = DbParams(dbtype='MSSQL', host="localhost", port=1433,
-                      dbname="mydata", user="mssql_user",
-                      odbc_driver="ODBC Driver 17 for SQL Server")
-
-DbParams objects have a function to check if a given database can be
-reached over the network. This does not require a username or password.
-
-.. code:: python
-
-   if not ORACLEDB.is_reachable():
-       raise ETLHelperError("Network problems")
-
-Other methods/properties are ``get_connection_string``,
-``get_sqlalchemy_connection_string``, ``paramstyle`` and ``copy``. See
-function docstrings for details.
-
-``connect`` function
-~~~~~~~~~~~~~~~~~~~~
-
-The ``DbParams.connect()`` function returns a DBAPI2 connection as
-provided by the underlying driver. Using context-manager syntax as below
-ensures that the connection is closed after use.
-
-.. code:: python
-
-   with SQLITEDB.connect() as conn1:
-       with POSTGRESDB.connect('PGPASSWORD') as conn2:
-           do_something()
-
-A standalone ``connect`` function provides backwards-compatibility with
-previous releases of ``etlhelper``:
-
-.. code:: python
-
-   from etlhelper import connect
-   conn3 = connect(ORACLEDB, 'ORACLE_PASSWORD')
-
-Both versions accept additional keyword arguments that are passed to the
-``connect`` function of the underlying driver. For example, the
-following sets the character encoding used by oracledb to ensure that
-values are returned as UTF-8:
-
-.. code:: python
-
-   conn4 = connect(ORACLEDB, 'ORACLE_PASSWORD', encoding="UTF-8", nencoding="UTF8")
-
-The above is a solution when special characters are scrambled in the
-returned data.
-
-Passwords
-~~~~~~~~~
-
-Database passwords must be specified via an environment variable. This
-reduces the temptation to store them within scripts. This can be done on
-the command line via:
-
--  ``export ORACLE_PASSWORD=some-secret-password`` on Linux
--  ``set ORACLE_PASSWORD=some-secret-password`` on Windows
-
-Or in a Python terminal via:
-
-.. code:: python
-
-   import os
-   os.environ['ORACLE_PASSWORD'] = 'some-secret-password'
-
-No password is required for SQLite databases.
-
-Transfer data
--------------
-
-Fetch all
-~~~~~~~~~
+Extract
+-------
 
 The ``fetchall`` function returns a list of named tuples containing data
 as native Python objects.
@@ -207,7 +109,7 @@ as native Python objects.
 
 returns
 
-::
+.. code:: python
 
    [Row(id=1, value=1.234, simple_text='text', utf8_text='Öæ°\nz',
         day=datetime.date(2018, 12, 7),
@@ -330,8 +232,12 @@ This reads rows from the database in chunks to prevent them all being
 loaded into memory at once. The default ``chunk_size`` is 5000 and this
 can be set via keyword argument.
 
+Load
+----
+
+
 Insert rows
-~~~~~~~~~~~
+^^^^^^^^^^^
 
 ``execute`` can be used to insert a single row or to execute other
 single statements e.g. “CREATE TABLE …”. The ``executemany`` function is
@@ -443,7 +349,7 @@ take an ``on_error`` parameter. They each return a tuple containing the
 number of rows processed and the number of rows that failed.
 
 Copy table rows
-~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^
 
 ``copy_table_rows`` provides a simple way to copy all the data from one
 table to another. It can take a ``transform`` function in case some
@@ -468,7 +374,7 @@ use ``execute`` with a ``CREATE TABLE IF NOT EXISTS ...`` statement to
 create it first. See the recipes for examples.
 
 Combining ``iter_rows`` with ``load``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 For extra control selecting the data to be transferred, ``iter_rows``
 can be combined with ``load``.
@@ -489,7 +395,7 @@ can be combined with ``load``.
        load('my_table', dest_conn, rows)
 
 Copy rows
-~~~~~~~~~
+^^^^^^^^^
 
 Customising both queries gives the greatest control on data selection
 and loading. ``copy_rows`` takes the results from a SELECT query and
@@ -528,7 +434,7 @@ A tuple of rows processed and failed is returned.
 .. _transform-1:
 
 Transform
-~~~~~~~~~
+---------
 
 Data can be transformed in-flight by applying a transform function. This
 is any Python callable (e.g. function or class) that takes an iterator
@@ -603,8 +509,106 @@ result from a calculation, a call to a webservice or a query against
 another database. As a standalone function with known inputs and
 outputs, the transform functions are also easy to test.
 
+
+Database connections and DbParams
+=================================
+
+ETLHelper can use any DB API 2.0 complient connection object.
+Users are free to create their own connections e.g., from connection pools,
+or they can use the DbParams objects to help.
+
+DbParams
+^^^^^^^^
+
+Database connection details are defined by ``DbParams`` objects.
+Connections are made via their ``connect`` functions (see below).
+``DbParams`` objects are created as follows or from environment
+variables using the ``from_environment()`` function. The class
+initialisation function checks that the correct attributes have been
+provided for a given ``dbtype``.
+
+.. code:: python
+
+   from etlhelper import DbParams
+
+   ORACLEDB = DbParams(dbtype='ORACLE', host="localhost", port=1521,
+                       dbname="mydata", user="oracle_user")
+
+   POSTGRESDB = DbParams(dbtype='PG', host="localhost", port=5432,
+                         dbname="mydata", user="postgres_user")
+
+   SQLITEDB = DbParams(dbtype='SQLITE', filename='/path/to/file.db')
+
+   MSSQLDB = DbParams(dbtype='MSSQL', host="localhost", port=1433,
+                      dbname="mydata", user="mssql_user",
+                      odbc_driver="ODBC Driver 17 for SQL Server")
+
+DbParams objects have a function to check if a given database can be
+reached over the network. This does not require a username or password.
+
+.. code:: python
+
+   if not ORACLEDB.is_reachable():
+       raise ETLHelperError("Network problems")
+
+Other methods/properties are ``get_connection_string``,
+``get_sqlalchemy_connection_string``, ``paramstyle`` and ``copy``. See
+function docstrings for details.
+
+``connect`` function
+^^^^^^^^^^^^^^^^^^^^
+
+The ``DbParams.connect()`` function returns a DBAPI2 connection as
+provided by the underlying driver. Using context-manager syntax as below
+ensures that the connection is closed after use.
+
+.. code:: python
+
+   with SQLITEDB.connect() as conn1:
+       with POSTGRESDB.connect('PGPASSWORD') as conn2:
+           do_something()
+
+A standalone ``connect`` function provides backwards-compatibility with
+previous releases of ``etlhelper``:
+
+.. code:: python
+
+   from etlhelper import connect
+   conn3 = connect(ORACLEDB, 'ORACLE_PASSWORD')
+
+Both versions accept additional keyword arguments that are passed to the
+``connect`` function of the underlying driver. For example, the
+following sets the character encoding used by oracledb to ensure that
+values are returned as UTF-8:
+
+.. code:: python
+
+   conn4 = connect(ORACLEDB, 'ORACLE_PASSWORD', encoding="UTF-8", nencoding="UTF8")
+
+The above is a solution when special characters are scrambled in the
+returned data.
+
+Passwords
+^^^^^^^^^
+
+Database passwords must be specified via an environment variable. This
+reduces the temptation to store them within scripts. This can be done on
+the command line via:
+
+-  ``export ORACLE_PASSWORD=some-secret-password`` on Linux
+-  ``set ORACLE_PASSWORD=some-secret-password`` on Windows
+
+Or in a Python terminal via:
+
+.. code:: python
+
+   import os
+   os.environ['ORACLE_PASSWORD'] = 'some-secret-password'
+
+No password is required for SQLite databases.
+
 Aborting running jobs
-~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^
 
 When running as a script, ``etlhelper`` jobs can be stopped by pressing
 *CTRL-C*. This option is not available when the job is running as a
@@ -630,7 +634,7 @@ Utilities
 The following utility functions provide useful database metadata.
 
 Table info
-~~~~~~~~~~
+^^^^^^^^^^
 
 The ``table_info`` function provides basic metadata for a table. An
 optional schema can be used. Note that for ``sqlite`` the schema value
@@ -666,7 +670,7 @@ Oracle
 ------
 
 Handling of LOBs for Oracle connections
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Oracle databases have special column types for Character Large Object
 (CLOB) and Binary Large Object (BLOB). In ETLHelper, the ``oracledb``
@@ -702,7 +706,7 @@ MS SQL Server
 -------------
 
 Installing Microsoft ODBC drivers
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The `pyodbc driver <https://pypi.org/project/pyodbc/>`__ for MS SQL Server requires ODBC drivers provided by Microsoft.
 On Linux, these can be installed via the system package manager.
@@ -710,7 +714,7 @@ Follow instructions on `Microsoft SQL Docs website <https://docs.microsoft.com/e
 or see a working example in our Dockerfile.
 
 Disabling fast_executemany for SQL Server and other pyODBC connections
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 By default an ``etlhelper`` pyODBC connection uses a cursor with its
 ``fast_executemany`` attribute set to ``True``. This setting improves
@@ -740,7 +744,7 @@ arguments are passed to the ``connect`` function of the underlying
 driver.
 
 Connecting to servers with self-signed certificates with SQL Server
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Since the ODBC Driver 18 for SQL Server, the default setting has been to
 fail certificate validation for servers with self-signed certificates.
@@ -761,7 +765,7 @@ Recipes
 The following recipes demonstrate how ``etlhelper`` can be used.
 
 Debug SQL and monitor progress with logging
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 ETLHelper provides a custom logging handler. Time-stamped messages
 indicating the number of rows processed can be enabled by setting the
@@ -802,7 +806,7 @@ To use the etlhelper logger directly, access it via:
    etl_logger.info("Hello world!")
 
 Database to database copy ETL script template
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The following is a template for an ETL script. It copies copy all the
 sensor readings from the previous day from an Oracle source to
@@ -874,7 +878,7 @@ UPDATE”, “UPSERT” or “INSERT … ON CONFLICT” may be more efficient, b
 the the exact commands depend on the target database type.
 
 Calling ETLHelper scripts from Apache Airflow
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The following is an `Apache Airflow
 DAG <https://airflow.apache.org/docs/stable/concepts.html>`__ that uses
@@ -910,7 +914,7 @@ scheduler will create tasks for each day since 1 August 2019 and call
        dag=dag)
 
 Spatial ETL
-~~~~~~~~~~~
+^^^^^^^^^^^
 
 No specific drivers are required for spatial data if they are
 transferred as Well Known Text.
@@ -937,7 +941,7 @@ manipulate geometries using the
 `Shapely <https://pypi.org/project/Shapely/>`__ library.
 
 Database to API / NoSQL copy ETL script template
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 ``etlhelper`` can be combined with Python’s
 `aiohttp <https://docs.aiohttp.org/en/stable/>`__ library to create an
@@ -1068,7 +1072,7 @@ In this example, failed rows will fail the whole job. Removing the
 ``raise_for_status()`` call will let them just be logged instead.
 
 CSV load script template
-~~~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^^^
 
 The following script is an example of using the ``load`` function to
 import data from a CSV file into a database. It shows how a
@@ -1146,7 +1150,7 @@ to insert.
            load_observations('observations.csv', conn)
 
 Export data to CSV
-~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^
 
 The
 `Pandas <https://pandas.pydata.org/pandas-docs/stable/generated/pandas.read_sql.html>`__
