@@ -43,14 +43,30 @@ This reduces the amount of boilerplate code required to manipulate data within r
 
 These tools can create easy-to-understand, lightweight, versionable and
 testable Extract-Transform-Load (ETL) workflows.
-
-The documentation below explains how the main features are used. See the
-individual function docstrings for full details of parameters and
+This documentation site explains how the main features are used.
+See the individual function docstrings for full details of parameters and
 options.
+
+**ETLHelper components**
+
+ETLHelper has three components.
+
+The *ETL functions* are used to extract, transform and load rows of data from relational databases.
+They can be used with any DB API 2.0-compliant database connections.
+Logging and helpful error messages are provided out-of-the-box.
+
+The *DbParams* class provides a convenient way to define database connections.
+For any given database system, it identifies the correct driver, the required parameters and defines connection strings.
+It provides convenience methods for checking databases are reachable over a network and for connecting to them.
+
+The *DbHelper* classes work behind the scenes to smooth out inconsistencies between different database systems.
+They also apply database-specific optimisations e.g., using the faster ``executebatch`` function for PostgreSQL connections instead of ``executemany``.
+In normal use, users do not interact with the DbHelper classes.
 
 
 Installation
 ------------
+
 
 Python packages
 ~~~~~~~~~~~~~~~
@@ -71,8 +87,14 @@ psycopg2). Multiple values can be separated by commas.
 The ``sqlite3`` driver is included within Python’s Standard Library.
 
 
-Connect to databases
---------------------
+Operating system level drivers
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Some database drivers require additional libraries to be installed on the host operating system.
+See the :ref:`Database-specific configuration <Database-specific configuration>` section for details.
+
+Database connections and DbParams
+---------------------------------
 
 DbParams
 ~~~~~~~~
@@ -201,7 +223,7 @@ Data are accessible via index (``row[4]``) or name (``row.day``).
 
 Other functions are provided to select data. ``fetchone`` and
 ``fetchall`` are equivalent to the cursor methods specified in the DBAPI
-v2.0. ETL Helper does not include a ``fetchmany`` function - instead use
+v2.0. ETLHelper does not include a ``fetchmany`` function - instead use
 ``iter_chunks`` to loop over a result set in batches of multiple rows.
 
 iter_rows
@@ -665,7 +687,7 @@ follows:
    select_sql = "SELECT my_clob, my_blob FROM my_table"
 
    with ORACLEDB.connect("ORA_PASSWORD") as conn:
-       # By default, ETL Helper returns native types
+       # By default, ETLHelper returns native types
        result_as_native = etl.fetchall(select_sql, conn)
 
        # Update oracledb settings to return LOBs
@@ -741,7 +763,7 @@ The following recipes demonstrate how ``etlhelper`` can be used.
 Debug SQL and monitor progress with logging
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-ETL Helper provides a custom logging handler. Time-stamped messages
+ETLHelper provides a custom logging handler. Time-stamped messages
 indicating the number of rows processed can be enabled by setting the
 log level to ``INFO``. Setting the level to ``DEBUG`` provides
 information on the query that was run, example data and the database
@@ -851,7 +873,7 @@ insertion to prevent duplicate key errors. SQL syntax such as “INSERT OR
 UPDATE”, “UPSERT” or “INSERT … ON CONFLICT” may be more efficient, but
 the the exact commands depend on the target database type.
 
-Calling ETL Helper scripts from Apache Airflow
+Calling ETLHelper scripts from Apache Airflow
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The following is an `Apache Airflow
@@ -1129,7 +1151,7 @@ Export data to CSV
 The
 `Pandas <https://pandas.pydata.org/pandas-docs/stable/generated/pandas.read_sql.html>`__
 library can connect to databases via SQLAlchemy. It has powerful tools
-for manipulating tabular data. ETL Helper makes it easy to prepare the
+for manipulating tabular data. ETLHelper makes it easy to prepare the
 SQL Alchemy connection.
 
 .. code:: python
@@ -1156,7 +1178,7 @@ presentation *Open Source Spatial ETL with Python and Apache Airflow*:
 Licence
 =======
 
-ETL Helper is distributed under the `LGPL v3.0 licence <LICENSE>`__.
+ETLHelper is distributed under the `LGPL v3.0 licence <LICENSE>`__.
 Copyright: © BGS / UKRI 2019
 
 API documentation
