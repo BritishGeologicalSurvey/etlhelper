@@ -4,6 +4,7 @@ on:
   push:
     branches: 
       - for_v1
+      - overhaul-docs
     paths:
       - 'docs/**'  
 
