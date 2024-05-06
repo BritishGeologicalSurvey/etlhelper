@@ -39,7 +39,7 @@ release = '0.14.2'
 # ones.
 extensions = [
     'sphinx.ext.autodoc',
-    'sphinx.ext.doctest',
+    'sphinx.ext.autosummary',
     'sphinx.ext.intersphinx',
     'sphinx.ext.todo',
     'sphinx.ext.coverage',
@@ -83,18 +83,16 @@ pygments_style = None
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = "sphinx_rtd_theme"
+html_theme = "alabaster"
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
 #
 html_theme_options = {
-    'logo_only': False,
-    'navigation_depth': 5,
-    'prev_next_buttons_location': 'bottom',
+    'logo': None,
+    'sidebar_collapse': True,
 }
-html_logo = "_static/logo.png"
 html_show_sourcelink = True
 
 # Add any paths that contain custom static files (such as style sheets) here,

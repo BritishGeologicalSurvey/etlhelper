@@ -13,7 +13,7 @@ ETLHelper is a Python ETL library to simplify data transfer into and out of data
    for notification of new releases.
 
 .. toctree::
-   :maxdepth: 3
+   :maxdepth: 2
    :caption: Table of contents
 
    overview
@@ -23,26 +23,9 @@ ETLHelper is a Python ETL library to simplify data transfer into and out of data
    utilities
    recipes
    about
+   api
 
-API documentation
-======================
-
-etlhelper module
-----------------------
-
-.. automodule:: etlhelper
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-
-etlhelper.row_factories module
----------------------------------
-
-.. automodule:: etlhelper.row_factories
-    :members:
-    :undoc-members:
-    :show-inheritance:
+See :doc:`installation` for install instructions.
 
 Indices and tables
 ==================
