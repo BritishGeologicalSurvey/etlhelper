@@ -418,3 +418,8 @@ Any Python code can be used within the function and extra data can
 result from a calculation, a call to a webservice or a query against
 another database. As a standalone function with known inputs and
 outputs, the transform functions are also easy to test.
+
+Error Handling
+--------------
+
+This section describes exception classes and on_error functions.
