@@ -7,11 +7,6 @@ Welcome to ETLHelper's documentation!
 
 ETLHelper is a Python ETL library to simplify data transfer into and out of databases.
 
-.. note::  There are a number of breaking changes planned for
-   ``etlhelper`` version 1.0. Please pin the version number in your
-   dependency list to avoid disruption and watch the project on GitHub
-   for notification of new releases.
-
 .. toctree::
    :maxdepth: 2
    :caption: Table of contents
@@ -23,6 +18,12 @@ ETLHelper is a Python ETL library to simplify data transfer into and out of data
    recipes
    about
    api
+
+.. note::  There are a number of breaking changes planned for
+   ``etlhelper`` version 1.0. Please pin the version number in your
+   dependency list to avoid disruption and watch the project on GitHub
+   for notification of new releases.
+
 
 See :doc:`installation` for install instructions.
 
