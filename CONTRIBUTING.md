@@ -115,7 +115,7 @@ sphinx-build docs docs/_build
 The documentation can then be viewed at `docs/_build/index.html`
 
 
-### Creating a new release
+## Creating a new release
 
 Releases are created manually from the main branch via tags.
 This should be done via the GitHub web interface.
