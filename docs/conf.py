@@ -19,6 +19,7 @@ sys.path.insert(0, os.path.abspath('..'))
 # -- Project information -----------------------------------------------------
 
 project = 'ETLHelper'
+documentation_title = "ETLHelper Documentation"
 copyright = '2023, British Geological Survey'
 author = 'British Geological Survey'
 
@@ -39,15 +40,6 @@ release = '0.14.2'
 # ones.
 extensions = [
     'sphinx.ext.autodoc',
-    'sphinx.ext.autosummary',
-    'sphinx.ext.intersphinx',
-    'sphinx.ext.todo',
-    'sphinx.ext.coverage',
-    'sphinx.ext.mathjax',
-    'sphinx.ext.ifconfig',
-    'sphinx.ext.viewcode',
-    'sphinx.ext.githubpages',
-    'sphinx_rtd_theme',
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -141,7 +133,7 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, 'ETLHelper.tex', 'ETLHelper Documentation',
+    (master_doc, 'ETLHelper.tex', documentation_title,
      'British Geological Survey', 'manual'),
 ]
 
@@ -151,7 +143,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    (master_doc, 'etlhelper', 'ETLHelper Documentation',
+    (master_doc, 'etlhelper', documentation_title,
      [author], 1)
 ]
 
@@ -162,7 +154,7 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    (master_doc, 'ETLHelper', 'ETLHelper Documentation',
+    (master_doc, 'ETLHelper', documentation_title,
      author, 'ETLHelper', 'One line description of project.',
      'Miscellaneous'),
 ]
