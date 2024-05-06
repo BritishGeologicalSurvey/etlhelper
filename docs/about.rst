@@ -4,13 +4,13 @@ About
 =====
 
 Licence
-=======
+^^^^^^^
 
 ETLHelper is distributed under the `LGPL v3.0 licence <LICENSE>`__.
 Copyright: © BGS / UKRI 2019
 
 Presentations
-=============
+^^^^^^^^^^^^^
 
 For a high level introduction to ``etlhelper``, see the FOSS4GUK 2019
 presentation *Open Source Spatial ETL with Python and Apache Airflow*:

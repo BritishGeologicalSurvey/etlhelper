@@ -107,9 +107,9 @@ To run these:
 
 The documentation is created using Sphinx.
 To locally build the documentation, run the following:
-
+ 
 ```bash
-sphinx-build docs docs/_build
+sphinx-build -a docs docs/_build
 ```
 
 The documentation can then be viewed at `docs/_build/index.html`

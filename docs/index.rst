@@ -1,16 +1,11 @@
 Welcome to ETLHelper's documentation!
 =====================================
 
-.. image:: https://img.shields.io/pypi/v/etlhelper?label=Current%20Release
-   :target: https://pypi.org/project/etlhelper
-.. image:: https://img.shields.io/pypi/dm/etlhelper?label=Downloads%20pypi
-
-ETLHelper is a Python ETL library to simplify data transfer into and out of databases.
-
 .. toctree::
-   :maxdepth: 2
-   :caption: Table of contents
+   :maxdepth: 3
+   :hidden:
 
+   Home <self>
    installation
    etl_functions
    connecting_to_databases
@@ -19,20 +14,24 @@ ETLHelper is a Python ETL library to simplify data transfer into and out of data
    about
    api
 
-.. note::  There are a number of breaking changes planned for
+.. image:: https://img.shields.io/pypi/v/etlhelper?label=Current%20Release
+   :target: https://pypi.org/project/etlhelper
+.. image:: https://img.shields.io/pypi/dm/etlhelper?label=Downloads%20pypi
+
+ETLHelper is a Python ETL library to simplify data transfer into and out of databases.
+
+
+.. note::  This documentation corresponds to the upcoming 1.0 release.
+   Refer to the README.md for the current codebase.
+   There are a number of breaking changes planned for
    ``etlhelper`` version 1.0. Please pin the version number in your
    dependency list to avoid disruption and watch the project on GitHub
    for notification of new releases.
-
-
-See :doc:`installation` for install instructions.
 
 ``etlhelper`` makes it easy to run SQL queries via Python and return the
 results.
 It is built upon the `DBAPI2 specification <https://www.python.org/dev/peps/pep-0249/>`__ and takes care of cursor management, importing drivers and formatting connection strings, while providing memory-efficient functions to read, write and transform data.
 This reduces the amount of boilerplate code required to manipulate data within relational databases with Python.
-
-**Features**
 
 -  ``fetchall``, ``iter_rows``, ``fetchone`` functions for
    querying databases
@@ -53,7 +52,8 @@ This documentation site explains how the main features are used.
 See the individual function docstrings for full details of parameters and
 options.
 
-**ETLHelper components**
+ETLHelper components
+^^^^^^^^^^^^^^^^^^^^
 
 ETLHelper has three components.
 
@@ -68,11 +68,3 @@ It provides convenience methods for checking databases are reachable over a netw
 The *DbHelper* classes work behind the scenes to smooth out inconsistencies between different database systems.
 They also apply database-specific optimisations e.g., using the faster ``executebatch`` function for PostgreSQL connections instead of ``executemany``.
 In normal use, users do not interact with the DbHelper classes.
-
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
