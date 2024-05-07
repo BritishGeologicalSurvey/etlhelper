@@ -3,8 +3,51 @@
 Utilities
 =========
 
+ETL Helper provides utility functions to provide logging information, table metadata
+and to allow flow control in threaded workflows.
 
-The following utility functions provide useful database metadata.
+
+Debug SQL and monitor progress with logging
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+ETLHelper provides a custom logging handler. Time-stamped messages
+indicating the number of rows processed can be enabled by setting the
+log level to ``INFO``. Setting the level to ``DEBUG`` provides
+information on the query that was run, example data and the database
+connection. To enable the logger, use:
+
+.. code:: python
+
+   import etlhelper as etl
+
+   etl.log_to_console()
+
+Output from a call to ``copy_rows`` will look like:
+
+::
+
+   2019-10-07 15:06:22,411 iter_chunks: Fetching rows
+   2019-10-07 15:06:22,413 executemany: 1 rows processed
+   2019-10-07 15:06:22,416 executemany: 2 rows processed
+   2019-10-07 15:06:22,419 executemany: 3 rows processed
+   2019-10-07 15:06:22,420 iter_chunks: 3 rows returned
+   2019-10-07 15:06:22,420 executemany: 3 rows processed in total
+
+Note: errors on database connections output messages may include login
+credentials in clear text.
+
+To use the etlhelper logger directly, access it via:
+
+.. code:: python
+
+   import logging
+
+   import etlhelper as etl
+
+   etl.log_to_console()
+   etl_logger = logging.getLogger("etlhelper")
+   etl_logger.info("Hello world!")
+
 
 Table info
 ^^^^^^^^^^
