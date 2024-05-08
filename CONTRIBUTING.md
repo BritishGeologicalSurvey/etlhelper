@@ -107,15 +107,15 @@ To run these:
 
 The documentation is created using Sphinx.
 To locally build the documentation, run the following:
-
+ 
 ```bash
-sphinx-build docs docs/_build
+sphinx-build -a docs docs/_build
 ```
 
 The documentation can then be viewed at `docs/_build/index.html`
 
 
-### Creating a new release
+## Creating a new release
 
 Releases are created manually from the main branch via tags.
 This should be done via the GitHub web interface.

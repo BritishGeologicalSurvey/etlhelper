@@ -19,6 +19,7 @@ sys.path.insert(0, os.path.abspath('..'))
 # -- Project information -----------------------------------------------------
 
 project = 'ETLHelper'
+documentation_title = "ETLHelper Documentation"
 copyright = '2023, British Geological Survey'
 author = 'British Geological Survey'
 
@@ -39,15 +40,6 @@ release = '0.14.2'
 # ones.
 extensions = [
     'sphinx.ext.autodoc',
-    'sphinx.ext.doctest',
-    'sphinx.ext.intersphinx',
-    'sphinx.ext.todo',
-    'sphinx.ext.coverage',
-    'sphinx.ext.mathjax',
-    'sphinx.ext.ifconfig',
-    'sphinx.ext.viewcode',
-    'sphinx.ext.githubpages',
-    'sphinx_rtd_theme',
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -67,7 +59,7 @@ master_doc = 'index'
 #
 # This is also used if you do content translation via gettext catalogs.
 # Usually you set "language" from the command line for these cases.
-language = None
+language = 'en'
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
@@ -83,18 +75,16 @@ pygments_style = None
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = "sphinx_rtd_theme"
+html_theme = "alabaster"
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
 #
 html_theme_options = {
-    'logo_only': False,
-    'navigation_depth': 5,
-    'prev_next_buttons_location': 'bottom',
+    'logo': None,
+    'sidebar_collapse': True,
 }
-html_logo = "_static/logo.png"
 html_show_sourcelink = True
 
 # Add any paths that contain custom static files (such as style sheets) here,
@@ -143,7 +133,7 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, 'ETLHelper.tex', 'ETLHelper Documentation',
+    (master_doc, 'ETLHelper.tex', documentation_title,
      'British Geological Survey', 'manual'),
 ]
 
@@ -153,7 +143,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    (master_doc, 'etlhelper', 'ETLHelper Documentation',
+    (master_doc, 'etlhelper', documentation_title,
      [author], 1)
 ]
 
@@ -164,7 +154,7 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    (master_doc, 'ETLHelper', 'ETLHelper Documentation',
+    (master_doc, 'ETLHelper', documentation_title,
      author, 'ETLHelper', 'One line description of project.',
      'Miscellaneous'),
 ]
@@ -193,7 +183,7 @@ epub_exclude_files = ['search.html']
 # -- Options for intersphinx extension ---------------------------------------
 
 # Example configuration for intersphinx: refer to the Python standard library.
-intersphinx_mapping = {'https://docs.python.org/': None}
+intersphinx_mapping = {'python': ('https://docs.python.org/3', None)}
 
 # -- Options for todo extension ----------------------------------------------
 

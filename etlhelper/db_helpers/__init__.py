@@ -1,5 +1,8 @@
 """
-init db_helpers
+DbHelper classes are used behind-the-scenes for customising the behaviour of
+different database drivers.
+
+For more details, see the source code in each module.
 """
 # flake8: noqa
 from etlhelper.db_helpers.oracle import OracleDbHelper

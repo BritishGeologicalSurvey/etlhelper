@@ -9,7 +9,6 @@ from importlib.metadata import (
 )
 
 # Import helper functions here for more convenient access
-# flake8: noqa
 from etlhelper.abort import abort_etlhelper_threads
 from etlhelper.db_params import DbParams
 from etlhelper.etl import (
@@ -76,3 +75,24 @@ def log_to_console(level=logging.INFO, output=sys.stderr) -> None:
     # Configure logger
     logger.addHandler(handler)
     logger.setLevel(level=level)
+
+
+__all__ = [
+    "DbParams",
+    "abort_etlhelper_threads",
+    "connect",
+    "copy_rows",
+    "copy_table_rows",
+    "execute",
+    "executemany",
+    "fetchall",
+    "fetchone",
+    "generate_insert_sql",
+    "get_connection_string",
+    "get_sqlalchemy_connection_string",
+    "iter_chunks",
+    "iter_rows",
+    "load",
+    "row_factories",
+    "table_info",
+]
