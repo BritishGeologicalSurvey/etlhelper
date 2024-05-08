@@ -1,4 +1,4 @@
-ETL Functions
+ETL functions
 =============
 
 Extract

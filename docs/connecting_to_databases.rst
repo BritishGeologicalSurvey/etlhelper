@@ -1,6 +1,6 @@
 .. _connecting_to_databases:
 
-Connecting to Databases
+Connecting to databases
 =======================
 
 
@@ -9,6 +9,8 @@ ETL Helper functions take `DB API 2.0 Connection <https://peps.python.org/pep-02
 Users are free to create their own connections directly or to supply them from connection pools.
 
 Alternatively, ETL Helper's :func:`DbParams <etlhelper.DbParams>` class can be used.
+
+.. _db_params:
 
 DbParams
 ^^^^^^^^

@@ -40,6 +40,7 @@ release = '1.0.0'
 # ones.
 extensions = [
     'sphinx.ext.autodoc',
+    'sphinx.ext.viewcode'
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -84,6 +85,9 @@ html_theme = "alabaster"
 html_theme_options = {
     'logo': None,
     'sidebar_collapse': True,
+    'show_relbar_top': False,
+    'show_relbar_bottom': True,
+    'show_related': True
 }
 html_show_sourcelink = True
 
