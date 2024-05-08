@@ -7,8 +7,8 @@ ETL Helper provides utility functions to provide logging information, table meta
 and to allow flow control in threaded workflows.
 
 
-Debug SQL and monitor progress with logging
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Log to console
+^^^^^^^^^^^^^^
 
 ETL Helper provides a custom logging handler. Time-stamped messages
 indicating the number of rows processed can be enabled by setting the
