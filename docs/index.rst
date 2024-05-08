@@ -86,3 +86,23 @@ The output is
 
    {'id': 1, 'name': 'basalt', 'grain_size': 'fine'}
    {'id': 2, 'name': 'granite', 'grain_size': 'coarse'}
+
+
+This script copies the data to another database, with transformation and logging.
+
+.. literalinclude:: demo_copy.py
+   :language: python
+
+The output is
+
+.. code:: bash
+
+   # 2024-05-08 14:57:42,046 execute: Executing query
+   # 2024-05-08 14:57:42,053 iter_chunks: Fetching rows (chunk_size=5000)
+   # 2024-05-08 14:57:42,054 executemany: Executing many (chunk_size=5000)
+   # 2024-05-08 14:57:42,054 iter_chunks: All rows returned
+   # 2024-05-08 14:57:42,055 executemany: 2 rows processed (0 failed)
+   # 2024-05-08 14:57:42,057 executemany: 2 rows processed in total
+
+   {'id': 1, 'name': 'basalt', 'category': 'igneous', 'last_update': '2024-05-08 14:59:54.878726'}
+   {'id': 2, 'name': 'granite', 'category': 'igneous', 'last_update': '2024-05-08 14:59:54.879034'}

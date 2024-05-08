@@ -1,10 +1,10 @@
+"""ETL Helper script to load records to a database table."""
 import sqlite3
-
 import etlhelper as etl
 
 db_file = "igneous_rocks.db"
 create_sql = """
-    CREATE TABLE IF NOT EXISTS igneous_rocks (
+    CREATE TABLE IF NOT EXISTS igneous_rock (
         id INTEGER PRIMARY KEY,
         name TEXT UNIQUE,
         grain_size TEXT
@@ -21,8 +21,8 @@ with sqlite3.connect(db_file) as conn:
     etl.execute(create_sql, conn)
 
     # Insert rows
-    etl.load('igneous_rocks', conn, igneous_rocks)
+    etl.load('igneous_rock', conn, igneous_rocks)
 
     # Confirm selection
-    for row in etl.fetchall('SELECT * FROM igneous_rocks', conn):
+    for row in etl.fetchall('SELECT * FROM igneous_rock', conn):
         print(row)
