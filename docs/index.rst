@@ -30,8 +30,11 @@ ETL Helper is a Python ETL library to simplify data transfer into and out of dat
 
 ``etlhelper`` makes it easy to run SQL queries via Python and return the
 results.
-It is built upon the `DBAPI2 specification <https://www.python.org/dev/peps/pep-0249/>`__ and takes care of cursor management, importing drivers and formatting connection strings, while providing memory-efficient functions to read, write and transform data.
-This reduces the amount of boilerplate code required to manipulate data within relational databases with Python.
+It is built upon the `DBAPI2 specification <https://www.python.org/dev/peps/pep-0249/>`__
+and takes care of cursor management, importing drivers and formatting connection strings,
+while providing memory-efficient functions to read, write and transform data.
+This reduces the amount of boilerplate code required to manipulate data within relational
+databases with Python.
 
 -  ``fetchall``, ``iter_rows``, ``fetchone`` functions for
    querying databases
@@ -68,3 +71,18 @@ It provides convenience methods for checking databases are reachable over a netw
 The *DbHelper* classes work behind the scenes to smooth out inconsistencies between different database systems.
 They also apply database-specific optimisations e.g., using the faster ``executebatch`` function for PostgreSQL connections instead of ``executemany``.
 In normal use, users do not interact with the DbHelper classes.
+
+Example
+^^^^^^^^
+
+The following script shows how to create a database table and load data into it.
+
+.. literalinclude:: demo_load.py
+   :language: python
+
+The output is
+
+.. code:: bash
+
+   {'id': 1, 'name': 'basalt', 'grain_size': 'fine'}
+   {'id': 2, 'name': 'granite', 'grain_size': 'coarse'}
