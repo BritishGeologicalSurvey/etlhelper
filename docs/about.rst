@@ -6,7 +6,7 @@ About
 Licence
 ^^^^^^^
 
-ETLHelper is distributed under the `LGPL v3.0 licence <LICENSE>`__.
+ETL Helper is distributed under the `LGPL v3.0 licence <LICENSE>`__.
 Copyright: © BGS / UKRI 2019
 
 Presentations

@@ -10,8 +10,8 @@ abort_event = threading.Event()
 
 def abort_etlhelper_threads():
     """
-    Abort the ETLHelper process at the end of the current chunk.  During
-    threaded operation, this will cause an ETLHelperAbort error to be
+    Abort the ETL Helper process at the end of the current chunk.  During
+    threaded operation, this will cause an ETL HelperAbort error to be
     raised.
     """
     abort_event.set()

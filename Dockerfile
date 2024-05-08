@@ -43,5 +43,5 @@ COPY etlhelper/ $APP/etlhelper
 # Clear old caches, if present
 RUN find . -regextype posix-egrep -regex '.*/__pycache__.*' -delete
 
-# Install ETLHelper
+# Install ETL Helper
 RUN python -m pip install .

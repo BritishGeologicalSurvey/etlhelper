@@ -83,7 +83,7 @@ Export data to CSV
 The
 `Pandas <https://pandas.pydata.org/pandas-docs/stable/generated/pandas.read_sql.html>`__
 library can connect to databases via SQLAlchemy. It has powerful tools
-for manipulating tabular data. ETLHelper makes it easy to prepare the
+for manipulating tabular data. ETL Helper makes it easy to prepare the
 SQL Alchemy connection.
 
 .. code:: python

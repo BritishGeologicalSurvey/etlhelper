@@ -48,7 +48,7 @@ logging.getLogger("etlhelper").handlers.clear()
 
 def log_to_console(level=logging.INFO, output=sys.stderr) -> None:
     """
-    Log ETLHelper messages to the given output.
+    Log ETL Helper messages to the given output.
 
     :param level: logger level
     :param output: the output location of the logger messages

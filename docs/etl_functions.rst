@@ -35,7 +35,7 @@ Data are accessible via index (``row[4]``) or name (``row.day``).
 
 Other functions are provided to select data. ``fetchone`` and
 ``fetchall`` are equivalent to the cursor methods specified in the DBAPI
-v2.0. ETLHelper does not include a ``fetchmany`` function - instead use
+v2.0. ETL Helper does not include a ``fetchmany`` function - instead use
 ``iter_chunks`` to loop over a result set in batches of multiple rows.
 
 iter_rows

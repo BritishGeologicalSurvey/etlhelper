@@ -4,11 +4,11 @@ Connecting to Databases
 =======================
 
 
-ETLHelper functions take `DB API 2.0 Connection <https://peps.python.org/pep-0249/#connection-objects>`_ objects as an argument.
+ETL Helper functions take `DB API 2.0 Connection <https://peps.python.org/pep-0249/#connection-objects>`_ objects as an argument.
 
 Users are free to create their own connections directly or to supply them from connection pools.
 
-Alternatively, ETLHelper's :func:`DbParams <etlhelper.DbParams>` class can be used.
+Alternatively, ETL Helper's :func:`DbParams <etlhelper.DbParams>` class can be used.
 
 DbParams
 ^^^^^^^^
@@ -133,7 +133,7 @@ Handling of LOBs for Oracle connections
 """""""""""""""""""""""""""""""""""""""
 
 Oracle databases have special column types for Character Large Object
-(CLOB) and Binary Large Object (BLOB). In ETLHelper, the ``oracledb``
+(CLOB) and Binary Large Object (BLOB). In ETL Helper, the ``oracledb``
 driver has been configured to return these as native Python ``str`` and
 ``bytes`` objects respectively. This is comparable to the behaviour of
 other database drivers e.g. SQLite, PostgreSQL and avoids the user
@@ -151,7 +151,7 @@ follows:
    select_sql = "SELECT my_clob, my_blob FROM my_table"
 
    with ORACLEDB.connect("ORA_PASSWORD") as conn:
-       # By default, ETLHelper returns native types
+       # By default, ETL Helper returns native types
        result_as_native = etl.fetchall(select_sql, conn)
 
        # Update oracledb settings to return LOBs
@@ -200,7 +200,7 @@ Since the ODBC Driver 18 for SQL Server, the default setting has been to
 fail certificate validation for servers with self-signed certificates.
 It is possible to override this setting within the connection string.
 
-ETLHelper provides an optional argument to the ``connect`` function to
+ETL Helper provides an optional argument to the ``connect`` function to
 apply the override and trust the server’s self-signed certificate.
 
 .. code:: python

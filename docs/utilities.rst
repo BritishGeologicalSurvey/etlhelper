@@ -10,7 +10,7 @@ and to allow flow control in threaded workflows.
 Debug SQL and monitor progress with logging
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-ETLHelper provides a custom logging handler. Time-stamped messages
+ETL Helper provides a custom logging handler. Time-stamped messages
 indicating the number of rows processed can be enabled by setting the
 log level to ``INFO``. Setting the level to ``DEBUG`` provides
 information on the query that was run, example data and the database

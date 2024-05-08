@@ -1,5 +1,5 @@
-Welcome to ETLHelper's documentation!
-=====================================
+Welcome to ETL Helper's documentation!
+======================================
 
 .. toctree::
    :maxdepth: 3
@@ -18,7 +18,7 @@ Welcome to ETLHelper's documentation!
    :target: https://pypi.org/project/etlhelper
 .. image:: https://img.shields.io/pypi/dm/etlhelper?label=Downloads%20pypi
 
-ETLHelper is a Python ETL library to simplify data transfer into and out of databases.
+ETL Helper is a Python ETL library to simplify data transfer into and out of databases.
 
 
 .. note::  This documentation is a work in progress in preparation for the upcoming 1.0 release.
@@ -52,10 +52,10 @@ This documentation site explains how the main features are used.
 See the individual function docstrings for full details of parameters and
 options.
 
-ETLHelper components
-^^^^^^^^^^^^^^^^^^^^
+ETL Helper components
+^^^^^^^^^^^^^^^^^^^^^
 
-ETLHelper has three components.
+ETL Helper has three components.
 
 The *ETL functions* are used to extract, transform and load rows of data from relational databases.
 They can be used with any DB API 2.0-compliant database connections.
