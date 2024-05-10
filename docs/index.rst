@@ -41,16 +41,16 @@ Features
 
 -  ``fetchall``, ``iter_rows``, ``fetchone`` functions for
    querying databases
+-  Data transfer uses memory-efficient generators (``iter_chunks`` and ``iter_rows``)
 -  ``execute``, ``executemany``, and ``load`` functions to insert or update data
 -  ``copy_rows`` and ``copy_table_rows`` to transfer data between databases
--  Data transfer uses memory-efficient generators (``iter_chunks`` and ``iter_rows``)
 -  User-defined transform functions transform data in-flight
+-  Helpful error messages display the failed query SQL
+-  ``on_error`` function to process rows that fail to insert
 -  ``DbParams`` objects provide consistent way to connect to different
    database types (currently Oracle, PostgreSQL, SQLite and MS SQL
    Server)
 -  Timestamped log messages for tracking long-running data transfers
--  Helpful error messages display the failed query SQL
--  ``on_error`` function to process rows that fail to insert
 
 These tools can create easy-to-understand, lightweight, versionable and
 testable Extract-Transform-Load (ETL) workflows.
