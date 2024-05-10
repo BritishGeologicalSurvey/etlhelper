@@ -2,52 +2,68 @@
 Extract
 ^^^^^^^
 
-The ``fetchall`` function returns a list of named tuples containing data
-as native Python objects.
+Functions
+---------
+
+ETL Helper provides four functions for extracting data from a SQL query.
+
+The ``fetch*`` functions *return* results once they have finished with the database.
+
+- :func:`fetchone() <etlhelper.fetchone>`: returns the first result.
+- :func:`fetchall() <etlhelper.fetchall>`: returns all results as a list.  This function
+  returns once all rows have been fetched into memory.
 
 .. code:: python
 
-   from my_databases import ORACLEDB
-   from etlhelper import fetchall
+    import sqlite3
+    import etlhelper as etl
 
-   sql = "SELECT * FROM src"
+    with sqlite3.connect('igneous_rocks.db') as conn:
+        first_row = etl.fetchone('SELECT * FROM igneous_rock', conn)
+        all_rows = etl.fetchall('SELECT * FROM igneous_rock', conn):
 
-   with ORACLEDB.connect("ORA_PASSWORD") as conn:
-       fetchall(sql, conn)
+    print(first_row)
+    print(all_rows)
 
 returns
 
 .. code:: python
 
-   [Row(id=1, value=1.234, simple_text='text', utf8_text='Öæ°\nz',
-        day=datetime.date(2018, 12, 7),
-        date_time=datetime.datetime(2018, 12, 7, 13, 1, 59)),
-    Row(id=2, value=2.234, simple_text='text', utf8_text='Öæ°\nz',
-        day=datetime.date(2018, 12, 8),
-        date_time=datetime.datetime(2018, 12, 8, 13, 1, 59)),
-    Row(id=3, value=2.234, simple_text='text', utf8_text='Öæ°\nz',
-        day=datetime.date(2018, 12, 9),
-        date_time=datetime.datetime(2018, 12, 9, 13, 1, 59))]
+    {'id': 1, 'name': 'basalt', 'grain_size': 'fine'}
+    [{'id': 1, 'name': 'basalt', 'grain_size': 'fine'},
+     {'id': 2, 'name': 'granite', 'grain_size': 'coarse'}]
 
-Data are accessible via index (``row[4]``) or name (``row.day``).
 
-Other functions are provided to select data. ``fetchone`` and
-``fetchall`` are equivalent to the cursor methods specified in the DBAPI
-v2.0. ETL Helper does not include a ``fetchmany`` function - instead use
-``iter_chunks`` to loop over a result set in batches of multiple rows.
+The ``iter_*`` functions *yield* data, either one or many rows at a time.
+Results are fetched in *chunks*, and only one chunk of data is held in memory at any time.
+Within a data processing pipeline, the next step can begin as soon as the first chunk has
+been fetched.
+The database connection must remain open until all results have been processed.
 
-iter_rows
----------
+- :func:`iter_rows() <etlhelper.iter_rows>`: returns an iterator that yields all results, one at a time.
+  This function can be used in place of ``fetchall`` within processing pipelines and when
+  looping over large datasets.
+- :func:`iter_chunks() <etlhelper.iter_chunks>`: returns an iterator that yields chunks of multiple results.
+  This provides similar functionality to the ``fetchmany`` method specified in the DB API 2.0.
 
-It is recommended to use ``iter_rows`` for looping over large result
-sets. It is a generator function that only yields data as requested.
-This ensures that the data are not all loaded into memory at once.
+The following is an example of :func:`iter_rows() <etlhelper.iter_rows>`:
 
-::
+.. code:: python
 
-   with ORACLEDB.connect("ORA_PASSWORD") as conn:
-       for row in iter_rows(sql, conn):
-           do_something(row)
+    import sqlite3
+    import etlhelper as etl
+
+    with sqlite3.connect('igneous_rocks.db') as conn:
+        for row in etl.iter_rows('SELECT * FROM igneous_rock', conn)
+            print(row)
+
+returns
+
+.. code:: python
+
+    {'id': 1, 'name': 'basalt', 'grain_size': 'fine'}
+    {'id': 2, 'name': 'granite', 'grain_size': 'coarse'}
+
 
 Parameters
 ----------
