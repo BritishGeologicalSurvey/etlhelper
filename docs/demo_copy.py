@@ -15,14 +15,14 @@ create_sql = """
     )"""
 
 
-select_sql = "SELECT name FROM igneous_rock"
-
-
 def transform(chunk):
     for row in chunk:
-        row['category'] = 'igneous'
-        row['last_update'] = dt.datetime.now()
-        yield row
+        new_row = {
+            "name": row["name"],
+            "category": "igneous",
+            "last_update": dt.datetime.now()
+        }
+        yield new_row
 
 
 etl.log_to_console()
@@ -33,8 +33,8 @@ with sqlite3.connect(igneous_db_file) as src:
         etl.execute(create_sql, dest)
 
         # Copy data
-        rows = etl.iter_rows(select_sql, src, transform=transform)
-        etl.load('rock', dest, rows)
+        rows = etl.copy_table_rows('igneous_rock', src, dest,
+                                    target='rock', transform=transform)
 
         # Confirm transfer
         for row in etl.fetchall('SELECT * FROM rock', dest):

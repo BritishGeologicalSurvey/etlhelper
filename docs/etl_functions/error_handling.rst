@@ -5,6 +5,8 @@ This section describes exception classes and on_error functions.
 
 logged errors
 
+also handling errors in SQL e.g. ON CONFLICT
+
 Handling insert errors
 ----------------------
 

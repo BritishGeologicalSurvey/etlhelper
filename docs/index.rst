@@ -18,7 +18,7 @@ Welcome to ETL Helper's documentation!
    :target: https://pypi.org/project/etlhelper
 .. image:: https://img.shields.io/pypi/dm/etlhelper?label=Downloads%20pypi
 
-ETL Helper is a Python ETL library to simplify data transfer into and out of databases.
+ETL Helper is a Python ETL (Extract, Transform, Load) library to simplify data transfer into and out of databases.
 
 
 .. note::  This documentation is a work in progress in preparation for the upcoming 1.0 release.
@@ -94,7 +94,7 @@ The output is:
 Copying data
 ------------
 
-This script copies the data to another database, with transformation and logging.
+This script copies data to another database, with transformation and logging.
 
 .. literalinclude:: demo_copy.py
    :language: python
@@ -112,3 +112,5 @@ The output is:
 
    {'id': 1, 'name': 'basalt', 'category': 'igneous', 'last_update': '2024-05-08 14:59:54.878726'}
    {'id': 2, 'name': 'granite', 'category': 'igneous', 'last_update': '2024-05-08 14:59:54.879034'}
+
+The :doc:`recipes` section has more example code.

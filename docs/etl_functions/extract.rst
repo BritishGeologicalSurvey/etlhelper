@@ -159,14 +159,14 @@ The ``pyodbc`` driver for MSSQL only supports positional placeholders.
 When using the ``load`` function in conjuction with ``iter_chunks`` data
 must be either named tuples or dictionaries.
 
-Transform
+transform
 """""""""
 
 The ``transform`` parameter takes a callable (e.g. function) that
 transforms the data before returning it.
 See the :ref:`Transform <transform>` section for details.
 
-Chunk size
+chunk_size
 """"""""""
 
 All data extraction functions use ``iter_chunks`` behind the scenes.
@@ -174,3 +174,8 @@ This reads rows from the database in *chunks* to prevent them all being
 loaded into memory at once.
 The ``chunk_size`` argument sets the number of rows in each chunk.
 The default ``chunk_size`` is 5000.
+
+Return values
+-------------
+
+TODO!
