@@ -30,8 +30,7 @@ ETL Helper is a Python ETL (Extract, Transform, Load) library to simplify data t
 
 ETL Helper makes it easy to run SQL queries via Python and return the
 results.
-It is built upon the `DBAPI2 specification <https://www.python.org/dev/peps/pep-0249/>`__
-and takes care of cursor management, importing drivers and formatting connection strings,
+It takes care of cursor management, importing drivers and formatting connection strings,
 while providing memory-efficient functions to read, write and transform data.
 This reduces the amount of boilerplate code required to manipulate data within relational
 databases with Python.
@@ -42,15 +41,18 @@ Features
 -  ``fetchall``, ``iter_rows``, ``fetchone`` functions for
    querying databases
 -  Data transfer uses memory-efficient generators (``iter_chunks`` and ``iter_rows``)
--  ``execute``, ``executemany``, and ``load`` functions to insert or update data
+-  ``executemany``, and ``load`` functions to insert or update data
 -  ``copy_rows`` and ``copy_table_rows`` to transfer data between databases
 -  User-defined transform functions transform data in-flight
+-  ``execute`` function for one-off commands
 -  Helpful error messages display the failed query SQL
 -  ``on_error`` function to process rows that fail to insert
 -  ``DbParams`` objects provide consistent way to connect to different
    database types (currently Oracle, PostgreSQL, SQLite and MS SQL
    Server)
 -  Timestamped log messages for tracking long-running data transfers
+-  Built upon the `DBAPI2 specification <https://www.python.org/dev/peps/pep-0249/>`__
+   for database drivers in Python
 
 These tools can create easy-to-understand, lightweight, versionable and
 testable Extract-Transform-Load (ETL) workflows.

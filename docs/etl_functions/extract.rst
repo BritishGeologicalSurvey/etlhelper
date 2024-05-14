@@ -174,8 +174,3 @@ This reads rows from the database in *chunks* to prevent them all being
 loaded into memory at once.
 The ``chunk_size`` argument sets the number of rows in each chunk.
 The default ``chunk_size`` is 5000.
-
-Return values
--------------
-
-TODO!
