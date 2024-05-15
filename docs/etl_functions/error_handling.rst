@@ -1,9 +1,37 @@
 Error Handling
 ^^^^^^^^^^^^^^
 
-This section describes exception classes and on_error functions.
+This section describes Exception classes, ``on_error`` functions and error
+handling via SQL.
 
-logged errors
+
+ETLHelperError
+--------------
+
+ETL Helper has a :ref:`variety of Exception classes <exceptions>`, all of which are subclasses
+of the :class:`ETLHelperError <etlhelper.exceptions.ETLHelperError>` base class.
+
+To aid debugging,
+the :class:`ETLHelperQueryError <etlhelper.exceptions.ETLHelperQueryError>`,
+:class:`ETLHelperExtractError <etlhelper.exceptions.ETLHelperExtractError>` and
+:class:`ETLHelperInsertError <etlhelper.exceptions.ETLHelperInsertError>`
+classes print the SQL query and the required paramstyle as well as the error
+message returned by the database.
+
+.. literalinclude:: ../demo_error.py
+   :language: python
+
+The output is:
+
+.. code:: bash
+
+    etlhelper.exceptions.ETLHelperExtractError: SQL query raised an error.
+
+    SELECT * FROM bad_table
+
+    Required paramstyle: qmark
+
+    no such table: bad_table
 
 also handling errors in SQL e.g. ON CONFLICT
 
@@ -62,3 +90,20 @@ The IDs of failed rows can be written to a file.
 ``executemany``, ``load``, ``copy_rows`` and ``copy_table_rows`` can all
 take an ``on_error`` parameter. They each return a tuple containing the
 number of rows processed and the number of rows that failed.
+
+
+Error handling via SQL
+----------------------
+
+The ``on_error`` functions allow individual failed rows to be processed,
+however this flexibility can come at the expense of speed.
+Each chunk of data that contains a bad row will be retried on a row-by-row
+basis.
+
+Databases also have methods for handling errors e.g. duplicate primary keys
+using SQL.
+By customising an INSERT query (which can be programmatically generated with
+:func:`generate_insert_query() <etlhelper.generate_insert_query>`) the database
+can be instructed how to process such rows.
+
+TODO: example script of ON CONFLICT ignore
