@@ -111,7 +111,7 @@ on_error
 """"""""
 
 Accepts a Python function that will be applied to failed rows.
-See on_error section for details.  ADD LINK
+See :ref:`on_error <on_error>` section for details.
 
 
 Return values

@@ -7,8 +7,10 @@ logged errors
 
 also handling errors in SQL e.g. ON CONFLICT
 
-Handling insert errors
-----------------------
+.. _on_error:
+
+on_error
+--------
 
 The default behaviour of ``etlhelper`` is to raise an exception on the
 first error and abort the transfer. Sometimes it is desirable to ignore
