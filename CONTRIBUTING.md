@@ -6,9 +6,9 @@
 All main features are complete, however contributions and suggestions are
 welcome, particularly in the following areas:
 
-+ support for more database types (MySQL, Informix)
++ support for more database types (MySQL, IBM Informix)
 + additional recipes / case studies
-+ add type annotations
++ improved type annotations
 + run more integration tests in GitHub Actions
 + performance optimisation
 + improved documentation

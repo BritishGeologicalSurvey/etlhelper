@@ -68,7 +68,7 @@ class DbParams(dict):
         except ETLHelperHelperError:
             msg = f'{self.dbtype} not in valid types ({DB_HELPER_FACTORY.helpers.keys()})'
             # from None suppresses lower errors in the stack trace
-            # Deeper error is recorded in ETLHelperDbParamsError.__context__
+            # Deeper error is recorded in ETL HelperDbParamsError.__context__
             raise ETLHelperDbParamsError(msg) from None
 
         unset_params = (given ^ required_params) & required_params

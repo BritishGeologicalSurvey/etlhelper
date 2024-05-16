@@ -18,15 +18,15 @@ sys.path.insert(0, os.path.abspath('..'))
 
 # -- Project information -----------------------------------------------------
 
-project = 'ETLHelper'
-documentation_title = "ETLHelper Documentation"
+project = 'ETL Helper'
+documentation_title = "ETL Helper Documentation"
 copyright = '2023, British Geological Survey'
 author = 'British Geological Survey'
 
 # The short X.Y version
-version = ''
+version = '1.0.0'
 # The full version, including alpha/beta/rc tags
-release = '0.14.2'
+release = '1.0.0'
 
 
 # -- General configuration ---------------------------------------------------
@@ -40,6 +40,7 @@ release = '0.14.2'
 # ones.
 extensions = [
     'sphinx.ext.autodoc',
+    'sphinx.ext.viewcode'
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -84,6 +85,9 @@ html_theme = "alabaster"
 html_theme_options = {
     'logo': None,
     'sidebar_collapse': True,
+    'show_relbar_top': False,
+    'show_relbar_bottom': True,
+    'show_related': True
 }
 html_show_sourcelink = True
 
@@ -154,8 +158,8 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    (master_doc, 'ETLHelper', documentation_title,
-     author, 'ETLHelper', 'One line description of project.',
+    (master_doc, 'ETL Helper', documentation_title,
+     author, 'ETL Helper', 'One line description of project.',
      'Miscellaneous'),
 ]
 
@@ -184,8 +188,3 @@ epub_exclude_files = ['search.html']
 
 # Example configuration for intersphinx: refer to the Python standard library.
 intersphinx_mapping = {'python': ('https://docs.python.org/3', None)}
-
-# -- Options for todo extension ----------------------------------------------
-
-# If true, `todo` and `todoList` produce output, else they produce nothing.
-todo_include_todos = True

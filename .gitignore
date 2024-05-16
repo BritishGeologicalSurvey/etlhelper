@@ -108,3 +108,6 @@ setup_env.sh
 .mypy_cache/
 bin/setup_local_env.sh
 .vscode
+
+# Databases created by test scripts
+*.db
