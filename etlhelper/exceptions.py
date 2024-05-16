@@ -1,5 +1,6 @@
 """
-ETL Helper Exception classes
+ETLHelper exceptions are derived from the ETLHelperError base class.
+
 """
 
 

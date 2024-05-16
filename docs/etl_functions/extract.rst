@@ -114,7 +114,7 @@ Row factories control the output format of returned rows.
 The default row factory for ETL Helper is a dictionary, but this can be
 changed with the ``row_factory`` argument.
 
-.. literalinclude:: demo_named_tuple.py
+.. literalinclude:: ../demo_namedtuple.py
    :language: python
 
 The output is:

@@ -4,13 +4,6 @@ different database drivers.
 They are not normally called directly.
 
 For more details, see the source code in each module.
-
-.. autoclass:: DbHelper
-.. autoclass:: SQLiteDbHelper
-.. autoclass:: PostgresDbHelper
-.. autoclass:: OracleDbHelper
-.. autoclass:: MSSQLDbHelper
-
 """
 # flake8: noqa
 from etlhelper.db_helpers.db_helper import DbHelper

@@ -106,4 +106,15 @@ By customising an INSERT query (which can be programmatically generated with
 :func:`generate_insert_query() <etlhelper.generate_insert_query>`) the database
 can be instructed how to process such rows.
 
-TODO: example script of ON CONFLICT ignore
+The following example for SQLite will ignore duplicate rows.
+Different databases have different syntax and capabilities, including
+``upsert`` and ``merge``.
+
+.. literalinclude:: ../demo_on_conflict.py
+   :language: python
+
+The output is:
+
+.. code:: bash
+
+   {'id': 1, 'name': 'basalt', 'grain_size': 'fine'}
