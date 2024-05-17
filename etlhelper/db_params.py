@@ -5,9 +5,16 @@ parameters.
 import os
 import socket
 
-from etlhelper.connect import connect, get_connection_string, get_sqlalchemy_connection_string
+from etlhelper.connect import (
+    connect,
+    get_connection_string,
+    get_sqlalchemy_connection_string,
+)
 from etlhelper.db_helper_factory import DB_HELPER_FACTORY
-from etlhelper.exceptions import ETLHelperDbParamsError, ETLHelperHelperError
+from etlhelper.exceptions import (
+    ETLHelperDbParamsError,
+    ETLHelperHelperError,
+)
 
 
 class DbParams(dict):
@@ -61,7 +68,7 @@ class DbParams(dict):
         except ETLHelperHelperError:
             msg = f'{self.dbtype} not in valid types ({DB_HELPER_FACTORY.helpers.keys()})'
             # from None suppresses lower errors in the stack trace
-            # Deeper error is recorded in ETLHelperDbParamsError.__context__
+            # Deeper error is recorded in ETL HelperDbParamsError.__context__
             raise ETLHelperDbParamsError(msg) from None
 
         unset_params = (given ^ required_params) & required_params

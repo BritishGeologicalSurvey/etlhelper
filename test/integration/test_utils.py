@@ -2,7 +2,10 @@
 import pytest
 
 from etlhelper.exceptions import ETLHelperQueryError
-from etlhelper.utils import Column, table_info
+from etlhelper.utils import (
+    Column,
+    table_info,
+)
 
 # pylint: disable=unused-argument, missing-docstring
 

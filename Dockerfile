@@ -1,4 +1,4 @@
-FROM python:3.6.9-slim
+FROM python:3.9-slim-bullseye
 
 # Install package dependencies
 RUN apt-get update -y && \
@@ -12,7 +12,7 @@ RUN apt-get update -y && \
 # Add repo for Microsoft ODBC driver for SQL Server
 RUN curl https://packages.microsoft.com/keys/microsoft.asc > microsoft.asc && \
     apt-key add microsoft.asc && \
-    curl https://packages.microsoft.com/config/debian/9/prod.list > /etc/apt/sources.list.d/mssql-release.list && \
+    curl https://packages.microsoft.com/config/debian/11/prod.list > /etc/apt/sources.list.d/mssql-release.list && \
     apt-get update -y && \
     ACCEPT_EULA=y apt-get install -y \
       msodbcsql17 \
@@ -25,21 +25,23 @@ WORKDIR $APP
 RUN mkdir etlhelper
 
 # Install requirements
-COPY requirements.txt $APP/
+COPY requirements-dev.txt $APP/
 RUN pip install --upgrade pip
-RUN pip install -r requirements.txt
+RUN pip install -r requirements-dev.txt
+
+# Copy files required to package for PyPI
+COPY .git/ $APP/.git
+COPY pyproject.toml README.md $APP/
+
+# Copy files required for testing
+COPY .flake8 pytest.ini $APP/
+COPY test/ $APP/test
 
 # Copy app files to container
-COPY setup.py versioneer.py setup.cfg .flake8 .coveragerc README.md pytest.ini $APP/
 COPY etlhelper/ $APP/etlhelper
-COPY test/ $APP/test
 
 # Clear old caches, if present
 RUN find . -regextype posix-egrep -regex '.*/__pycache__.*' -delete
 
-# Set up Oracle Client
-ARG INSTANT_CLIENT_ZIP
+# Install ETL Helper
 RUN python -m pip install .
-RUN setup_oracle_client -v
-# Have to hard-code oracle_lib_export as ENV can't use result of command
-ENV LD_LIBRARY_PATH=/app/etlhelper/oracle_instantclient

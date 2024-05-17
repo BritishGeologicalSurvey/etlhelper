@@ -8,9 +8,9 @@ A row_factory function must:
   + return a function that takes a tuple
 
 """
+import re
 from collections import namedtuple
 from warnings import warn
-import re
 
 
 def namedtuple_row_factory(cursor):

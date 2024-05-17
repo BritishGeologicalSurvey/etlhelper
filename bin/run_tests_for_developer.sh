@@ -4,7 +4,6 @@ flake8 etlhelper test || exit 1
 
 echo "Building container"
 docker build \
-  --build-arg INSTANT_CLIENT_ZIP=${INSTANT_CLIENT_ZIP} \
   -t etlhelper-test-runner . || exit 1
 
 echo "Unit and integration tests"

@@ -14,7 +14,7 @@ def connect(db_params, password_variable=None, **kwargs):
     :return: Connection object
     """
     helper = DB_HELPER_FACTORY.from_db_params(db_params)
-    # Helpers will raise ETLHelperConnectionError if connection fails
+    # Helpers will raise ETL HelperConnectionError if connection fails
     conn = helper.connect(db_params, password_variable, **kwargs)
     return conn
 

@@ -1,8 +1,9 @@
 """
 Database helper for Oracle
 """
-from textwrap import dedent
 import warnings
+from textwrap import dedent
+
 from etlhelper.db_helpers.db_helper import DbHelper
 
 
@@ -25,19 +26,26 @@ class OracleDbHelper(DbHelper):
         super().__init__()
         self.required_params = {'host', 'port', 'dbname', 'user'}
         self.missing_driver_msg = (
-            "Could not import cx_Oracle module required for Oracle connections.  "
+            "Could not import oracledb module required for Oracle connections.  "
             "See https://github.com/BritishGeologicalSurvey/etlhelper for installation instructions")
         self.named_paramstyle = 'named'
         self.positional_paramstyle = 'numeric'
 
         try:
-            import cx_Oracle
-            self.sql_exceptions = (cx_Oracle.DatabaseError,
-                                   cx_Oracle.InterfaceError)
-            self.connect_exceptions = (cx_Oracle.DatabaseError,
-                                       cx_Oracle.InterfaceError)
-            self.paramstyle = cx_Oracle.paramstyle
-            self._connect_func = cx_Oracle.connect
+            import oracledb
+            self.sql_exceptions = (oracledb.DatabaseError,
+                                   oracledb.InterfaceError)
+            self.connect_exceptions = (oracledb.DatabaseError,
+                                       oracledb.InterfaceError)
+            self.paramstyle = oracledb.paramstyle
+            self._connect_func = oracledb.connect
+
+            # Fetch large objects as Python strings/bytes instead of LOBs
+            # The oracledb default is LOB, but native types are faster to
+            # transfer and are in line with return types of other databases
+            # e.g. SQLite or PostgreSQL.
+            # https://python-oracledb.readthedocs.io/en/latest/user_guide/lob_data.html#fetching-lobs-as-strings-and-bytes
+            oracledb.defaults.fetch_lobs = False
         except ImportError:
             warnings.warn(self.missing_driver_msg)
 

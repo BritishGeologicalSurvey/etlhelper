@@ -2,9 +2,10 @@
 These currently run against internal BGS instance.
 """
 # pylint: disable=unused-argument, missing-docstring
-from collections import namedtuple
 import os
+from collections import namedtuple
 from textwrap import dedent
+from unittest.mock import Mock
 
 import pyodbc
 import pytest
@@ -15,18 +16,27 @@ from etlhelper import (
     copy_rows,
     copy_table_rows,
     execute,
-    get_rows,
+    executemany,
+    fetchall,
     generate_insert_sql,
     load,
 )
-from etlhelper.utils import table_info, Column
+from etlhelper.utils import (
+    table_info,
+    Column,
+)
+from etlhelper.db_helper_factory import DB_HELPER_FACTORY
 from etlhelper.exceptions import (
     ETLHelperConnectionError,
     ETLHelperInsertError,
     ETLHelperQueryError
 )
+from etlhelper.row_factories import namedtuple_row_factory
 
 # Skip these tests if database is unreachable
+if not os.getenv('TEST_MSSQL_HOST'):
+    pytest.skip('MSSQL test database is not defined', allow_module_level=True)
+
 MSSQLDB = DbParams.from_environment(prefix='TEST_MSSQL_')
 if not MSSQLDB.is_reachable():
     pytest.skip('MSSQL test database is unreachable', allow_module_level=True)
@@ -35,8 +45,29 @@ if not MSSQLDB.is_reachable():
 # -- Tests here --
 
 def test_connect():
-    conn = connect(MSSQLDB, 'TEST_MSSQL_PASSWORD')
+    conn = connect(MSSQLDB, 'TEST_MSSQL_PASSWORD',
+                   trust_server_certificate=True)
     assert isinstance(conn, pyodbc.Connection)
+
+
+@pytest.mark.parametrize('trust_server_certificate', [
+    True,
+    False
+])
+def test_connect_trust_server_certificate(monkeypatch, trust_server_certificate):
+    # Arrange
+    helper = DB_HELPER_FACTORY.from_db_params(MSSQLDB)
+    mock_connect = Mock()
+    monkeypatch.setattr(helper, '_connect_func', mock_connect)
+
+    # Act
+    helper.connect(MSSQLDB, 'TEST_MSSQL_PASSWORD',
+                   trust_server_certificate=trust_server_certificate)
+
+    # Assert
+    conn_str = mock_connect.call_args.args[0]
+    trusted = ';TrustServerCertificate=yes' in conn_str
+    assert trust_server_certificate is trusted
 
 
 def test_connect_wrong_password(monkeypatch):
@@ -65,29 +96,31 @@ def test_bad_constraint(test_tables, testdb_conn):
 
 
 def test_copy_rows_happy_path_fast_true(
-        test_tables, testdb_conn, testdb_conn2, test_table_data):
+        test_tables, testdb_conn, testdb_conn2, test_table_data_dict):
     # Note: ODBC driver requires separate connections for source and destination,
     # even if they are the same database.
     # Arrange and act
     select_sql = "SELECT * FROM src"
     insert_sql = INSERT_SQL.format(tablename='dest')
-    copy_rows(select_sql, testdb_conn, insert_sql, testdb_conn2)
+    copy_rows(select_sql, testdb_conn, insert_sql, testdb_conn2,
+              row_factory=namedtuple_row_factory)
 
     # Assert
     sql = "SELECT * FROM dest"
-    result = get_rows(sql, testdb_conn)
-    assert result == test_table_data
+    result = fetchall(sql, testdb_conn)
+    assert result == test_table_data_dict
 
 
 def test_copy_rows_happy_path_deprecated_tables_fast_true(
-        test_deprecated_tables, testdb_conn, testdb_conn2, test_table_data):
+        test_deprecated_tables, testdb_conn, testdb_conn2, test_table_data_dict):
     # Note: ODBC driver requires separate connections for source and destination,
     # even if they are the same database.
     # Arrange and act
     select_sql = "SELECT * FROM src"
     insert_sql = INSERT_SQL.format(tablename='dest')
     with pytest.warns(UserWarning) as record:
-        copy_rows(select_sql, testdb_conn, insert_sql, testdb_conn2)
+        copy_rows(select_sql, testdb_conn, insert_sql, testdb_conn2,
+                  row_factory=namedtuple_row_factory)
 
     # Assert
     assert len(record) == 1
@@ -95,54 +128,58 @@ def test_copy_rows_happy_path_deprecated_tables_fast_true(
         "fast_executemany execution failed")
 
     sql = "SELECT * FROM dest"
-    result = get_rows(sql, testdb_conn)
-    assert result == test_table_data
+    result = fetchall(sql, testdb_conn)
+    assert result == test_table_data_dict
 
 
 def test_copy_rows_happy_path_fast_false(
-        test_tables, testdb_fast_false_conn, testdb_fast_false_conn2, test_table_data):
+        test_tables, testdb_fast_false_conn, testdb_fast_false_conn2, test_table_data_dict):
     # Note: ODBC driver requires separate connections for source and destination,
     # even if they are the same database.
     # Arrange and act
     select_sql = "SELECT * FROM src"
     insert_sql = INSERT_SQL.format(tablename='dest')
-    copy_rows(select_sql, testdb_fast_false_conn, insert_sql, testdb_fast_false_conn2)
+    copy_rows(select_sql, testdb_fast_false_conn, insert_sql, testdb_fast_false_conn2,
+              row_factory=namedtuple_row_factory)
 
     # Assert
     sql = "SELECT * FROM dest"
-    result = get_rows(sql, testdb_fast_false_conn)
-    assert result == test_table_data
+    result = fetchall(sql, testdb_fast_false_conn)
+    assert result == test_table_data_dict
 
 
 def test_copy_rows_happy_path_deprecated_tables_fast_false(
-        test_deprecated_tables, testdb_fast_false_conn, testdb_fast_false_conn2, test_table_data):
+        test_deprecated_tables, testdb_fast_false_conn,
+        testdb_fast_false_conn2, test_table_data_dict):
     # Note: ODBC driver requires separate connections for source and destination,
     # even if they are the same database.
     # Arrange and act
     select_sql = "SELECT * FROM src"
     insert_sql = INSERT_SQL.format(tablename='dest')
-    copy_rows(select_sql, testdb_fast_false_conn, insert_sql, testdb_fast_false_conn2)
+    copy_rows(select_sql, testdb_fast_false_conn, insert_sql, testdb_fast_false_conn2,
+              row_factory=namedtuple_row_factory)
 
     # Assert
     sql = "SELECT * FROM dest"
-    result = get_rows(sql, testdb_fast_false_conn)
-    assert result == test_table_data
+    result = fetchall(sql, testdb_fast_false_conn)
+    assert result == test_table_data_dict
 
 
 def test_copy_table_rows_happy_path_fast_true(
-        test_tables, testdb_conn, testdb_conn2, test_table_data):
+        test_tables, testdb_conn, testdb_conn2, test_table_data_dict):
     # Note: ODBC driver requires separate connections for source and destination,
     # even if they are the same database.
     # Arrange and act
-    copy_table_rows('src', testdb_conn, testdb_conn2, target='dest')
+    copy_table_rows('src', testdb_conn, testdb_conn2, target='dest',
+                    row_factory=namedtuple_row_factory)
 
     # Assert
     sql = "SELECT * FROM dest"
-    result = get_rows(sql, testdb_conn)
-    assert result == test_table_data
+    result = fetchall(sql, testdb_conn)
+    assert result == test_table_data_dict
 
 
-def test_copy_table_rows_on_error(test_tables, testdb_conn, test_table_data):
+def test_copy_table_rows_on_error(test_tables, testdb_conn, test_table_data_dict):
     # Arrange
     duplicate_id_row_sql = """
        INSERT INTO dest (id, value)
@@ -155,11 +192,11 @@ def test_copy_table_rows_on_error(test_tables, testdb_conn, test_table_data):
     # Act
     errors = []
     copy_table_rows('src', testdb_conn, testdb_conn, target='dest',
-                    on_error=errors.extend)
+                    on_error=errors.extend, row_factory=namedtuple_row_factory)
 
     # Assert
     sql = "SELECT * FROM dest"
-    result = get_rows(sql, testdb_conn)
+    result = fetchall(sql, testdb_conn)
 
     # Check that first row was caught as error
     row, exception = errors[0]
@@ -167,48 +204,66 @@ def test_copy_table_rows_on_error(test_tables, testdb_conn, test_table_data):
     assert "unique" in str(exception).lower()
 
     # Check that other rows were inserted correctly
-    assert result[1:] == test_table_data[1:]
+    assert result[1:] == test_table_data_dict[1:]
 
 
-def test_get_rows_with_parameters(test_tables, testdb_conn,
-                                  test_table_data):
+def test_fetchall_with_parameters(test_tables, testdb_conn):
     # parameters=None is tested by default in other tests
 
     # Bind by index
     sql = "SELECT * FROM src where ID = ?"
-    result = get_rows(sql, testdb_conn, parameters=(1,))
+    result = fetchall(sql, testdb_conn, parameters=(1,))
     assert len(result) == 1
-    assert result[0].id == 1
+    assert result[0]["id"] == 1
 
 
-def test_copy_rows_bad_param_style(test_tables, testdb_conn, test_table_data):
+def test_copy_rows_bad_param_style(test_tables, testdb_conn):
     # Arrange and act
     select_sql = "SELECT * FROM src"
     insert_sql = BAD_PARAM_STYLE_SQL.format(tablename='dest')
     with pytest.raises(ETLHelperInsertError):
-        copy_rows(select_sql, testdb_conn, insert_sql, testdb_conn)
+        copy_rows(select_sql, testdb_conn, insert_sql, testdb_conn,
+                  row_factory=namedtuple_row_factory)
 
 
-def test_load_named_tuples(testdb_conn, test_tables, test_table_data):
+def test_executemany_dicts_raises_error(testdb_conn, test_tables, test_table_data_dict):
+    # Arrange
+    # Placeholder doesn't really matter as pydodbc doesn't support
+    # named placeholders
+    insert_sql = dedent("""
+        INSERT INTO dest (id, value, simple_text, utf8_text, day, date_time)
+        VALUES (:id, :value, :simple_text, :utf8_text, :day, :date_time)
+        ;""").strip()
+    expected_message = ("pyodbc driver for MS SQL only supports positional placeholders.  "
+                        "Use namedtuple, tuple or list (via row_factory setting for copy_rows).")
+
+    # Act and assert
+    # pyodbc doesn't support named parameters.
+    with pytest.raises(ETLHelperInsertError) as exc_info:
+        executemany(insert_sql, testdb_conn, test_table_data_dict)
+
+    assert str(exc_info.value) == expected_message
+
+
+def test_load_namedtuples(testdb_conn, test_tables, test_table_data_namedtuple):
     # Act
-    load('dest', testdb_conn, test_table_data)
+    load('dest', testdb_conn, test_table_data_namedtuple)
 
     # Assert
     sql = "SELECT * FROM dest"
-    result = get_rows(sql, testdb_conn)
-    assert result == test_table_data
+    result = fetchall(sql, testdb_conn, row_factory=namedtuple_row_factory)
+    assert result == test_table_data_namedtuple
 
 
-def test_load_dicts(testdb_conn, test_tables, test_table_data):
+def test_load_dicts(testdb_conn, test_tables, test_table_data_dict):
     # Arrange
-    data_as_dicts = [row._asdict() for row in test_table_data]
     expected_message = ("Database connection (<class 'pyodbc.Connection'>) doesn't support named parameters.  "
                         "Pass data as namedtuples instead.")
 
     # Act and assert
     # pyodbc doesn't support named parameters.
     with pytest.raises(ETLHelperInsertError) as exc_info:
-        load('dest', testdb_conn, data_as_dicts)
+        load('dest', testdb_conn, test_table_data_dict)
 
     assert str(exc_info.value) == expected_message
 
@@ -221,7 +276,7 @@ def test_generate_insert_sql_tuple(testdb_conn):
         generate_insert_sql('my_table', data, testdb_conn)
 
 
-def test_generate_insert_sql_named_tuple(testdb_conn):
+def test_generate_insert_sql_namedtuple(testdb_conn):
     # Arrange
     TwoColumnRow = namedtuple('TwoColumnRow', ('id', 'data'))
     data = TwoColumnRow(1, 'one')
@@ -310,33 +365,37 @@ BAD_PARAM_STYLE_SQL = dedent("""
 @pytest.fixture(scope='function')
 def testdb_conn():
     """Get connection to test MS SQL database."""
-    with connect(MSSQLDB, 'TEST_MSSQL_PASSWORD') as conn:
+    with connect(MSSQLDB, 'TEST_MSSQL_PASSWORD',
+                 trust_server_certificate=True) as conn:
         return conn
 
 
 @pytest.fixture(scope='function')
 def testdb_conn2():
     """Get connection to test MS SQL database."""
-    with connect(MSSQLDB, 'TEST_MSSQL_PASSWORD') as conn:
+    with connect(MSSQLDB, 'TEST_MSSQL_PASSWORD',
+                 trust_server_certificate=True) as conn:
         return conn
 
 
 @pytest.fixture(scope='function')
 def testdb_fast_false_conn():
     """Get connection to test MS SQL database."""
-    with connect(MSSQLDB, 'TEST_MSSQL_PASSWORD', fast_executemany=False) as conn:
+    with connect(MSSQLDB, 'TEST_MSSQL_PASSWORD', fast_executemany=False,
+                 trust_server_certificate=True) as conn:
         return conn
 
 
 @pytest.fixture(scope='function')
 def testdb_fast_false_conn2():
     """Get connection to test MS SQL database."""
-    with connect(MSSQLDB, 'TEST_MSSQL_PASSWORD', fast_executemany=False) as conn:
+    with connect(MSSQLDB, 'TEST_MSSQL_PASSWORD', fast_executemany=False,
+                 trust_server_certificate=True) as conn:
         return conn
 
 
 @pytest.fixture(scope='function')
-def test_tables(test_table_data, testdb_conn):
+def test_tables(test_table_data_namedtuple, testdb_conn):
     """
     Create a table and fill with test data.  Teardown after the yield drops it
     again.
@@ -366,7 +425,7 @@ def test_tables(test_table_data, testdb_conn):
             pass
         cursor.execute(create_src_sql)
         cursor.executemany(INSERT_SQL.format(tablename='src'),
-                           test_table_data)
+                           test_table_data_namedtuple)
         # dest table
         try:
             cursor.execute(drop_dest_sql)
@@ -387,7 +446,7 @@ def test_tables(test_table_data, testdb_conn):
 
 
 @pytest.fixture(scope='function')
-def test_deprecated_tables(test_table_data, testdb_conn):
+def test_deprecated_tables(test_table_data_namedtuple, testdb_conn):
     """
     Create a table and fill with test data.  Teardown after the yield drops it
     again.
@@ -417,7 +476,7 @@ def test_deprecated_tables(test_table_data, testdb_conn):
             pass
         cursor.execute(create_src_sql)
         cursor.executemany(INSERT_SQL.format(tablename='src'),
-                           test_table_data)
+                           test_table_data_namedtuple)
         # dest table
         try:
             cursor.execute(drop_dest_sql)

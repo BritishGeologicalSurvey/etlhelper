@@ -1,8 +1,9 @@
 """
 Database helper for PostgreSQL
 """
-from textwrap import dedent
 import warnings
+from textwrap import dedent
+
 from etlhelper.db_helpers.db_helper import DbHelper
 
 

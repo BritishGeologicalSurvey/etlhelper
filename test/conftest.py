@@ -3,18 +3,24 @@ Fixtures for pytest.  Functions defined here can be passed as arguments to
 pytest tests.  scope parameter describes how often they are recreated e.g.
 once per module.
 """
-from collections import namedtuple
-import datetime as dt
+import logging
 import os
-from pathlib import Path
 import socket
+import datetime as dt
+from collections import namedtuple
+from pathlib import Path
 from textwrap import dedent
+from typing import Any
 from zipfile import ZipFile
 
 import pytest
 from psycopg2.extras import execute_batch
 
-from etlhelper import connect, DbParams
+from etlhelper import (
+    connect,
+    log_to_console,
+    DbParams,
+)
 
 PGTESTDB = DbParams(
     dbtype='PG',
@@ -22,6 +28,18 @@ PGTESTDB = DbParams(
     port=5432,
     dbname='etlhelper',
     user='etlhelper_user')
+
+
+@pytest.fixture(scope="function")
+def logger() -> logging.Logger:
+    """
+    Return an enabled etlhelper logger for tests.
+    The logger handler is set to NullHandler afterwards.
+    """
+    log_to_console()
+    logger = logging.getLogger("etlhelper")
+    yield logger
+    logger.handlers.clear()
 
 
 @pytest.fixture(scope='module')
@@ -37,7 +55,7 @@ def pgtestdb_insert_sql():
 
 
 @pytest.fixture(scope='function')
-def pgtestdb_test_tables(test_table_data, pgtestdb_conn, pgtestdb_insert_sql):
+def pgtestdb_test_tables(test_table_data_namedtuple, pgtestdb_conn, pgtestdb_insert_sql):
     """
     Create a table and fill with test data.  Teardown after the yield drops it
     again.
@@ -63,7 +81,7 @@ def pgtestdb_test_tables(test_table_data, pgtestdb_conn, pgtestdb_insert_sql):
         cursor.execute(drop_dest_sql)
         cursor.execute(create_src_sql)
         cursor.execute(create_dest_sql)
-        execute_batch(cursor, pgtestdb_insert_sql, test_table_data)
+        execute_batch(cursor, pgtestdb_insert_sql, test_table_data_namedtuple)
     pgtestdb_conn.commit()
 
     # Return control to calling function until end of test
@@ -77,7 +95,23 @@ def pgtestdb_test_tables(test_table_data, pgtestdb_conn, pgtestdb_insert_sql):
 
 
 @pytest.fixture(scope='module')
-def test_table_data():
+def test_table_data_dict() -> list[dict[str, Any]]:
+    """
+    Return list of dictionaries of test data
+    """
+    data = [
+        {"id": 1, "value": 1.234, "simple_text": "text", "utf8_text": 'Öæ°\nz',
+         "day": dt.date(2018, 12, 7), "date_time": dt.datetime(2018, 12, 7, 13, 1, 59)},
+        {"id": 2, "value": 2.234, "simple_text": "text", "utf8_text": 'Öæ°\nz',
+         "day": dt.date(2018, 12, 8), "date_time": dt.datetime(2018, 12, 8, 13, 1, 59)},
+        {"id": 3, "value": 2.234, "simple_text": "text", "utf8_text": 'Öæ°\nz',
+         "day": dt.date(2018, 12, 9), "date_time": dt.datetime(2018, 12, 9, 13, 1, 59)},
+    ]
+    return data
+
+
+@pytest.fixture(scope='module')
+def test_table_data_namedtuple():
     """
     Return list of tuples of test data
     """

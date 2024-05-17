@@ -1,0 +1,61 @@
+[build-system]
+requires = ["setuptools", "setuptools_scm[toml]"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "etlhelper"
+description = "etlhelper is Python ETL library to simplify data transfer into and out of databases."
+readme = {file = "README.md", content-type = "text/markdown"}
+authors = [
+    {name = "BGS Informatics", email = "enquiries@bgs.ac.uk"},
+]
+license = {text = "LGPL-3.0 license"}
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Information Technology",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: GNU Lesser General Public License v3 or later (LGPLv3+)",
+    "Natural Language :: English",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Topic :: Database",
+    "Topic :: Scientific/Engineering :: GIS",
+]
+requires-python = ">=3.9"
+dynamic = ["version"]
+
+[project.urls]
+"Source Code" = "https://github.com/BritishGeologicalSurvey/etlhelper"
+"Documentation" = "https://britishgeologicalsurvey.github.io/etlhelper/"
+
+[project.optional-dependencies]
+oracle = ["oracledb", "cffi"]
+mssql = ["pyodbc"]
+postgres = ["psycopg2-binary"]
+all = [
+    "oracledb",
+    "cffi",
+    "pyodbc",
+    "psycopg2-binary",
+]
+dev = [
+    "flake8",
+    "ipdb",
+    "ipython",
+    "pytest",
+    "pytest-cov",
+]
+pkg = [
+    "build",
+    "twine",
+]
+
+[tool.setuptools_scm]
+# This can be empty, it's presence indicates that the version comes from git
+# Errors can occur if new commits are made after the git release version
+# Therefore, it is best to make all commits, then release git version, then
+# pull new tag, then run build
+
+[tool.setuptools]
+packages = ["etlhelper"]

@@ -6,6 +6,7 @@ from collections import namedtuple
 from etlhelper import fetchall
 from etlhelper.exceptions import ETLHelperQueryError
 from etlhelper.db_helper_factory import DB_HELPER_FACTORY
+from etlhelper.row_factories import namedtuple_row_factory
 
 Column = namedtuple('Column', ['name', 'type', 'not_null', 'has_default'])
 
@@ -22,7 +23,7 @@ def table_info(table, conn, schema=None):
     helper = DB_HELPER_FACTORY.from_conn(conn)
 
     params = (table, schema)
-    result = fetchall(helper.table_info_query, conn, parameters=params)
+    result = fetchall(helper.table_info_query, conn, parameters=params, row_factory=namedtuple_row_factory)
     columns = [Column(*row) for row in result]
 
     if not columns:

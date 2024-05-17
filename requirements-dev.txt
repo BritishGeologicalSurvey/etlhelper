@@ -1,0 +1,17 @@
+oracledb
+cffi
+flake8
+flake8-annotations
+mypy
+ipdb
+ipython
+psycopg2-binary
+types-psycopg2
+pyodbc
+pytest-cov
+pytest>=4.6
+build
+twine
+wheel
+sphinx
+sphinx_rtd_theme

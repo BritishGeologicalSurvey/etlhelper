@@ -1,53 +1,59 @@
 """Test for etl load functions.  Data loading is carried out using
 the executemany call.  These are run against PostgreSQL."""
 # pylint: disable=unused-argument, missing-docstring
-from collections import namedtuple
 import re
-from unittest.mock import sentinel, Mock, ANY
+from collections import namedtuple
+from unittest.mock import (
+    Mock,
+    ANY,
+    sentinel,
+)
 
 import pytest
 
+import etlhelper.etl as etlhelper_etl
 from etlhelper import (
     executemany,
     generate_insert_sql,
-    get_rows,
+    fetchall,
     iter_rows,
-    load)
+    load,
+)
+from etlhelper.row_factories import namedtuple_row_factory
 from etlhelper.etl import ETLHelperInsertError
-import etlhelper.etl as etlhelper_etl
 from etlhelper.exceptions import ETLHelperBadIdentifierError
 
 
 @pytest.mark.parametrize('commit_chunks', [True, False])
 def test_insert_rows_happy_path(pgtestdb_conn, pgtestdb_test_tables,
-                                pgtestdb_insert_sql, test_table_data,
+                                pgtestdb_insert_sql, test_table_data_namedtuple,
                                 commit_chunks):
     # Parameterized to ensure success with and without commit_chunks
     # Arrange
     insert_sql = pgtestdb_insert_sql.replace('src', 'dest')
 
     # Act
-    processed, failed = executemany(insert_sql, pgtestdb_conn, test_table_data,
+    processed, failed = executemany(insert_sql, pgtestdb_conn, test_table_data_namedtuple,
                                     commit_chunks=commit_chunks)
 
     # Assert
-    assert processed == len(test_table_data)
+    assert processed == len(test_table_data_namedtuple)
     assert failed == 0
 
     sql = "SELECT * FROM dest"
-    result = get_rows(sql, pgtestdb_conn)
-    assert result == test_table_data
+    result = fetchall(sql, pgtestdb_conn, row_factory=namedtuple_row_factory)
+    assert result == test_table_data_namedtuple
 
 
 @pytest.mark.parametrize('commit_chunks', [True, False])
 def test_insert_rows_on_error(pgtestdb_conn, pgtestdb_test_tables,
-                              pgtestdb_insert_sql, test_table_data,
+                              pgtestdb_insert_sql, test_table_data_namedtuple,
                               commit_chunks):
     # Parameterized to ensure success with and without commit_chunks
     # Arrange
     insert_sql = pgtestdb_insert_sql.replace('src', 'dest')
     # Create duplicated rows to data that will fail primary key check
-    duplicated_rows = test_table_data * 2
+    duplicated_rows = test_table_data_namedtuple * 2
 
     # Act
     errors = []
@@ -59,30 +65,30 @@ def test_insert_rows_on_error(pgtestdb_conn, pgtestdb_test_tables,
     assert failed == len(errors)
 
     sql = "SELECT * FROM dest"
-    result = get_rows(sql, pgtestdb_conn)
-    assert result == test_table_data
+    result = fetchall(sql, pgtestdb_conn, row_factory=namedtuple_row_factory)
+    assert result == test_table_data_namedtuple
 
     # Assert full set of failed rows failing unique constraint
     failed_rows, exceptions = zip(*errors)
-    assert set(failed_rows) == set(test_table_data)
+    assert set(failed_rows) == set(test_table_data_namedtuple)
     assert all(['unique' in str(e).lower() for e in exceptions])
 
 
 @pytest.mark.parametrize('chunk_size', [1, 2, 3, 4])
 def test_insert_rows_chunked(pgtestdb_conn, pgtestdb_test_tables,
-                             pgtestdb_insert_sql, test_table_data, monkeypatch,
+                             pgtestdb_insert_sql, test_table_data_namedtuple, monkeypatch,
                              chunk_size):
     # Arrange
     monkeypatch.setattr('etlhelper.etl.CHUNKSIZE', chunk_size)
     insert_sql = pgtestdb_insert_sql.replace('src', 'dest')
 
     # Act
-    executemany(insert_sql, pgtestdb_conn, test_table_data)
+    executemany(insert_sql, pgtestdb_conn, test_table_data_namedtuple)
 
     # Assert
     sql = "SELECT * FROM dest"
-    result = get_rows(sql, pgtestdb_conn)
-    assert result == test_table_data
+    result = fetchall(sql, pgtestdb_conn, row_factory=namedtuple_row_factory)
+    assert result == test_table_data_namedtuple
 
 
 def test_insert_rows_no_rows(pgtestdb_conn, pgtestdb_test_tables,
@@ -102,42 +108,56 @@ def test_insert_rows_no_rows(pgtestdb_conn, pgtestdb_test_tables,
     assert list(result) == []
 
 
-def test_insert_rows_bad_query(pgtestdb_conn, test_table_data):
+def test_insert_rows_bad_query(pgtestdb_conn, test_table_data_namedtuple):
     # Arrange
     insert_sql = "INSERT INTO bad_table VALUES (%s, %s, %s, %s, %s, %s)"
 
     # Act and assert
     with pytest.raises(ETLHelperInsertError):
-        executemany(insert_sql, pgtestdb_conn, test_table_data)
+        executemany(insert_sql, pgtestdb_conn, test_table_data_namedtuple)
 
 
-def test_load_named_tuples(pgtestdb_conn, pgtestdb_test_tables, test_table_data):
+def test_load_namedtuples(pgtestdb_conn, pgtestdb_test_tables, test_table_data_namedtuple):
     # Act
-    processed, failed = load('dest', pgtestdb_conn, test_table_data)
+    processed, failed = load('dest', pgtestdb_conn, test_table_data_namedtuple)
 
     # Assert
-    assert processed == len(test_table_data)
+    assert processed == len(test_table_data_namedtuple)
     assert failed == 0
 
     sql = "SELECT * FROM dest"
-    result = get_rows(sql, pgtestdb_conn)
-    assert result == test_table_data
+    result = fetchall(sql, pgtestdb_conn, row_factory=namedtuple_row_factory)
+    assert result == test_table_data_namedtuple
 
 
-def test_load_dicts(pgtestdb_conn, pgtestdb_test_tables, test_table_data):
-    # Arrange
-    data_as_dicts = [row._asdict() for row in test_table_data]
-
+def test_load_dicts(pgtestdb_conn, pgtestdb_test_tables, test_table_data_dict):
     # Act
-    processed, failed = load('dest', pgtestdb_conn, data_as_dicts)
+    processed, failed = load('dest', pgtestdb_conn, test_table_data_dict)
 
     # Assert
-    assert processed == len(test_table_data)
+    assert processed == len(test_table_data_dict)
     assert failed == 0
 
     sql = "SELECT * FROM dest"
-    result = get_rows(sql, pgtestdb_conn)
-    assert result == test_table_data
+    result = fetchall(sql, pgtestdb_conn)
+    assert result == test_table_data_dict
+
+
+def test_load_namedtuples_with_transform_generator(pgtestdb_conn, pgtestdb_test_tables, test_table_data_namedtuple):
+    # Act
+    def transform(chunk):
+        for row in chunk:
+            yield row
+
+    processed, failed = load('dest', pgtestdb_conn, test_table_data_namedtuple, transform=transform)
+
+    # Assert
+    assert processed == len(test_table_data_namedtuple)
+    assert failed == 0
+
+    sql = "SELECT * FROM dest"
+    result = fetchall(sql, pgtestdb_conn, row_factory=namedtuple_row_factory)
+    assert result == test_table_data_namedtuple
 
 
 @pytest.mark.parametrize('null_data', [
@@ -156,19 +176,19 @@ def test_load_no_data(pgtestdb_conn, pgtestdb_test_tables, null_data):
 
 
 @pytest.mark.parametrize('chunk_size', [1, 2, 3, 4])
-def test_load_named_tuples_chunk_size(pgtestdb_conn, pgtestdb_test_tables,
-                                      test_table_data, chunk_size):
+def test_load_namedtuples_chunk_size(pgtestdb_conn, pgtestdb_test_tables,
+                                     test_table_data_namedtuple, chunk_size):
     # Act
-    load('dest', pgtestdb_conn, test_table_data, chunk_size=chunk_size)
+    load('dest', pgtestdb_conn, test_table_data_namedtuple, chunk_size=chunk_size)
 
     # Assert
     sql = "SELECT * FROM dest"
-    result = get_rows(sql, pgtestdb_conn)
-    assert result == test_table_data
+    result = fetchall(sql, pgtestdb_conn, row_factory=namedtuple_row_factory)
+    assert result == test_table_data_namedtuple
 
 
 def test_load_parameters_pass_to_executemany(monkeypatch, pgtestdb_conn,
-                                             test_table_data):
+                                             test_table_data_namedtuple):
     # Arrange
     # Patch 'iter_rows' function within etlhelper.etl module
     mock_executemany = Mock()
@@ -180,7 +200,7 @@ def test_load_parameters_pass_to_executemany(monkeypatch, pgtestdb_conn,
     chunk_size = sentinel.chunk_size
 
     # Act
-    load(table, pgtestdb_conn, test_table_data, commit_chunks=commit_chunks,
+    load(table, pgtestdb_conn, test_table_data_namedtuple, commit_chunks=commit_chunks,
          chunk_size=chunk_size)
 
     # Assert
@@ -192,7 +212,8 @@ def test_load_parameters_pass_to_executemany(monkeypatch, pgtestdb_conn,
     sql = re.sub(r"\s\s+", " ", sql)  # replace newlines and whitespace
 
     mock_executemany.assert_called_once_with(
-        sql, pgtestdb_conn, ANY, on_error=None,
+        sql, pgtestdb_conn, ANY,
+        transform=None, on_error=None,
         commit_chunks=sentinel.commit_chunks,
         chunk_size=sentinel.chunk_size)
 
@@ -207,7 +228,7 @@ def test_generate_insert_sql_tuple(pgtestdb_conn):
         generate_insert_sql('my_table', data, pgtestdb_conn)
 
 
-def test_generate_insert_sql_named_tuple(pgtestdb_conn):
+def test_generate_insert_sql_namedtuple(pgtestdb_conn):
     # Arrange
     TwoColumnRow = namedtuple('TwoColumnRow', ('id', 'data'))
     data = TwoColumnRow(1, 'one')

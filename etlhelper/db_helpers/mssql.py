@@ -3,7 +3,9 @@ Database helper for mssql
 """
 import warnings
 from textwrap import dedent
+
 from etlhelper.db_helpers.db_helper import DbHelper
+from etlhelper.exceptions import ETLHelperInsertError
 
 
 class MSSQLDbHelper(DbHelper):
@@ -39,11 +41,14 @@ class MSSQLDbHelper(DbHelper):
             self.paramstyle = pyodbc.paramstyle
             self._connect_func = pyodbc.connect
             self.use_fast_executemany = True
+            self.trust_server_certificate = False
         except ImportError:
             warnings.warn(self.missing_driver_msg)
 
-    def connect(self, db_params, password_variable=None, fast_executemany=True, **kwargs):
+    def connect(self, db_params, password_variable=None,
+                fast_executemany=True, trust_server_certificate=False, **kwargs):
         self.use_fast_executemany = fast_executemany
+        self.trust_server_certificate = trust_server_certificate
         return super().connect(db_params, password_variable, **kwargs)
 
     def get_connection_string(self, db_params, password_variable):
@@ -55,8 +60,11 @@ class MSSQLDbHelper(DbHelper):
         """
         # Prepare connection string
         password = self.get_password(password_variable)
-        return (f'DRIVER={db_params.odbc_driver};SERVER=tcp:{db_params.host};PORT={db_params.port};'
-                f'DATABASE={db_params.dbname};UID={db_params.user};PWD={password}')
+        conn_str = (f'DRIVER={db_params.odbc_driver};SERVER=tcp:{db_params.host};PORT={db_params.port};'
+                    f'DATABASE={db_params.dbname};UID={db_params.user};PWD={password}')
+        if self.trust_server_certificate:
+            conn_str += ';TrustServerCertificate=yes'
+        return conn_str
 
     def get_sqlalchemy_connection_string(self, db_params, password_variable):
         """
@@ -86,3 +94,7 @@ class MSSQLDbHelper(DbHelper):
             )
             cursor.fast_executemany = False
             cursor.executemany(query, chunk)
+        except TypeError:
+            msg = ("pyodbc driver for MS SQL only supports positional placeholders.  "
+                   "Use namedtuple, tuple or list (via row_factory setting for copy_rows).")
+            raise ETLHelperInsertError(msg)

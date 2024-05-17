@@ -1,17 +1,20 @@
 """Unit tests for db_helpers module."""
 import builtins
-from unittest.mock import Mock
-import pytest
 import sqlite3
+from unittest.mock import Mock
 
-import cx_Oracle
-import pyodbc
+import oracledb
 import psycopg2
+import pyodbc
+import pytest
 
 from etlhelper import DbParams
 from etlhelper.db_helper_factory import DB_HELPER_FACTORY
 from etlhelper.db_helpers import (
-    OracleDbHelper, MSSQLDbHelper, PostgresDbHelper, SQLiteDbHelper
+    MSSQLDbHelper,
+    OracleDbHelper,
+    PostgresDbHelper,
+    SQLiteDbHelper
 )
 from etlhelper.exceptions import ETLHelperConnectionError
 
@@ -30,7 +33,7 @@ SQLITEDB = DbParams(dbtype='SQLITE', filename='/myfile.db')
 
 
 @pytest.mark.parametrize('helper, expected', [
-    (OracleDbHelper, (cx_Oracle.DatabaseError, cx_Oracle.InterfaceError)),
+    (OracleDbHelper, (oracledb.DatabaseError, oracledb.InterfaceError)),
     (MSSQLDbHelper, (pyodbc.DatabaseError, pyodbc.InterfaceError)),
     (PostgresDbHelper, (psycopg2.DatabaseError, psycopg2.InterfaceError)),
     (SQLiteDbHelper, (sqlite3.DatabaseError, sqlite3.InterfaceError))
@@ -42,7 +45,7 @@ def test_sql_exceptions(helper, expected):
 
 
 @pytest.mark.parametrize('helper, expected', [
-    (OracleDbHelper, (cx_Oracle.DatabaseError, cx_Oracle.InterfaceError)),
+    (OracleDbHelper, (oracledb.DatabaseError, oracledb.InterfaceError)),
     (MSSQLDbHelper, (pyodbc.DatabaseError, pyodbc.InterfaceError)),
     (PostgresDbHelper, (psycopg2.DatabaseError, psycopg2.InterfaceError)),
     (SQLiteDbHelper, (sqlite3.DatabaseError, sqlite3.InterfaceError))
@@ -64,7 +67,7 @@ def test_paramstyle(helper, expected):
 
 
 @pytest.mark.parametrize('db_params, driver, expected', [
-    (ORACLEDB, cx_Oracle, 'testuser/mypassword@server:1521/testdb'),
+    (ORACLEDB, oracledb, 'testuser/mypassword@server:1521/testdb'),
     (MSSQLDB, pyodbc,
      'DRIVER=test driver;SERVER=tcp:server;PORT=1521;DATABASE=testdb;UID=testuser;PWD=mypassword'), # NOQA
     (POSTGRESDB, psycopg2,
@@ -104,7 +107,7 @@ def test_sqlalchemy_conn_string(monkeypatch, db_params, expected):
 
 
 @pytest.mark.parametrize('db_params, driver', [
-    (ORACLEDB, 'cx_Oracle'), (MSSQLDB, 'pyodbc'), (POSTGRESDB, 'psycopg2'),
+    (ORACLEDB, 'oracledb'), (MSSQLDB, 'pyodbc'), (POSTGRESDB, 'psycopg2'),
     (SQLITEDB, 'sqlite3')
 ])
 def test_connect_without_driver_raises_exception(db_params, driver, monkeypatch):

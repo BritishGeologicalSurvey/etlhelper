@@ -2,9 +2,9 @@
 Tests for implementation of the abort() function in both extracting and
 loading data.
 """
-from concurrent.futures import ThreadPoolExecutor
 import logging
 import sqlite3
+from concurrent.futures import ThreadPoolExecutor
 from time import sleep
 
 import pytest

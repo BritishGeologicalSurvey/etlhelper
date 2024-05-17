@@ -6,10 +6,10 @@
 All main features are complete, however contributions and suggestions are
 welcome, particularly in the following areas:
 
-+ support for more database types (MySQL, Informix)
++ support for more database types (MySQL, IBM Informix)
 + additional recipes / case studies
-+ add type annotations
-+ run more integration tests in Travis CI (or port to GitHub Actions)
++ improved type annotations
++ run more integration tests in GitHub Actions
 + performance optimisation
 + improved documentation
 
@@ -47,7 +47,7 @@ Pull requests and issues should be targeted at the GitHub repository.
 
 ### Prerequisites
 
-+ Python 3.6+ virtual environment
++ Python 3.9+ virtual environment
 + Git
 + Docker
 
@@ -58,19 +58,13 @@ Install locally for development by cloning repository and running the following
 in the root:
 
 ```bash
-pip install -r requirements.txt
+pip install -r requirements-dev.txt
 pip install -e .
 ```
 
 Development files will be linked to the virtual environment/system folder
 hierarchy allowing changes to take effect directly.
 
-Proprietary Oracle Instant Client drivers are required.
-These can be installed with:
-
-```bash
-source $(setup_oracle_client)
-```
 
 ### Running tests
 
@@ -84,7 +78,7 @@ export TEST_PG_PORT=5432
 export TEST_PG_PASSWORD=etlhelper_pw
 docker run -e POSTGRES_USER=etlhelper_user -e POSTGRES_DB=etlhelper \
   -e POSTGRES_PASSWORD=$TEST_PG_PASSWORD --name etlhelper_postgis \
-  -d --rm -p $TEST_PG_PORT:5432 mdillon/postgis:11-alpine
+  -d --rm -p $TEST_PG_PORT:5432 postgis/postgis:15-3.4
 ```
 
 Tests are run with:
@@ -95,7 +89,6 @@ bash bin/run_tests_for_developer.sh
 
 The test-runner script will run tests within a dedicated container and provide
 HTML coverage output.  It can be viewed with `firefox htmlcov/index.html`.
-
 
 #### Running additional BGS integration tests
 
@@ -110,7 +103,19 @@ To run these:
 + Paste into the terminal to set environment variables
 + Run tests as before
 
-### Creating a new release
+### Building documentation
+
+The documentation is created using Sphinx.
+To locally build the documentation, run the following:
+ 
+```bash
+sphinx-build -a docs docs/_build
+```
+
+The documentation can then be viewed at `docs/_build/index.html`
+
+
+## Creating a new release
 
 Releases are created manually from the main branch via tags.
 This should be done via the GitHub web interface.
