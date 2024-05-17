@@ -11,7 +11,7 @@ on:
 
 jobs:
   pages:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
@@ -24,3 +24,5 @@ jobs:
           pip install sphinx sphinx_rtd_theme
     - id: deployment
       uses: sphinx-notes/pages@v3
+      with:
+        python-version: '3.10'
