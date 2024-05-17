@@ -13,3 +13,4 @@ per-file-ignores =
     row_factories.py: A
     utils.py: A,
     etlhelper/db_helpers/*: A,
+    test/**: A
