@@ -348,8 +348,7 @@ BAD_PARAM_STYLE_SQL = dedent("""
 @pytest.fixture(scope='function')
 def testdb_conn():
     """Get connection to test Oracle database."""
-    with connect(ORADB, 'TEST_ORACLE_PASSWORD', encoding="UTF-8",
-                 nencoding="UTF-8") as conn:
+    with connect(ORADB, 'TEST_ORACLE_PASSWORD') as conn:
         yield conn
 
 
