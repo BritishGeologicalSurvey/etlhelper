@@ -7,6 +7,7 @@ from importlib.metadata import (
     PackageNotFoundError,
     version,
 )
+from typing import TextIO
 
 # Import helper functions here for more convenient access
 from etlhelper.abort import abort_etlhelper_threads
@@ -46,7 +47,10 @@ except PackageNotFoundError:
 logging.getLogger("etlhelper").handlers.clear()
 
 
-def log_to_console(level=logging.INFO, output=sys.stderr) -> None:
+def log_to_console(
+    level: int = logging.INFO,
+    output: TextIO = sys.stderr,
+) -> None:
     """
     Log ETL Helper messages to the given output.
 
@@ -63,7 +67,7 @@ def log_to_console(level=logging.INFO, output=sys.stderr) -> None:
         default_fmt = logging.Formatter('%(asctime)s %(funcName)s: %(message)s')
         debug_fmt = logging.Formatter('%(message)s')
 
-        def format(self, record):
+        def format(self, record: logging.LogRecord) -> str:
             if record.levelno < logging.INFO:
                 return self.debug_fmt.format(record)
             else:
