@@ -21,16 +21,12 @@ databases with Python.
 The code for ETL Helper version 1.0 has now been merged into `main`, although not yet deployed to PyPI.
 It contains many breaking changes.
 The [documentation pages](https://britishgeologicalsurvey.github.io/etlhelper/) now correspond to the upcoming version 1.0.
-To use this now, install directly from GitHub:
-
-```bash
-pip install git+https://github.com/BritishGeologicalSurvey/etlhelper.git@main
-```
+Specify a [release candidate tag](https://github.com/BritishGeologicalSurvey/etlhelper/tags) or use `--pre` flag with `pip` to install pre-release versions.
 
 ## Installation
 
 ETL Helper is available on PyPI (version 0.14.3).
-Documentation for the most recent version on PyPI is [here](https://github.com/BritishGeologicalSurvey/etlhelper/tree/v0.14.3#readme).
+Documentation for v0.14.3 is [here](https://github.com/BritishGeologicalSurvey/etlhelper/tree/v0.14.3#readme).
 
 ```bash
 pip install etlhelper
