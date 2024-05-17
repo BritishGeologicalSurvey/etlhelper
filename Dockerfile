@@ -15,7 +15,7 @@ RUN curl https://packages.microsoft.com/keys/microsoft.asc > microsoft.asc && \
     curl https://packages.microsoft.com/config/debian/11/prod.list > /etc/apt/sources.list.d/mssql-release.list && \
     apt-get update -y && \
     ACCEPT_EULA=y apt-get install -y \
-      msodbcsql17 \
+      msodbcsql18 \
       unixodbc-dev
 
 # Install Python modules

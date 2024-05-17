@@ -15,7 +15,6 @@ etlhelper.row_factories
     :members:
 
 
-
 .. _db_helpers:
 
 DB Helpers
