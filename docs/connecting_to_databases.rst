@@ -92,16 +92,13 @@ previous releases of ``etlhelper``:
 Both versions accept additional keyword arguments that are passed to the
 `DB API 2.0-compatible connect function <https://peps.python.org/pep-0249/#connect>`_
 of the underlying driver.
-For example, the following sets the character encoding used by ``oracledb`` to ensure that
-values are returned as UTF-8:
+For example, the following sets a timeout used by ``sqlite3`` to limit how long
+it waits to get a lock on a table.
 
 .. code:: python
 
-   oracle_conn = ORACLEDB.connect('ORACLE_PASSWORD',
-                                  encoding="UTF-8",
-                                  nencoding="UTF8")
+   conn = MY_SQLITE_DB.connect(timeout=20)
 
-The above is a solution when special characters are scrambled in the returned data.
 
 .. _passwords:
 
