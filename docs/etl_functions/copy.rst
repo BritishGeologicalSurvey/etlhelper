@@ -7,7 +7,7 @@ These are presented in order of increased control or customisability.
 copy_table_rows
 ---------------
 
-:func:`copy_table_rows() <etlhelper.copy_table_rows>`` provides a simple way
+:func:`copy_table_rows() <etlhelper.copy_table_rows>` provides a simple way
 to copy all the data from one table to another.
 It can take a ``transform`` function in case some modification of the data,
 e.g. change of case of column names, is required.
