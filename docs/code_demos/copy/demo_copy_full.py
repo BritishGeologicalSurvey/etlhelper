@@ -1,6 +1,7 @@
 """ETL Helper script to copy records between databases."""
-import datetime as dt
 import sqlite3
+import datetime as dt
+from typing import Generator
 import etlhelper as etl
 
 igneous_db_file = "igneous_rocks.db"
@@ -12,16 +13,15 @@ create_sql = """
         name TEXT UNIQUE,
         category TEXT,
         last_update DATETIME
-    )"""
-
-
+    )
+"""
 select_sql = "SELECT name FROM igneous_rock"
 
 
-def transform(chunk):
+def transform(chunk: list[dict]) -> Generator[dict, None, None]:
     for row in chunk:
-        row['category'] = 'igneous'
-        row['last_update'] = dt.datetime.now()
+        row["category"] = "igneous"
+        row["last_update"] = dt.datetime.now()
         yield row
 
 
@@ -34,8 +34,8 @@ with sqlite3.connect(igneous_db_file) as src:
 
         # Copy data
         rows = etl.iter_rows(select_sql, src, transform=transform)
-        etl.load('rock', dest, rows)
+        etl.load("rock", dest, rows)
 
         # Confirm transfer
-        for row in etl.fetchall('SELECT * FROM rock', dest):
+        for row in etl.fetchall("SELECT * FROM rock", dest):
             print(row)

@@ -18,7 +18,7 @@ the :class:`ETLHelperQueryError <etlhelper.exceptions.ETLHelperQueryError>`,
 classes print the SQL query and the required paramstyle as well as the error
 message returned by the database.
 
-.. literalinclude:: ../demo_error.py
+.. literalinclude:: ../code_demos/error_handling/demo_extract_error.py
    :language: python
 
 The output is:
@@ -53,28 +53,15 @@ all the errors into a list to process at the end.
 .. code:: python
 
    errors = []
-   executemany(sql, conn, rows, on_error=errors.extend)
+   etl.executemany(sql, conn, rows, on_error=errors.extend)
 
    if errors:
        do_something()
 
 Errors can be logged to the ``etlhelper`` logger.
 
-.. code:: python
-
-   import logging
-
-   import etlhelper as etl
-
-   etl.log_to_console()
-   logger = logging.getLogger("etlhelper")
-
-
-   def log_errors(failed_rows):
-       for row, exception in failed_rows:
-           logger.error(exception)
-
-   executemany(sql, conn, rows, on_error=log_errors)
+.. literalinclude:: ../code_demos/error_handling/demo_log_error.py
+   :language: python
 
 The IDs of failed rows can be written to a file.
 
@@ -85,7 +72,7 @@ The IDs of failed rows can be written to a file.
            for row, exception in failed_rows:
                out_file.write(f"{row.id}\n")
 
-   executemany(sql, conn, rows, on_error=write_bad_ids)
+   etl.executemany(sql, conn, rows, on_error=write_bad_ids)
 
 ``executemany``, ``load``, ``copy_rows`` and ``copy_table_rows`` can all
 take an ``on_error`` parameter. They each return a tuple containing the
@@ -110,7 +97,7 @@ The following example for SQLite will ignore duplicate rows.
 Different databases have different syntax and capabilities, including
 ``upsert`` and ``merge``.
 
-.. literalinclude:: ../demo_on_conflict.py
+.. literalinclude:: ../code_demos/error_handling/demo_sql_conflict_error.py
    :language: python
 
 The output is:
