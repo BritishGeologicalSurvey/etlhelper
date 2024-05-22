@@ -13,17 +13,8 @@ The ``fetch*`` functions *return* results once they have finished with the datab
 - :func:`fetchall() <etlhelper.fetchall>`: returns all results as a list.  This function
   returns once all rows have been fetched into memory.
 
-.. code:: python
-
-    import sqlite3
-    import etlhelper as etl
-
-    with sqlite3.connect('igneous_rocks.db') as conn:
-        first_row = etl.fetchone('SELECT * FROM igneous_rock', conn)
-        all_rows = etl.fetchall('SELECT * FROM igneous_rock', conn):
-
-    print(first_row)
-    print(all_rows)
+.. literalinclude:: ../code_demos/extract/demo_fetch.py
+   :language: python
 
 returns
 
@@ -48,14 +39,8 @@ The database connection must remain open until all results have been processed.
 
 The following is an example of :func:`iter_rows() <etlhelper.iter_rows>`:
 
-.. code:: python
-
-    import sqlite3
-    import etlhelper as etl
-
-    with sqlite3.connect('igneous_rocks.db') as conn:
-        for row in etl.iter_rows('SELECT * FROM igneous_rock', conn)
-            print(row)
+.. literalinclude:: ../code_demos/extract/demo_iter.py
+   :language: python
 
 returns
 
@@ -114,7 +99,7 @@ Row factories control the output format of returned rows.
 The default row factory for ETL Helper is a dictionary, but this can be
 changed with the ``row_factory`` argument.
 
-.. literalinclude:: ../demo_namedtuple.py
+.. literalinclude:: ../code_demos/extract/demo_row_factory.py
    :language: python
 
 The output is:

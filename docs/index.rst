@@ -83,7 +83,7 @@ Loading data
 The following script uses the ``execute``, ``load`` and ``fetchall`` functions to
 create a database table and populate it with data.
 
-.. literalinclude:: demo_load.py
+.. literalinclude:: code_demos/load/demo_load_full.py
    :language: python
 
 The output is:
@@ -98,7 +98,7 @@ Copying data
 
 This script copies data to another database, with transformation and logging.
 
-.. literalinclude:: demo_copy.py
+.. literalinclude:: code_demos/copy/demo_copy_full.py
    :language: python
 
 The output is:

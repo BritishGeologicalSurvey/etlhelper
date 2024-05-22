@@ -1,6 +1,6 @@
 #! /bin/sh
 echo "Flake8 checks"
-flake8 etlhelper test || exit 1
+flake8 etlhelper test docs/code_demos || exit 1
 
 echo "Building container"
 docker build \

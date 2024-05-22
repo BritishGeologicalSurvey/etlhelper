@@ -3,7 +3,9 @@ max-line-length = 120
 extend-ignore =
     # Do not require self and cls to have type hints
     # See: https://github.com/sco1/flake8-annotations/issues/75
-    ANN101, ANN102
+    ANN101, ANN102,
+    # Do not require **kwargs to have type hints
+    ANN003
 per-file-ignores =
     # Do not check annotations in these files
     abort.py: A,
@@ -14,3 +16,4 @@ per-file-ignores =
     utils.py: A,
     etlhelper/db_helpers/*: A,
     test/**: A
+    docs/**: A

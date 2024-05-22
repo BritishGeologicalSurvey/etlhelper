@@ -25,22 +25,8 @@ The instantiation checks that the correct attributes have been provided for the
 specified ``dbtype``.
 See :ref:`passwords <passwords>` section for how to provide passwords.
 
-.. code:: python
-
-   import etlhelper as etl
-
-   ORACLEDB = etl.DbParams(dbtype='ORACLE', host="localhost", port=1521,
-                           dbname="mydata", user="oracle_user")
-
-   POSTGRESDB = etl.DbParams(dbtype='PG', host="localhost", port=5432,
-                             dbname="mydata", user="postgres_user")
-
-   SQLITEDB = etl.DbParams(dbtype='SQLITE', filename='/path/to/file.db')
-
-   MSSQLDB = etl.DbParams(dbtype='MSSQL', host="localhost", port=1433,
-                          dbname="mydata", user="mssql_user",
-                          odbc_driver="ODBC Driver 17 for SQL Server")
-
+.. literalinclude:: code_demos/connecting_to_databases/db_params.py
+   :language: python
 
 :class:`DbParams <etlhelper.DbParams>` objects can also be created from environment variables, using the
 :func:`from_environment() <etlhelper.DbParams.from_environment>` function.
@@ -84,10 +70,8 @@ Using context-manager syntax as below ensures that the connection is closed afte
 A standalone :func:`etlhelper.connect() <etlhelper.connect>` function provides backwards-compatibility with
 previous releases of ``etlhelper``:
 
-.. code:: python
-
-   import etlhelper as etl
-   oracle_conn = etl.connect(ORACLEDB, 'ORACLE_PASSWORD')
+.. literalinclude:: code_demos/connecting_to_databases/standalone_connect.py
+   :language: python
 
 Both versions accept additional keyword arguments that are passed to the
 `DB API 2.0-compatible connect function <https://peps.python.org/pep-0249/#connect>`_
@@ -118,10 +102,8 @@ Environment variables can be set on the command line via:
 
 Or in a Python terminal via:
 
-.. code:: python
-
-   import os
-   os.environ['ORACLE_PASSWORD'] = 'some-secret-password'
+.. literalinclude:: code_demos/connecting_to_databases/oracle_env.py
+   :language: python
 
 No password is required for SQLite databases.
 
@@ -142,20 +124,8 @@ data transfer. However, it is not suitable for LOBs larger than 1 Gb.
 To return CLOB and BLOB columns as LOBs, configure the driver as
 follows:
 
-.. code:: python
-
-   import etlhelper as etl
-   import oracledb
-
-   select_sql = "SELECT my_clob, my_blob FROM my_table"
-
-   with ORACLEDB.connect("ORA_PASSWORD") as conn:
-       # By default, ETL Helper returns native types
-       result_as_native = etl.fetchall(select_sql, conn)
-
-       # Update oracledb settings to return LOBs
-       oracledb.defaults.fetch_lobs = True
-       result_as_lobs = etl.fetchall(select_sql, conn)
+.. literalinclude:: code_demos/connecting_to_databases/oracle_lobs.py
+   :language: python
 
 See the `oracledb
 docs <https://python-oracledb.readthedocs.io/en/latest/user_guide/lob_data.html#fetching-lobs-as-strings-and-bytes>`__

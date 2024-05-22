@@ -10,19 +10,8 @@ ETL Helper provides two functions for loading of data.
 - :func:`load() <etlhelper.load>`: Inserts data from an iterable of dictionaries
   or namedtuples into an existing target table.
 
-.. code:: python
-
-    import sqlite3
-    import etlhelper as etl
-
-    rows = [
-      {"name": "basalt", "grain_size": "fine"},
-      {"name": "granite", "grain_size": "coarse"}
-    ]
-
-    with sqlite3.connect('igneous_rocks.db') as conn:
-        # Note that table must already exist
-        processed, failed = etl.load('igneous_rock', conn, rows)
+.. literalinclude:: ../code_demos/load/demo_load_min.py
+   :language: python
 
 NOTE: the ``load`` function uses the first row of data to generate the
 list of column for the insert query. If later items in the data contain
@@ -32,45 +21,14 @@ raised.
 - :func:`executemany() <etlhelper.executemany>`: Applies SQL query with parameters
   supplied by iterable of data.  Customising the SQL query allows fine control.
 
-.. code:: python
-
-    import sqlite3
-    import etlhelper as etl
-
-    rows = [
-      {"name": "basalt", "grain_size": "fine"},
-      {"name": "granite", "grain_size": "coarse"}
-    ]
-    
-    # Insert query changes case and adds update_at column
-    insert_sql = """
-        INSERT INTO igneous_rocks (name, grain_size, updated_at)
-        VALUES (:name, UPPER(:grainsize), datetime('now'))
-    """
-
-    with sqlite3.connect('igneous_rocks.db') as conn:
-        # Note that table must already exist
-        processed, failed = etl.executemany(insert_sql, conn, rows)
+.. literalinclude:: ../code_demos/load/demo_executemany_named.py
+   :language: python
   
 The INSERT query must container placeholders with an appropriate format for
 the input data e.g. positional for tuples, named for dictionaries. 
 
-.. code:: python
-
-   from etlhelper import executemany
-
-    rows = [("basalt", "fine"), ("granite", "coarse")]
-    
-    # Positional placeholders for data in tuple format
-    insert_sql = """
-        INSERT INTO igneous_rocks (name, grain_size, updated_at)
-        VALUES (?, UPPER(?), datetime('now'))
-    """
-
-    with sqlite3.connect('igneous_rocks.db') as conn:
-        # Note that table must already exist
-        processed, failed = etl.executemany(insert_sql, conn, rows)
-
+.. literalinclude:: ../code_demos/load/demo_executemany_positional.py
+   :language: python
 
 :func:`executemany() <etlhelper.executemany>` can also be used with UPDATE commands.
 
