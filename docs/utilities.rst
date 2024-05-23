@@ -43,7 +43,7 @@ connection. To enable the logger, use:
 
    etl.log_to_console()
 
-Output from a call to ``copy_rows`` will look like:
+Output from a call to :func:`copy_rows() <etlhelper.copy_rows>` will look like:
 
 ::
 
@@ -73,7 +73,7 @@ To use the etlhelper logger directly, access it via:
 Table info
 ^^^^^^^^^^
 
-The ``table_info`` function provides basic metadata for a table. An
+The :func:`table_info() <etlhelper.table_info>` function provides basic metadata for a table. An
 optional schema can be used. Note that for ``sqlite`` the schema value
 is currently ignored.
 
@@ -104,13 +104,13 @@ but does have a DEFAULT value.
 Generate INSERT SQL
 ^^^^^^^^^^^^^^^^^^^
 
-The ``generate_insert_query`` is used by the ``load`` function to remove
+The :func:`generate_insert_query() <etlhelper.generate_insert_query>` is used by the :func:`load() <etlhelper.load>` function to remove
 the need to explicitly write the INSERT query for simple cases.
 By calling this function manually, users can create a base insert query
 that can be extended with clauses such as ``ON CONFLICT DO NOTHING`` (See
 Error Handling for more info).
 
-As ``generate_insert_query`` creates SQL statements from user-provided
+As :func:`generate_insert_query() <etlhelper.generate_insert_query>` creates SQL statements from user-provided
 input, it checks the table and column names to ensure that they only
 contain valid characters.
 
@@ -121,17 +121,17 @@ Aborting running jobs
 When running as a script, ``etlhelper`` jobs can be stopped by pressing
 *CTRL-C*. This option is not available when the job is running as a
 background process, e.g. in a GUI application. The
-``abort_etlhelper_threads()`` function is provided to cancel jobs
+:func:`abort_etlhelper_threads() <etlhelper.abort_etlhelper_threads>` function is provided to cancel jobs
 running in a separate thread by raising an ``ETLHelperAbort`` exception
 within the thread.
 
 The state of the data when the job is cancelled (or crashes) depends on
-the arguments passed to ``executemany`` (or the functions that call it
-e.g. ``load``, ``copy_rows``).
+the arguments passed to :func:`executemany() <etlhelper.executemany>` (or the functions that call it
+e.g. :func:`load() <etlhelper.load>`, :func:`copy_rows() <etlhelper.copy_rows>`).
 
--  If ``commit_chunks`` is ``True`` (default), all chunks up to the one
+-  If :func:`commit_chunks() <etlhelper.commit_chunks>` is ``True`` (default), all chunks up to the one
    where the error occured are committed.
--  If ``commit_chunks`` is ``False``, everything is rolled back and the
+-  If :func:`commit_chunks() <etlhelper.commit_chunks>` is ``False``, everything is rolled back and the
    database is unchanged.
--  If an ``on_error`` function is defined, all rows without errors are
+-  If an :func:`on_error() <etlhelper.on_error>` function is defined, all rows without errors are
    committed.
