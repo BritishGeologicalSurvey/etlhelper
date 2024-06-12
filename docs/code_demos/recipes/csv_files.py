@@ -57,8 +57,7 @@ def on_error(failed_rows: list[tuple[dict, Exception]]) -> None:
 
 
 if __name__ == "__main__":
-    from etlhelper import log_to_console
-    log_to_console()
+    etl.log_to_console()
 
     db = etl.DbParams(dbtype="SQLITE", filename="observations.sqlite")
     with db.connect() as conn:
