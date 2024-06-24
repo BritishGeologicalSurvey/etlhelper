@@ -20,14 +20,6 @@ Welcome to ETL Helper's documentation!
 
 ETL Helper is a Python ETL (Extract, Transform, Load) library to simplify data transfer into and out of databases.
 
-
-.. note::  This documentation is a work in progress in preparation for the upcoming 1.0 release.
-   Refer to the `v0.14.3 GitHub README.md <https://github.com/BritishGeologicalSurvey/etlhelper/tree/v0.14.3>`_ for the current codebase.
-   There are a number of breaking changes planned for
-   ``etlhelper`` version 1.0. Please pin the version number in your
-   dependency list to avoid disruption and watch the project on GitHub
-   for notification of new releases.
-
 ETL Helper makes it easy to run SQL queries via Python and return the
 results.
 It takes care of cursor management, importing drivers and formatting connection strings,
