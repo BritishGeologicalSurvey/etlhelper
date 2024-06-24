@@ -11,7 +11,7 @@ authors = [
 ]
 license = {text = "LGPL-3.0 license"}
 classifiers = [
-    "Development Status :: 4 - Beta",
+    "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",
     "Intended Audience :: Information Technology",
     "Intended Audience :: Science/Research",
