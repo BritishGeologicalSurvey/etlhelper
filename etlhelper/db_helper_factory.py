@@ -18,7 +18,7 @@ class DbHelperFactory():
     """
     def __init__(self):
         self.helpers = {}
-        self._conn_types = {}
+        self._conn_types: dict[str, str] = {}
 
     def register_helper(self, dbtype, conn_type, db_helper):
         """
