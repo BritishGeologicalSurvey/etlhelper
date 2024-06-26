@@ -16,23 +16,17 @@ databases with Python.
 
 ---
 
-## Version 1.0 coming soon!
-
-The code for ETL Helper version 1.0 has now been merged into `main`, although not yet deployed to PyPI.
-It contains many breaking changes.
-The [documentation pages](https://britishgeologicalsurvey.github.io/etlhelper/) now correspond to the upcoming version 1.0.
-Specify a [release candidate tag](https://pypi.org/project/etlhelper/#history) or use `--pre` flag with `pip` to install pre-release versions.
-
 ## Installation
 
-ETL Helper is available on PyPI (version 0.14.3).
-Documentation for v0.14.3 is [here](https://github.com/BritishGeologicalSurvey/etlhelper/tree/v0.14.3#readme).
+ETL Helper is available on PyPI.
 
 ```bash
 pip install etlhelper
 ```
 
-Database driver packages are not included by default and should be specified in square brackets. Options are oracle (installs oracledb), mssql (installs pyodbc) and postgres (installs psycopg2). Multiple values can be separated by commas.
+Database driver packages are not included by default and should be specified in square brackets.
+Options are `oracle` (installs [oracledb](https://pypi.org/project/oracledb/)), `mssql` (installs [pyodbc](https://pypi.org/project/pyodbc/)) and `postgres` (installs [psycopg2](https://pypi.org/project/psycopg2/)).
+Multiple values can be separated by commas.
 
 ```bash
 pip install etlhelper[oracle,postgres]
