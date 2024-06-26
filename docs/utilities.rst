@@ -22,11 +22,13 @@ IDs) after INSERT statements. To capture these values, use the
 Log to console
 ^^^^^^^^^^^^^^
 
-ETL Helper provides a custom logging handler. Time-stamped messages
-indicating the number of rows processed can be enabled by setting the
-log level to ``INFO``. Setting the level to ``DEBUG`` provides
+ETL Helper can be configured to send time-stamped log messages to the console via
+a call to :func:`log_to_console() <etlhelper.log_to_console>` function.
+
+A log level of ``INFO`` reports progress, e.g. the number of rows processed.
+Setting the level to ``DEBUG`` provides
 information on the query that was run, example data and the database
-connection. To enable the logger, use:
+connection.
 
 .. literalinclude:: code_demos/utilities/enable_logger.py
    :language: python
