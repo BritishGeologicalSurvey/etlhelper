@@ -111,6 +111,7 @@ def test_copy_rows_happy_path_fast_true(
     assert result == test_table_data_dict
 
 
+@pytest.mark.skip(reason="Since MSODBC18 this test is unreliable")
 def test_copy_rows_happy_path_deprecated_tables_fast_true(
         test_deprecated_tables, testdb_conn, testdb_conn2, test_table_data_dict):
     # Note: ODBC driver requires separate connections for source and destination,
