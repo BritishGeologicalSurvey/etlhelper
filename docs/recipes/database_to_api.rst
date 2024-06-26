@@ -7,9 +7,12 @@ ETL for posting data from a database into an HTTP API. The API could be
 a NoSQL document store (e.g. ElasticSearch, Cassandra) or some other web
 service.
 
-This example transfers data from Oracle to ElasticSearch. It uses
+This example posts data from an Oracle database to an HTTP API. It uses
 ``iter_chunks`` to fetch data from the database without loading it all
-into memory at once. A custom transform function creates a dictionary
+into memory at once. `Parameters <https://britishgeologicalsurvey.github.io/etlhelper/etl_functions/extract.html#parameters>`__ are sent with the database query to filter
+rows to only those changed within specified time peiod. This is used to 
+only transfer data that has changed since the last time this script was 
+ran. A custom transform function creates a dictionary
 structure from each row of data. This is “dumped” into JSON and posted
 to the API via ``aiohttp``.
 
