@@ -26,3 +26,7 @@ transfer as opposed to posting records in series.
 
 In this example, failed rows will fail the whole job. Removing the
 ``raise_for_status()`` call will let them just be logged instead.
+
+To provide the database connection, a `DbParams <https://britishgeologicalsurvey.github.io/etlhelper/connecting_to_databases.html#dbparams>`__ object is 
+imported from a separate `db` file.
+
