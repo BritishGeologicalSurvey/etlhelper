@@ -97,6 +97,7 @@ __all__ = [
     "iter_chunks",
     "iter_rows",
     "load",
+    "log_to_console",
     "row_factories",
     "table_info",
 ]
