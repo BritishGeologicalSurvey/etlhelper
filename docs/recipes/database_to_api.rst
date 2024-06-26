@@ -8,9 +8,10 @@ a NoSQL document store (e.g. ElasticSearch, Cassandra) or some other web
 service.
 
 This example posts data from an Oracle database to an HTTP API. It uses
-``iter_chunks`` to fetch data from the database without loading it all
-into memory at once. `Parameters <https://britishgeologicalsurvey.github.io/etlhelper/etl_functions/extract.html#parameters>`__ are sent with the database query to filter
-rows to only those changed within specified time peiod. This is used to 
+:func:`iter_chunks() <etlhelper.iter_chunks>` to fetch data from the
+database without loading it all
+into memory at once.  :ref:`Parameters <parameters>` are sent with the database query to filter
+rows to only those changed within specified time period. This is used to
 only transfer data that has changed since the last time this script was 
 ran. A custom transform function creates a dictionary
 structure from each row of data. This is “dumped” into JSON and posted
@@ -27,6 +28,6 @@ transfer as opposed to posting records in series.
 In this example, failed rows will fail the whole job. Removing the
 ``raise_for_status()`` call will let them just be logged instead.
 
-To provide the database connection, a `DbParams <https://britishgeologicalsurvey.github.io/etlhelper/connecting_to_databases.html#dbparams>`__ object is 
+To provide the database connection, :class:`DbParams <etlhelper.DbParams>` object is
 imported from a separate `db` file.
 

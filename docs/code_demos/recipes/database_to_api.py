@@ -12,7 +12,7 @@ from db import ORACLE_DB
 
 logger = logging.getLogger("copy_sensors_async")
 
-# SQL query to get data from Oracle 
+# SQL query to get data from Oracle
 SELECT_SENSORS = """
     SELECT CODE, DESCRIPTION
     FROM BGS.DIC_SEN_SENSOR
@@ -34,7 +34,7 @@ def copy_sensors(startdate: dt.datetime, enddate: dt.datetime) -> None:
                 startdate.isoformat(), enddate.isoformat())
     row_count = 0
 
-    #connect using the DbParams we imported
+    # Connect using the imported DbParams
     with ORACLE_DB.connect("ORACLE_PASSWORD") as conn:
         # chunks is a generator that yields lists of dictionaries
         # passing in our select query, connection object, bind variable parameters and custom transform function
