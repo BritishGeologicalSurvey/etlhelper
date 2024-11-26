@@ -66,5 +66,5 @@ class OracleDbHelper(DbHelper):
         Returns connection string for SQLAlchemy engine.
         """
         password = self.get_password(password_variable)
-        return (f'oracle://{db_params.user}:{password}@'
+        return (f'oracle+oracledb://{db_params.user}:{password}@'
                 f'{db_params.host}:{db_params.port}/{db_params.dbname}')
