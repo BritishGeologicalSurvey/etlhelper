@@ -90,7 +90,7 @@ def test_connect(monkeypatch, db_params, driver, expected):
 
 
 @pytest.mark.parametrize('db_params, expected', [
-    (ORACLEDB, 'oracle://testuser:mypassword@server:1521/testdb'),
+    (ORACLEDB, 'oracle+oracledb://testuser:mypassword@server:1521/testdb'),
     (MSSQLDB,
      'mssql+pyodbc://testuser:mypassword@server:1521/testdb?driver=test+driver'),
     # NOQA
