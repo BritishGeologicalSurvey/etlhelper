@@ -11,6 +11,7 @@ on:
   push:
     paths:
       - '**.py'
+      - '.github/workflows/test.yml'
 
 jobs:
   flake8_py3:
@@ -51,7 +52,7 @@ jobs:
           --health-retries 5
     strategy:
       matrix:
-        python-version: [3.9, '3.10', 3.11]
+        python-version: [3.9, '3.10', 3.11, 3.12, 3.13]
     steps:
       - name: Checkout repo
         uses: actions/checkout@v3
