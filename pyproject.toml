@@ -58,4 +58,4 @@ pkg = [
 # pull new tag, then run build
 
 [tool.setuptools]
-packages = ["etlhelper"]
+packages = ["etlhelper", "etlhelper.db_helpers"]
