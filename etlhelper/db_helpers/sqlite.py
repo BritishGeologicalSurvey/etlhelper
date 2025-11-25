@@ -21,10 +21,10 @@ class SQLiteDbHelper(DbHelper):
             lower(type),
             "notnull" as not_null,
             (case when dflt_value is not null then 1 else 0 end) as has_default
-        FROM pragma_table_info(:table_name)
+        FROM pragma_table_info(?)
         -- this effectively ignores the unused schema_name
         -- parameter since schemas are not used in sqlite
-        WHERE COALESCE(TRUE, :schema_name)
+        WHERE COALESCE(TRUE, ?)
         ;""").strip()
 
     def __init__(self):
