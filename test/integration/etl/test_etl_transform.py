@@ -5,10 +5,8 @@ from datetime import (
     datetime,
     date,
 )
-from typing import (
-    Iterable,
-    Any,
-)
+from collections.abc import Iterable
+from typing import Any
 
 import pytest
 

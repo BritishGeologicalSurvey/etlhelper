@@ -8,7 +8,7 @@ curl 'https://sensors.bgs.ac.uk/FROST-Server/v1.1/Observations?$select=@iot.id,r
 import csv
 import sqlite3
 import datetime as dt
-from typing import Iterable
+from collections.abc import Iterable
 
 import etlhelper as etl
 
