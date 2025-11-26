@@ -1,23 +1,44 @@
+from __future__ import annotations
+
+from collections.abc import (
+    Callable,
+    Iterable,
+    Mapping,
+    Sequence,
+)
 from typing import (
     Any,
-    Collection,
     Protocol,
+    NamedTuple,
 )
+
+# InputRow is the typehint for our function arguments
+# whereas Row is the typehint for return values
+InputRow = Mapping[str, Any] | Sequence[Any] | NamedTuple
+# The exact type of a Row depends on the row_factory and transform functions used
+# and so, it is given the generic type Any
+Row = Any
+Chunk = list[Row]
+Parameters = Mapping[str, Any] | Sequence[Any]
+Transform = Callable[[Chunk], Chunk]
+
+
+class Cursor(Protocol):
+    rowcount = 1
+    def execute(self, *args: Any, **kwargs: Any) -> Cursor: ...
+    def executemany(self, *args: Any, **kwargs: Any) -> None: ...
+    def fetchone(self) -> Row: ...
+    def fetchmany(self, *args: Any, **kwarg) -> Iterable[Row]: ...
+    def fetchall(self) -> Iterable[Row]: ...
+    def close(self) -> None: ...
+    def __enter__(self) -> Cursor: ...
+    def __exit__(self, *args: Any, **kwargs: Any) -> None: ...
 
 
 class Connection(Protocol):
-    def close(self) -> None:
-        ...
-
-    def commit(self) -> None:
-        ...
-
-    def rollback(self) -> None:
-        ...
-
-    def cursor(self):  # noqa Cursor Protocol not defined
-        ...
-
-
-Row = Collection[Any]
-Chunk = list[Row]
+    def close(self) -> None: ...
+    def commit(self) -> None: ...
+    def rollback(self) -> None: ...
+    def cursor(self, *args: Any, **kwargs: Any) -> Cursor: ...
+    def __enter__(self) -> Connection: ...
+    def __exit__(self, *args: Any, **kwargs: Any) -> None: ...
