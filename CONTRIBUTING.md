@@ -47,7 +47,7 @@ Pull requests and issues should be targeted at the GitHub repository.
 
 ### Prerequisites
 
-+ Python 3.9+ virtual environment
++ Python 3.10+ virtual environment
 + Git
 + Docker
 
