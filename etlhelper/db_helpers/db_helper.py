@@ -7,8 +7,15 @@ from abc import (
     ABCMeta,
     abstractmethod,
 )
+from typing import Optional
 
+from etlhelper.db_params import DbParams
 from etlhelper.exceptions import ETLHelperConnectionError
+from etlhelper.types import (
+    Chunk,
+    Connection,
+    Cursor,
+)
 
 logger = logging.getLogger('etlhelper')
 
@@ -18,19 +25,19 @@ class DbHelper(metaclass=ABCMeta):
     Abstract Base Class for DBHelpers
     """
     sql_exceptions = None
-    connect_exceptions = None
-    table_info_query = None
+    connect_exceptions = ()
+    table_info_query = ""
     # The following are used to help create parameterized queries.  Although
     # paramstyle is required by DBAPI2, most drivers support both a named and
     # positional style.
     paramstyle = None
     named_paramstyle = None
-    positional_paramstyle = None
+    positional_paramstyle = ""
 
     @abstractmethod
     def __init__(self):
-        self.sql_exceptions = tuple()
-        self.connect_exceptions = tuple()
+        self.sql_exceptions = ()
+        self.connect_exceptions = ()
         self.required_params = set()
         self.paramstyle = ''
         self.missing_driver_msg = ''
@@ -38,7 +45,7 @@ class DbHelper(metaclass=ABCMeta):
         # successfully initialised if driver is installed
         self._connect_func = self._raise_missing_driver_error_on_connect
 
-    def connect(self, db_params, password_variable=None, **kwargs):
+    def connect(self, db_params: DbParams, password_variable: Optional[str] = None, **kwargs) -> Connection:
         """
         Return a connection (as appropriate), configured for
         the database with the password obtained from environment variable.  These
@@ -63,7 +70,7 @@ class DbHelper(metaclass=ABCMeta):
         return conn
 
     @staticmethod
-    def get_password(password_variable):
+    def get_password(password_variable: Optional[str]) -> str:
         """
         Read password from environment variable.
         :param password_variable: str, name of environment variable with password
@@ -83,14 +90,14 @@ class DbHelper(metaclass=ABCMeta):
 
     @staticmethod
     @abstractmethod
-    def get_connection_string(db_params, password_variable):
+    def get_connection_string(db_params: DbParams, password_variable: Optional[str]):
         """
         :returns: str
         """
         return
 
     @staticmethod
-    def executemany(cursor, query, chunk):
+    def executemany(cursor: Cursor, query: str, chunk: Chunk):
         """
         Call executemany method appropriate to database.  Overridden for PostgreSQL.
 
@@ -101,7 +108,7 @@ class DbHelper(metaclass=ABCMeta):
         cursor.executemany(query, chunk)
 
     @staticmethod
-    def cursor(conn):
+    def cursor(conn: Connection) -> Cursor:
         """
         Return a cursor on the connection.  Overridded for SQLite.
 
