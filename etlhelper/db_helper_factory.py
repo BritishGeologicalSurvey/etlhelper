@@ -6,15 +6,15 @@ Factory pattern that generates a DbHelper for each DB type
 from __future__ import annotations
 from functools import lru_cache
 
-from etlhelper.db_helpers.oracle import OracleDbHelper
-from etlhelper.db_helpers.postgres import PostgresDbHelper
-from etlhelper.db_helpers.mssql import MSSQLDbHelper
-from etlhelper.db_helpers.sqlite import SQLiteDbHelper
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from etlhelper.db_params import DbParams
     from etlhelper.db_helpers import DbHelper
 
+from etlhelper.db_helpers import OracleDbHelper
+from etlhelper.db_helpers import PostgresDbHelper
+from etlhelper.db_helpers import MSSQLDbHelper
+from etlhelper.db_helpers import SQLiteDbHelper
 from etlhelper.exceptions import ETLHelperHelperError
 from etlhelper.types import Connection
 
