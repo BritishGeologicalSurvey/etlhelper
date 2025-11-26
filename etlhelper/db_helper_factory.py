@@ -3,31 +3,38 @@
 Factory pattern that generates a DbHelper for each DB type
 
 """
+from __future__ import annotations
 from functools import lru_cache
 
-from etlhelper.db_helpers.oracle import OracleDbHelper
-from etlhelper.db_helpers.postgres import PostgresDbHelper
-from etlhelper.db_helpers.mssql import MSSQLDbHelper
-from etlhelper.db_helpers.sqlite import SQLiteDbHelper
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from etlhelper.db_params import DbParams
+    from etlhelper.db_helpers import DbHelper
+
+from etlhelper.db_helpers import OracleDbHelper
+from etlhelper.db_helpers import PostgresDbHelper
+from etlhelper.db_helpers import MSSQLDbHelper
+from etlhelper.db_helpers import SQLiteDbHelper
 from etlhelper.exceptions import ETLHelperHelperError
+from etlhelper.types import Connection
 
 
-class DbHelperFactory():
+class DbHelperFactory:
     """
     The DB Helper Factory class.
     """
     def __init__(self):
-        self.helpers = {}
+        self.helpers: dict[str, type[DbHelper]] = {}
         self._conn_types: dict[str, str] = {}
 
-    def register_helper(self, dbtype, conn_type, db_helper):
+    def register_helper(self, dbtype: str, conn_type: str, db_helper: type[DbHelper]) -> None:
         """
         Store db helper in internal list.
         """
         self.helpers[dbtype] = db_helper
         self._conn_types[conn_type] = dbtype
 
-    def from_db_params(self, db_params):
+    def from_db_params(self, db_params: DbParams) -> DbHelper:
         """
         Return initialised db_helper
         """
@@ -37,7 +44,7 @@ class DbHelperFactory():
 
         return self.from_dbtype(db_params.dbtype)
 
-    def from_conn(self, conn):
+    def from_conn(self, conn: Connection) -> DbHelper:
         """
         Return initialised db_helper based on connection.
         """
@@ -45,8 +52,8 @@ class DbHelperFactory():
             msg = f"Expected connection-like object, got {type(conn)}"
             raise ETLHelperHelperError(msg)
 
+        conn_type = str(conn.__class__)
         try:
-            conn_type = str(conn.__class__)
             dbtype = self._conn_types[conn_type]
         except KeyError:
             msg = f"Unsupported connection type: {conn_type}"
@@ -54,7 +61,7 @@ class DbHelperFactory():
         return self.from_dbtype(dbtype)
 
     @lru_cache(maxsize=16)
-    def from_dbtype(self, dbtype):
+    def from_dbtype(self, dbtype: str) -> DbHelper:
         """
         Return initialised db helper based on type
         """

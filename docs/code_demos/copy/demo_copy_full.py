@@ -1,7 +1,7 @@
 """ETL Helper script to copy records between databases."""
 import sqlite3
 import datetime as dt
-from typing import Generator
+from collections.abc import Generator
 import etlhelper as etl
 
 igneous_db_file = "igneous_rocks.db"

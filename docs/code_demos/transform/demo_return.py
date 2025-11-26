@@ -1,7 +1,7 @@
 """ETL Helper script to demonstrate using a transform function which returns a list of rows."""
 import random
 import sqlite3
-from typing import Iterator
+from collections.abc import Iterator
 import etlhelper as etl
 from etlhelper.row_factories import namedtuple_row_factory
 
