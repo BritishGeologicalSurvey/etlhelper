@@ -8,15 +8,16 @@ from itertools import (
     zip_longest,
     chain,
 )
-from typing import (
-    Any,
+from collections.abc import (
     Callable,
-    Collection,
+    Generator,
     Iterable,
     Iterator,
+)
+from typing import (
+    Any,
     NamedTuple,
     Optional,
-    Union,
 )
 
 from etlhelper.abort import (
@@ -33,8 +34,11 @@ from etlhelper.exceptions import (
 from etlhelper.row_factories import dict_row_factory
 from etlhelper.types import (
     Connection,
+    InputRow,
     Row,
     Chunk,
+    Parameters,
+    Transform,
 )
 
 logger = logging.getLogger('etlhelper')
@@ -49,11 +53,11 @@ class FailedRow(NamedTuple):
 def iter_chunks(
         select_query: str,
         conn: Connection,
-        parameters: tuple = (),
+        parameters: Parameters = (),
         row_factory: Callable = dict_row_factory,
-        transform: Optional[Callable[[Chunk], Chunk]] = None,
+        transform: Optional[Transform] = None,
         chunk_size: int = CHUNKSIZE
-        ) -> Iterator[Chunk]:
+        ) -> Generator[Chunk, None, None]:
     """
     Run SQL query against connection and return iterator object to loop over
     results in batches of chunksize (default 5000).
@@ -138,9 +142,9 @@ def iter_chunks(
 def iter_rows(
         select_query: str,
         conn: Connection,
-        parameters: tuple = (),
+        parameters: Parameters = (),
         row_factory: Callable = dict_row_factory,
-        transform: Optional[Callable[[Chunk], Chunk]] = None,
+        transform: Optional[Transform] = None,
         chunk_size: int = CHUNKSIZE
         ) -> Iterator[Row]:
     """
@@ -168,9 +172,9 @@ def iter_rows(
 def fetchone(
         select_query: str,
         conn: Connection,
-        parameters: tuple = (),
+        parameters: Parameters = (),
         row_factory: Callable = dict_row_factory,
-        transform: Optional[Callable[[Chunk], Chunk]] = None,
+        transform: Optional[Transform] = None,
         chunk_size: int = 1
         ) -> Optional[Row]:
     """
@@ -203,9 +207,9 @@ def fetchone(
 def fetchall(
         select_query: str,
         conn: Connection,
-        parameters: tuple = (),
+        parameters: Parameters = (),
         row_factory: Callable = dict_row_factory,
-        transform: Optional[Callable[[Chunk], Chunk]] = None,
+        transform: Optional[Transform] = None,
         chunk_size: int = CHUNKSIZE
         ) -> Chunk:
     """
@@ -229,8 +233,8 @@ def fetchall(
 def executemany(
         query: str,
         conn: Connection,
-        rows: Iterable[Row],
-        transform: Optional[Callable[[Chunk], Chunk]] = None,
+        rows: Iterable[InputRow],
+        transform: Optional[Transform] = None,
         on_error: Optional[Callable[[list[FailedRow]], Any]] = None,
         commit_chunks: bool = True,
         chunk_size: int = CHUNKSIZE,
@@ -366,9 +370,9 @@ def copy_rows(
         source_conn: Connection,
         insert_query: str,
         dest_conn: Connection,
-        parameters: tuple = (),
+        parameters: Parameters = (),
         row_factory: Callable = dict_row_factory,
-        transform: Optional[Callable[[Chunk], Chunk]] = None,
+        transform: Optional[Transform] = None,
         on_error: Optional[Callable] = None,
         commit_chunks: bool = True,
         chunk_size: int = CHUNKSIZE,
@@ -420,7 +424,7 @@ def copy_rows(
 def execute(
         query: str,
         conn: Connection,
-        parameters: Collection[Any] = ()
+        parameters: Parameters = ()
         ) -> None:
     """
     Run SQL query against connection.
@@ -455,7 +459,7 @@ def copy_table_rows(
         dest_conn: Connection,
         target: Optional[str] = None,
         row_factory: Callable = dict_row_factory,
-        transform: Optional[Callable[[Chunk], Chunk]] = None,
+        transform: Optional[Transform] = None,
         on_error: Optional[Callable] = None,
         commit_chunks: bool = True,
         chunk_size: int = CHUNKSIZE
@@ -505,8 +509,8 @@ def copy_table_rows(
 def load(
         table: str,
         conn: Connection,
-        rows: Iterable[Row],
-        transform: Optional[Callable[[Chunk], Chunk]] = None,
+        rows: Iterable[InputRow],
+        transform: Optional[Transform] = None,
         on_error: Optional[Callable] = None,
         commit_chunks: bool = True,
         chunk_size: int = CHUNKSIZE,
@@ -663,7 +667,7 @@ def validate_identifier(identifier: str) -> None:
 def _chunker(
         iterable: Iterable[Row],
         n_chunks: int,
-        ) -> Iterator[tuple[Union[Row, None], ...]]:
+        ) -> Iterator[tuple[Row | None, ...]]:
     """Collect data into fixed-length chunks or blocks.
     Code from recipe at https://docs.python.org/3.6/library/itertools.html
 
