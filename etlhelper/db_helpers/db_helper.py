@@ -1,15 +1,18 @@
 """
 Database helper classes using Factory Pattern
 """
+from __future__ import annotations
 import logging
 import os
 from abc import (
     ABCMeta,
     abstractmethod,
 )
-from typing import Optional
+from typing import Optional, TYPE_CHECKING
 
-from etlhelper.db_params import DbParams
+if TYPE_CHECKING:
+    from etlhelper.db_params import DbParams
+
 from etlhelper.exceptions import ETLHelperConnectionError
 from etlhelper.types import (
     Chunk,
