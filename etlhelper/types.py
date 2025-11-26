@@ -9,18 +9,18 @@ from collections.abc import (
 from typing import (
     Any,
     Protocol,
-    NamedTuple,
+    TypeAlias
 )
 
 # InputRow is the typehint for our function arguments
-# whereas Row is the typehint for return values
-InputRow = Mapping[str, Any] | Sequence[Any] | NamedTuple
+# whereas Row is the typehint for return values.
+InputRow: TypeAlias = Mapping[str, Any] | Sequence[Any]
 # The exact type of a Row depends on the row_factory and transform functions used
 # and so, it is given the generic type Any
-Row = Any
-Chunk = list[Row]
-Parameters = Mapping[str, Any] | Sequence[Any]
-Transform = Callable[[Chunk], Chunk]
+Row: TypeAlias = Any
+Chunk: TypeAlias = list[Row]
+Parameters: TypeAlias = Mapping[str, Any] | Sequence[Any]
+Transform: TypeAlias = Callable[[Chunk], Chunk]
 
 
 class Cursor(Protocol):
