@@ -6,8 +6,8 @@ Transform
 ETL Helper functions accept a function as the ``transform`` keyword argument,
 which enables transformation of data in flight.
 
-This is any Python callable (e.g. function or class) that takes an iterator
-and returns another iterator (e.g. list or generator via the ``yield``
+This is any Python callable (e.g. function or class) that takes an iterable
+and returns another iterable (e.g. list or generator via the ``yield``
 statement).
 Transform functions are applied to data as they are read
 from the database (in the case of data fetching functions and
