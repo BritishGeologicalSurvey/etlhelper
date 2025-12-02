@@ -79,7 +79,7 @@ A dictionary is used for named placeholders,
    select_sql = "SELECT * FROM src WHERE id = :id"  # SQLite style
 
    with sqlite3.connect("rocks.db") as conn:
-       etl.fetchall(sql, conn, parameters={'id': 1})
+       etl.fetchall(select_sql, conn, parameters={'id': 1})
 
 or a tuple for positional placeholders.
 
@@ -88,7 +88,7 @@ or a tuple for positional placeholders.
    select_sql = "SELECT * FROM src WHERE id = ?"  # SQLite style
 
    with sqlite3.connect("rocks.db") as conn:
-       etl.fetchall(sql, conn, parameters=(1,))
+       etl.fetchall(select_sql, conn, parameters=(1,))
 
 
 Named parameters result in more readable code.
