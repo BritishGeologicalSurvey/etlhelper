@@ -33,7 +33,7 @@ from etlhelper.exceptions import (
 )
 from etlhelper.row_factories import dict_row_factory
 from etlhelper.types import (
-    Connection,
+    DBAPIConnection,
     InputRow,
     Row,
     Chunk,
@@ -52,7 +52,7 @@ class FailedRow(NamedTuple):
 
 def iter_chunks(
         select_query: str,
-        conn: Connection,
+        conn: DBAPIConnection,
         parameters: Parameters = (),
         row_factory: Callable = dict_row_factory,
         transform: Optional[Transform] = None,
@@ -141,7 +141,7 @@ def iter_chunks(
 
 def iter_rows(
         select_query: str,
-        conn: Connection,
+        conn: DBAPIConnection,
         parameters: Parameters = (),
         row_factory: Callable = dict_row_factory,
         transform: Optional[Transform] = None,
@@ -171,7 +171,7 @@ def iter_rows(
 
 def fetchone(
         select_query: str,
-        conn: Connection,
+        conn: DBAPIConnection,
         parameters: Parameters = (),
         row_factory: Callable = dict_row_factory,
         transform: Optional[Transform] = None,
@@ -206,7 +206,7 @@ def fetchone(
 
 def fetchall(
         select_query: str,
-        conn: Connection,
+        conn: DBAPIConnection,
         parameters: Parameters = (),
         row_factory: Callable = dict_row_factory,
         transform: Optional[Transform] = None,
@@ -232,7 +232,7 @@ def fetchall(
 
 def executemany(
         query: str,
-        conn: Connection,
+        conn: DBAPIConnection,
         rows: Iterable[InputRow],
         transform: Optional[Transform] = None,
         on_error: Optional[Callable[[list[FailedRow]], Any]] = None,
@@ -341,7 +341,7 @@ def executemany(
 
 def _execute_by_row(
         query: str,
-        conn: Connection,
+        conn: DBAPIConnection,
         chunk: Chunk
         ) -> list[FailedRow]:
     """
@@ -367,9 +367,9 @@ def _execute_by_row(
 
 def copy_rows(
         select_query: str,
-        source_conn: Connection,
+        source_conn: DBAPIConnection,
         insert_query: str,
-        dest_conn: Connection,
+        dest_conn: DBAPIConnection,
         parameters: Parameters = (),
         row_factory: Callable = dict_row_factory,
         transform: Optional[Transform] = None,
@@ -423,7 +423,7 @@ def copy_rows(
 
 def execute(
         query: str,
-        conn: Connection,
+        conn: DBAPIConnection,
         parameters: Parameters = ()
         ) -> None:
     """
@@ -455,8 +455,8 @@ def execute(
 
 def copy_table_rows(
         table: str,
-        source_conn: Connection,
-        dest_conn: Connection,
+        source_conn: DBAPIConnection,
+        dest_conn: DBAPIConnection,
         target: Optional[str] = None,
         row_factory: Callable = dict_row_factory,
         transform: Optional[Transform] = None,
@@ -508,7 +508,7 @@ def copy_table_rows(
 
 def load(
         table: str,
-        conn: Connection,
+        conn: DBAPIConnection,
         rows: Iterable[InputRow],
         transform: Optional[Transform] = None,
         on_error: Optional[Callable] = None,
@@ -577,7 +577,7 @@ def load(
 def generate_insert_sql(
         table: str,
         row: Row,
-        conn: Connection
+        conn: DBAPIConnection
         ) -> str:
     """Generate insert SQL for table, getting column names from row and the
     Generate insert SQL for table, getting column names from row and the
