@@ -18,15 +18,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@a12a3943b4bdde767164f792f33f40b04645d846  # v3
       - name: Setup Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@d09bd5e6005b175076f227b13d9730d56e9dcfcb  # v4
         with:
           python-version: '3.10'
       - name: Install flake8
         run: pip install flake8
       - name: Run flake8
-        uses: suo/flake8-github-action@releases/v1
+        uses: suo/flake8-github-action@3e87882219642e01aa8a6bbd03b4b0adb8542c2a  # releases/v1
         with:
           checkName: 'flake8_py3'
 
@@ -55,9 +55,9 @@ jobs:
         python-version: ['3.10', 3.11, 3.12, 3.13, 3.14]
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@a12a3943b4bdde767164f792f33f40b04645d846  # v3
       - name: Setup Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@d09bd5e6005b175076f227b13d9730d56e9dcfcb  # v4
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install requirements
