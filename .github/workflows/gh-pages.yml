@@ -23,6 +23,6 @@ jobs:
       run: |
           pip install sphinx sphinx_rtd_theme
     - id: deployment
-      uses: sphinx-notes/pages@f7cabbad7f99057f9617e73ea57b40c5fedb53bc  # v3
+      uses: sphinx-notes/pages@e9c8f79f285fb41a150ba6e08a3c2a29635e7ee1  # v3.5
       with:
         python-version: '3.10'
