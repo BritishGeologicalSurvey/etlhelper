@@ -33,8 +33,6 @@ The output is:
 
     no such table: bad_table
 
-also handling errors in SQL e.g. ON CONFLICT
-
 .. _on_error:
 
 on_error
@@ -90,12 +88,15 @@ basis.
 Databases also have methods for handling errors e.g. duplicate primary keys
 using SQL.
 By customising an INSERT query (which can be programmatically generated with
-:func:`generate_insert_query() <etlhelper.generate_insert_query>`) the database
+:func:`generate_insert_sql() <etlhelper.generate_insert_sql>`) the database
 can be instructed how to process such rows.
 
-The following example for SQLite will ignore duplicate rows.
-Different databases have different syntax and capabilities, including
-``upsert`` and ``merge``.
+SQLite: ignore conflicting rows
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The following example uses SQLite's ``ON CONFLICT DO NOTHING`` to skip rows
+that would violate a primary key or unique constraint. The first row is
+inserted and the duplicate row is skipped.
 
 .. literalinclude:: ../code_demos/error_handling/demo_sql_conflict_error.py
    :language: python
@@ -105,3 +106,42 @@ The output is:
 .. code:: bash
 
    {'id': 1, 'name': 'basalt', 'grain_size': 'fine'}
+
+SQLite: update conflicting rows
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Use ``ON CONFLICT (id) DO UPDATE`` to update the existing row instead.
+The conflict target, ``id``, selects the primary key constraint that triggers
+the update. The ``excluded`` prefix refers to the values from the row that
+was about to be inserted.
+
+.. literalinclude:: ../code_demos/error_handling/demo_sql_conflict_update.py
+   :language: python
+
+The output is:
+
+.. code:: bash
+
+   {'id': 1, 'name': 'basalt', 'grain_size': 'fine-grained'}
+
+These clauses handle uniqueness conflicts, not every database error.
+For example, a ``NOT NULL`` or foreign key violation can still raise an
+exception. Choose the conflict target carefully: ``ON CONFLICT (id)`` does
+not handle a conflict on the separate ``name`` unique constraint.
+Use :ref:`on_error` when failed rows need to be logged or processed in Python.
+
+Database-specific syntax
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+SQL conflict handling varies between databases. Consult the database's
+documentation before adapting an example:
+
+* `SQLite UPSERT <https://www.sqlite.org/lang_upsert.html>`_ documents
+  ``ON CONFLICT DO NOTHING`` and ``ON CONFLICT ... DO UPDATE`` (SQLite 3.24.0
+  or later).
+* `PostgreSQL INSERT <https://www.postgresql.org/docs/current/sql-insert.html>`_
+  documents its ``ON CONFLICT`` clause.
+* `Oracle MERGE <https://docs.oracle.com/en/database/oracle/oracle-database/26/sqlrf/MERGE.html>`_
+  combines insert and update operations based on a matching condition.
+* `SQL Server MERGE <https://learn.microsoft.com/en-us/sql/t-sql/statements/merge-transact-sql>`_
+  describes its matching clauses and concurrency considerations.
