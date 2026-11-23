@@ -1,6 +1,6 @@
 #! /bin/sh
 echo "Flake8 checks"
-flake8 etlhelper test docs/code_demos || exit 1
+uv run flake8 etlhelper test docs/code_demos || exit 1
 
 echo "Building container"
 docker build \
@@ -26,7 +26,7 @@ docker run \
   --name=etlhelper-test-runner \
   -it \
   etlhelper-test-runner \
-  pytest -vs -rsx --pdb --cov=etlhelper --cov-report html --cov-report term test/
+  uv run pytest -vs -rsx --pdb --cov=etlhelper --cov-report html --cov-report term test/
 
 # Copy coverage files out of container to local if tests passed
 if [ $? -eq 0 ]; then

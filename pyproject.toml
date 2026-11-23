@@ -39,8 +39,11 @@ all = [
     "pyodbc",
     "psycopg2-binary",
 ]
+
+[dependency-groups]
 dev = [
     "flake8",
+    "flake8-annotations",
     "ipdb",
     "ipython",
     "pytest",
@@ -49,6 +52,10 @@ dev = [
 pkg = [
     "build",
     "twine",
+]
+docs = [
+    "sphinx",
+    "sphinx_rtd_theme",
 ]
 
 [tool.setuptools_scm]
