@@ -58,7 +58,7 @@ Install locally for development by cloning repository and running the following
 in the root:
 
 ```bash
-uv sync --extra all --all-groups
+uv pip install -e .[all] --group dev --group docs
 ```
 
 Development files will be linked to the virtual environment/system folder
@@ -108,7 +108,7 @@ The documentation is created using Sphinx.
 To locally build the documentation, run the following:
  
 ```bash
-uv run sphinx-build -a docs docs/_build
+sphinx-build -a docs docs/_build
 ```
 
 The documentation can then be viewed at `docs/_build/index.html`
