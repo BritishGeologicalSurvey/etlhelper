@@ -12,6 +12,7 @@ on:
     paths:
       - '**.py'
       - 'pyproject.toml'
+      - '.flake8'
       - '.github/workflows/test.yml'
 
 jobs:
