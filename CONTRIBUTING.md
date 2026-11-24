@@ -58,8 +58,7 @@ Install locally for development by cloning repository and running the following
 in the root:
 
 ```bash
-pip install -r requirements-dev.txt
-pip install -e .
+uv pip install -e .[all] --group dev --group docs
 ```
 
 Development files will be linked to the virtual environment/system folder
