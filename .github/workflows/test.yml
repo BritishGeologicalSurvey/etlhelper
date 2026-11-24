@@ -27,7 +27,7 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@ae62891fec2bb8e7d6c99fc78c9fec3a63790f8d # v10.0.0
       - name: Install dev dependencies
-        run: uv pip install . --group dev
+        run: uv pip install --system . --group dev
       - name: Run flake8
         run: flake8
 
@@ -64,6 +64,6 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@ae62891fec2bb8e7d6c99fc78c9fec3a63790f8d # v10.0.0
       - name: Install dependencies
-        run: uv pip install .[all] --group dev
+        run: uv pip install --system .[all] --group dev
       - name: Run pytest
         run: pytest -vrsx --cov=etlhelper --cov-report term test/
